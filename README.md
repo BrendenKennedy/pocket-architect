@@ -1,70 +1,157 @@
 # CVAT Workstation - Minimal Configuration
 
-Terraform configuration for deploying a CVAT workstation on AWS EC2.
+## Brief Summary
 
-## Features
+Terraform configuration for deploying a CVAT workstation on AWS EC2. This infrastructure supports a checkpoint/restore workflow, allowing you to save your progress at milestones (e.g., "n8n working", "mlflow configured") and restore from those checkpoints later.
 
-- EC2 instance with Ubuntu 22.04
-- Automatic SSH host key cleanup on instance replacement
-- **EBS Snapshot Restore Support** - Restore from manually created snapshots
+**Use Cases:**
+- Deploy a CVAT workstation with optional MLflow and n8n services
+- Save infrastructure state at milestones using checkpoints
+- Cost-effective: stop infrastructure when not in use (saves compute costs)
+- Optional HTTPS/SSL via Application Load Balancer with custom domain
 
-## Checkpoint Workflow (Recommended)
+## Prerequisites
 
-This configuration supports a checkpoint/restore workflow for managing your infrastructure state at different milestones (e.g., "n8n working", "mlflow setup", etc.).
+### Required Tools
 
-### Your Workflow
+1. **Terraform** (>= 1.5.0)
+   - macOS: `brew install terraform`
+   - Linux/Windows: [terraform.io/downloads](https://www.terraform.io/downloads)
+   - Verify: `terraform version`
 
-1. **Fresh Start**: Run `terraform init`, `terraform plan`, `terraform apply`
-   - Creates instances from the latest snapshot checkpoint
-   - Stands up ALB if enabled
+2. **AWS CLI** (v2 recommended)
+   - macOS: `brew install awscli`
+   - Linux/Windows: [AWS CLI installation guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+   - Verify: `aws --version`
+   - Configure: `aws configure --profile terraform`
 
-2. **Work on Services**: Install/configure services on the instance
+3. **SSH Client** (usually pre-installed)
+   - Verify: `ssh -V`
 
-3. **Take Breaks**: Use `./down.sh` to stop instances and destroy ALB (saves money)
+4. **curl** (usually pre-installed)
+   - Verify: `curl --version`
 
-4. **Create Checkpoints**: When you reach milestones (e.g., "n8n working"), create a checkpoint:
+### AWS Account Setup
+
+1. **AWS Account** with permissions for:
+   - EC2 (instances, key pairs, snapshots, AMIs)
+   - VPC (read subnets, security groups)
+   - IAM (EC2 SSM roles)
+   - Route 53 (if using `domain_name`)
+   - ACM (if using `enable_alb`)
+
+2. **AWS Credentials** configured:
    ```bash
-   ./checkpoint.sh
+   aws configure --profile terraform
    ```
-   This will:
-   - Create a snapshot of your current instance
-   - Create an AMI from that snapshot
-   - Update `terraform.tfvars` with the new snapshot ID
 
-5. **Test Checkpoints**: After creating a checkpoint:
+### Required AWS Values
+
+Before running Terraform, gather these **3 required values**:
+
+1. **Subnet ID** (`subnet_id`)
+   - AWS Console → VPC → Subnets
+   - Must be a public subnet with Internet Gateway
+   - Example: `subnet-0563a2c216fb47323`
+
+2. **EC2 Key Pair Name** (`ssh_key_name`)
+   - AWS Console → EC2 → Key Pairs
+   - Create if needed: EC2 → Key Pairs → Create Key Pair
+   - Download `.pem` file and set permissions: `chmod 400 ~/.ssh/key-name.pem`
+   - Use the **name** (not file path) in Terraform
+   - Example: `brendens-mac`
+
+3. **Your Public IP** (`my_ip_cidr`)
+   - Run: `curl ifconfig.me`
+   - Add `/32` suffix
+   - Example: `70.119.100.238/32`
+
+### Optional AWS Values
+
+- **Elastic IP Allocation ID** - AWS Console → EC2 → Elastic IPs
+- **Domain Name** - Requires Route 53 hosted zone (AWS Console → Route 53)
+- **Snapshot ID** - AWS Console → EC2 → Snapshots (or use `./checkpoint.sh`)
+
+## How to Use
+
+### Initial Deployment
+
+1. **Copy and configure:**
    ```bash
-   # Destroy and recreate to verify
-   terraform destroy -target=aws_instance.minimal
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+   Edit `terraform.tfvars` with your values:
+   ```hcl
+   my_ip_cidr = "YOUR_IP/32"
+   subnet_id = "subnet-xxxxx"
+   ssh_key_name = "your-key-name"
+   ```
+
+2. **Initialize and deploy:**
+   ```bash
+   terraform init
+   terraform plan
    terraform apply
    ```
-   The instance will be rebuilt from the new checkpoint.
 
-### Creating a Checkpoint
+3. **SSH to instance:**
+   ```bash
+   ssh -i ~/.ssh/your-key-name.pem ubuntu@<instance-ip>
+   ```
 
-**Recommended: Use the automated script**
+### Starting and Stopping Infrastructure
+
+**Start (turn ON):**
+```bash
+./up.sh
+```
+- Starts EC2 instances
+- Creates ALB (if `enable_alb = true`)
+- Updates DNS records
+
+**Stop (turn OFF - saves costs):**
+```bash
+./down.sh
+```
+- Stops EC2 instances (data preserved)
+- Destroys ALB (saves ~$16-22/month)
+- Updates DNS to point to Elastic IP
+
+**Note:** When stopped, you only pay for storage (~$1.50/month for 250GB). No compute charges.
+
+### Creating Checkpoints
+
+Save your progress at milestones (e.g., "n8n working", "mlflow configured"):
+
 ```bash
 ./checkpoint.sh
 ```
 
-The script will:
-1. Find your running instance
-2. Create a snapshot from its root volume
-3. Create an AMI from that snapshot
-4. Update `terraform.tfvars` with the new snapshot ID
-5. Tag everything for easy identification
+This automatically:
+- Creates a snapshot of your current instance
+- Creates an AMI from that snapshot
+- Updates `terraform.tfvars` with the new snapshot ID
+- Tags everything for easy identification
 
-**Manual Method** (if you prefer):
-1. Go to AWS Console → EC2 → Volumes
-2. Find your instance's root volume
-3. Create snapshot with a descriptive name
-4. Get the snapshot ID (starts with `snap-`)
-5. Edit `terraform.tfvars` and update `root_volume_snapshot_id`
+**Manual method:**
+1. AWS Console → EC2 → Volumes → Create snapshot
+2. Edit `terraform.tfvars`: `root_volume_snapshot_id = "snap-xxxxx"`
+
+### Restoring from a Checkpoint
+
+If `root_volume_snapshot_id` is set in `terraform.tfvars`, Terraform will automatically:
+- Create an AMI from the snapshot (if one doesn't exist)
+- Launch the instance from that AMI
+- Preserve all your data and configuration
+
+Just run:
+```bash
+terraform apply
+```
 
 ### Switching Between Checkpoints
 
-To use a different checkpoint snapshot:
-
-1. Edit `terraform.tfvars` and update:
+1. Edit `terraform.tfvars`:
    ```hcl
    root_volume_snapshot_id = "snap-YOUR-CHECKPOINT-ID"
    ```
@@ -72,13 +159,7 @@ To use a different checkpoint snapshot:
    ```bash
    terraform apply
    ```
-
-### AMI Management
-
-- **No Clutter**: AMIs are only created when you create a new checkpoint (new snapshot ID)
-- **Reuse**: If an AMI already exists for a snapshot, Terraform will reuse it instead of creating a duplicate
-- **Checkpoint-Based**: One AMI per checkpoint snapshot, not per terraform run
-- **Clean Up**: Old AMIs can be manually deleted from AWS Console when no longer needed
+   Terraform will destroy the existing instance and create a new one from the checkpoint.
 
 ### Creating a Fresh Instance
 
@@ -93,148 +174,88 @@ To start completely fresh (not from a checkpoint):
    terraform apply
    ```
 
-## Configuration
+## General Architecture
 
-### Required Variables
+### Core Resources
 
-- `my_ip_cidr`: Your IP address in CIDR notation (e.g., "1.2.3.4/32") - used for SSH and service access
-- `subnet_id`: Subnet ID where the EC2 instance will be launched (must be a public subnet with internet gateway)
-- `ssh_key_name`: Name of the AWS EC2 Key Pair to use for SSH access
+- **EC2 Instance** (`t3.xlarge`, Ubuntu 22.04)
+  - Always created, can be stopped when `enable_infrastructure = false`
+  - Root volume: 60GB (or matches snapshot size if restoring)
+  - IAM role for SSM access
+  - Automatic SSH host key cleanup on replacement
 
-### Optional Variables
+- **Security Group**
+  - SSH access from your IP only
+  - Service ports (8080 CVAT, 5000 MLflow, 5678 n8n):
+    - Direct access from your IP (when ALB disabled)
+    - Or only from ALB security group (when ALB enabled)
 
+### Optional Resources (when enabled)
+
+- **Application Load Balancer** (`enable_alb = true`)
+  - HTTPS/SSL termination
+  - Routes traffic to EC2 instance
+  - Requires `domain_name` to be set
+  - Cost: ~$16-22/month when running
+
+- **ACM Certificate** (when ALB + domain enabled)
+  - Free SSL/TLS certificate
+  - Wildcard support for subdomains
+  - Automatic DNS validation via Route 53
+
+- **Route 53 DNS Records** (when `domain_name` set)
+  - Main domain: `example.com`
+  - Subdomains: `cvat.example.com`, `mlflow.example.com`, `n8n.example.com`
+  - Points to ALB (when enabled) or Elastic IP (when disabled)
+
+- **Elastic IP** (optional, via `elastic_ip_allocation_id`)
+  - Static public IP address
+  - Automatically reassociated on instance replacement
+
+- **AMI from Snapshot** (when `root_volume_snapshot_id` set)
+  - Created automatically from snapshot
+  - Reused if AMI already exists (prevents duplicates)
+  - One AMI per checkpoint snapshot
+
+### Network Architecture
+
+- **Public Subnet** (user-provided)
+  - Must have Internet Gateway route
+  - EC2 instance launched here
+
+- **Alternate Subnet** (created automatically if ALB enabled)
+  - Created in different AZ for ALB high availability
+  - Only created if needed (when ALB enabled and only 1 AZ available)
+
+### Cost Optimization
+
+- **Stopped Infrastructure**: Only pay for EBS storage (~$1.50/month for 250GB)
+- **ALB Disabled**: Access services directly via IP (HTTP only, saves ~$16-22/month)
+- **No Domain**: Skip DNS/SSL setup entirely
+
+## Configuration Variables
+
+**Required:**
+- `my_ip_cidr`: Your IP in CIDR notation (e.g., "1.2.3.4/32")
+- `subnet_id`: Public subnet ID
+- `ssh_key_name`: EC2 Key Pair name
+
+**Optional:**
 - `aws_region`: AWS region (default: "us-east-2")
-- `elastic_ip_allocation_id`: Elastic IP allocation ID to associate with the instance. Leave empty to use auto-assigned public IP (default: "")
-- `domain_name`: Domain name for Route 53 DNS and ACM certificate. Leave empty to disable DNS/SSL setup (default: ""). If provided, you must have a Route 53 hosted zone for this domain
-- `root_volume_snapshot_id`: EBS snapshot ID to restore from (default: "")
-- `enable_infrastructure`: Enable all infrastructure. When false, EC2 instances are stopped and ALB is destroyed (saves costs). Default: `true`
-- `enable_alb`: Enable Application Load Balancer with HTTPS/SSL. Requires `domain_name` to be set. When disabled, services are accessed directly via IP (HTTP only). Default: `false`
+- `elastic_ip_allocation_id`: Static IP allocation ID (default: "")
+- `domain_name`: Domain for DNS/SSL (default: "")
+- `root_volume_snapshot_id`: Snapshot ID to restore from (default: "")
+- `enable_infrastructure`: Enable infrastructure (default: `true`)
+- `enable_alb`: Enable ALB with HTTPS (default: `false`, requires `domain_name`)
 
-### Example terraform.tfvars
-
-```hcl
-aws_region = "us-east-2"
-my_ip_cidr = "YOUR_IP_ADDRESS/32"
-subnet_id = "subnet-0123456789abcdef0"
-ssh_key_name = "my-key-pair"
-
-# Optional: Elastic IP (leave empty to use auto-assigned IP)
-# elastic_ip_allocation_id = "eipalloc-0123456789abcdef0"
-
-# Optional: Domain name for DNS and SSL (leave empty to disable)
-# domain_name = "example.com"
-
-# Optional: Restore from snapshot
-# root_volume_snapshot_id = "snap-0123456789abcdef0"
-
-# Infrastructure control
-enable_infrastructure = true
-enable_alb = false  # Set to true if you provided domain_name
-```
-
-### Getting Started
-
-1. **Copy the example file:**
-   ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   ```
-
-2. **Create or select an EC2 Key Pair (if you don't have one):**
-   - **AWS Console:** EC2 → Key Pairs → Create Key Pair
-     - Name it (e.g., `my-key-pair`)
-     - Download the `.pem` file to `~/.ssh/my-key-pair.pem`
-     - Set permissions: `chmod 400 ~/.ssh/my-key-pair.pem`
-   - **AWS CLI:**
-     ```bash
-     aws ec2 create-key-pair --key-name my-key-pair --query 'KeyMaterial' --output text > ~/.ssh/my-key-pair.pem
-     chmod 400 ~/.ssh/my-key-pair.pem
-     ```
-   - **Note:** This creates the Key Pair in AWS and downloads the private key. The Terraform code uses the Key Pair NAME (not the file path).
-
-3. **Edit `terraform.tfvars` with your values:**
-   - Get your IP: `curl ifconfig.me` (add `/32` at the end)
-   - Find a public subnet in your VPC (AWS Console > VPC > Subnets)
-   - Set `ssh_key_name` to the NAME of your EC2 Key Pair (the one you created/selected above)
-   - Example: `ssh_key_name = "my-key-pair"`
-
-4. **Optional: Set up domain and SSL:**
-   - Create a Route 53 hosted zone for your domain
-   - Set `domain_name` in `terraform.tfvars`
-   - Set `enable_alb = true` to use HTTPS
-
-5. **SSH to your instance after deployment:**
-   ```bash
-   ssh -i ~/.ssh/my-key-pair.pem ubuntu@<instance-ip>
-   ```
-   Use the private key file you downloaded when creating the Key Pair.
-
-## Usage
-
-### Quick Start/Stop (Recommended)
-
-**Turn infrastructure ON:**
-```bash
-./up.sh
-```
-This will:
-- Start EC2 instances
-- Create ALB (if `enable_alb = true`)
-- Update DNS records
-
-**Turn infrastructure OFF (save costs):**
-```bash
-./down.sh
-```
-This will:
-- Stop EC2 instances (data preserved)
-- Destroy ALB (saves ~$16-22/month)
-- Update DNS to point to Elastic IP
-
-**Create a checkpoint (save your progress):**
-```bash
-./checkpoint.sh
-```
-This will:
-- Create a snapshot of your current instance state
-- Create an AMI from that snapshot
-- Update `terraform.tfvars` with the new snapshot ID
-- Tag everything for easy identification
-
-Perfect for saving milestones like "n8n working", "mlflow configured", etc.
-
-### Manual Setup
-
-1. Copy `terraform.tfvars.example` to `terraform.tfvars`
-2. Edit `terraform.tfvars` with your values
-3. Initialize Terraform:
-   ```bash
-   terraform init
-   ```
-4. Review the plan:
-   ```bash
-   terraform plan
-   ```
-5. Apply:
-   ```bash
-   terraform apply
-   ```
-
-## Important Notes
-
-- **Checkpoint-Based Snapshots**: Use `./checkpoint.sh` to create checkpoints at milestones. Don't create snapshots manually unless you understand the workflow.
-- **AMI Reuse**: Terraform will reuse existing AMIs for a snapshot instead of creating duplicates. Only creates new AMIs when you create a new checkpoint (new snapshot ID).
-- **Instance Replacement**: When switching to a different checkpoint, Terraform will destroy the existing instance and create a new one. The Elastic IP will be automatically reassociated.
-- **SSH Host Keys**: The configuration automatically removes old SSH host keys from `~/.ssh/known_hosts` when instances are replaced, preventing SSH connection errors.
-- **Volume Size**: The root volume is set to 60GB (or matches snapshot size if restoring). You can only increase volume size, not decrease.
-- **Cost Savings**: When stopped, you only pay for storage (~$1.50/month for 250GB). No compute charges for stopped instances.
+See `terraform.tfvars.example` for a complete example.
 
 ## Outputs
 
-- `instance_id`: The EC2 instance ID
-- `public_ip`: The public IP address of the instance (Elastic IP)
-- `domain_name`: The main domain name
-- `load_balancer_dns`: ALB DNS name (when ALB is enabled)
-- `https_url`: HTTPS URL (when ALB is enabled)
-- `cvat_url_subdomain`, `mlflow_url_subdomain`, `n8n_url_subdomain`: Subdomain URLs for each service
-- `infrastructure_status`: Current infrastructure status (UP/DOWN)
-
+- `instance_id`: EC2 instance ID
+- `public_ip`: Public IP address
+- `domain_name`: Main domain (if set)
+- `load_balancer_dns`: ALB DNS name (if ALB enabled)
+- `https_url`: HTTPS URL (if ALB + domain enabled)
+- `cvat_url_subdomain`, `mlflow_url_subdomain`, `n8n_url_subdomain`: Service URLs
+- `infrastructure_status`: Current status (UP/DOWN)

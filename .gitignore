@@ -9,6 +9,7 @@
 terraform.tfvars
 terraform.tfvars.bak
 *.auto.tfvars
+*.tfvars.json
 
 # Override files
 override.tf
@@ -20,14 +21,70 @@ override.tf.json
 crash.log
 crash.*.log
 
-# Ignore any .tfvars files that are generated
-*.tfvars.json
-
-# Ignore CLI configuration files
+# CLI configuration files
 .terraformrc
 terraform.rc
 
+# SSH keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*.pub
+!*.pub.example
+
+# AWS credentials and config (if stored locally)
+.aws/
+aws-credentials
+aws-config
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Secrets and passwords
+*secret*
+*password*
+*credential*
+secrets/
+.secrets
+
+# Backup files
+*.bak
+*.backup
+*.old
+*~
+
+# Log files (may contain sensitive info)
+*.log
+logs/
+
 # OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
 
