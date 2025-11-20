@@ -1,0 +1,40 @@
+aws_region = "us-east-2"
+my_ip_cidr = "YOUR_IP_ADDRESS/32"
+
+# REQUIRED: Subnet ID where the EC2 instance will be launched
+# Must be a public subnet with internet gateway attached
+# Example: subnet_id = "subnet-0123456789abcdef0"
+subnet_id = "YOUR_SUBNET_ID"
+
+# REQUIRED: SSH Key Pair name for EC2 instance access
+# Create one in AWS Console: EC2 > Key Pairs > Create key pair
+# Example: ssh_key_name = "my-key-pair"
+ssh_key_name = "YOUR_SSH_KEY_NAME"
+
+# Optional: Elastic IP allocation ID to associate with the instance
+# Leave empty to use auto-assigned public IP
+# Example: elastic_ip_allocation_id = "eipalloc-0123456789abcdef0"
+# elastic_ip_allocation_id = ""
+
+# Optional: Domain name for Route 53 DNS and ACM certificate
+# Leave empty to disable DNS/SSL setup (no domain needed)
+# If provided, you must have a Route 53 hosted zone for this domain
+# Example: domain_name = "example.com"
+# domain_name = ""
+
+# Optional: Restore from a snapshot checkpoint
+# Leave empty or omit to create a fresh instance
+# root_volume_snapshot_id = "snap-xxxxxxxxxxxxxxxxx"
+
+# Infrastructure Control
+# Set to false to stop EC2 instances and destroy ALB (saves compute costs)
+# EC2 instances will be stopped (not terminated) - data preserved
+# Run ./down.sh to stop, ./up.sh to start
+enable_infrastructure = true
+
+# ALB Control
+# Set to true to enable ALB with HTTPS (~$16-22/month when infrastructure is running)
+# Requires domain_name to be set. Set to false to disable ALB (HTTP only, saves money)
+# Only applies when enable_infrastructure = true
+enable_alb = false
+
