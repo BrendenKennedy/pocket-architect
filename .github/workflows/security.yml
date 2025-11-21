@@ -1,0 +1,50 @@
+name: Security Checks
+
+on:
+  pull_request:
+    paths:
+      - 'mlcloud/providers/**/*.tf'
+      - 'mlcloud/providers/**/*.tf.json'
+      - 'terraform/**/*.tf'
+      - 'terraform_modules/**/*.tf'
+  push:
+    branches:
+      - main
+    paths:
+      - 'mlcloud/providers/**/*.tf'
+      - 'mlcloud/providers/**/*.tf.json'
+      - 'terraform/**/*.tf'
+      - 'terraform_modules/**/*.tf'
+
+jobs:
+  checkov:
+    name: Checkov Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install Checkov
+        run: pip install checkov
+      
+      - name: Run Checkov
+        run: |
+          find . -name "*.tf" -type f | while read tf_file; do
+            echo "Scanning $tf_file"
+            checkov -f "$tf_file" --compact --framework terraform || true
+          done
+  
+  tfsec:
+    name: tfsec Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          soft_fail: true
+      
+      - name: Run tfsec
+        run: |
+          find . -name "*.tf" -type f | xargs -I {} tfsec {}
+

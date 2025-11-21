@@ -1,261 +1,305 @@
-# CVAT Workstation - Minimal Configuration
+# mlcloud
 
-## Brief Summary
+A zero-install, platform-agnostic Python CLI that turns any laptop into an on-demand GPU computer-vision workstation with zero vendor lock-in.
 
-Terraform configuration for deploying a CVAT workstation on AWS EC2. This infrastructure supports a checkpoint/restore workflow, allowing you to save your progress at milestones (e.g., "n8n working", "mlflow configured") and restore from those checkpoints later.
-
-**Use Cases:**
-- Deploy a CVAT workstation with optional MLflow and n8n services
-- Save infrastructure state at milestones using checkpoints
-- Cost-effective: stop infrastructure when not in use (saves compute costs)
-- Optional HTTPS/SSL via Application Load Balancer with custom domain
-
-## Prerequisites
-
-### Required Tools
-
-1. **Terraform** (>= 1.5.0)
-   - macOS: `brew install terraform`
-   - Linux/Windows: [terraform.io/downloads](https://www.terraform.io/downloads)
-   - Verify: `terraform version`
-
-2. **AWS CLI** (v2 recommended)
-   - macOS: `brew install awscli`
-   - Linux/Windows: [AWS CLI installation guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-   - Verify: `aws --version`
-   - Configure: `aws configure --profile terraform`
-
-3. **SSH Client** (usually pre-installed)
-   - Verify: `ssh -V`
-
-4. **curl** (usually pre-installed)
-   - Verify: `curl --version`
-
-### AWS Account Setup
-
-1. **AWS Account** with permissions for:
-   - EC2 (instances, key pairs, snapshots, AMIs)
-   - VPC (read subnets, security groups)
-   - IAM (EC2 SSM roles)
-   - Route 53 (if using `domain_name`)
-   - ACM (if using `enable_alb`)
-
-2. **AWS Credentials** configured:
-   ```bash
-   aws configure --profile terraform
-   ```
-
-### Required AWS Values
-
-Before running Terraform, gather these **3 required values**:
-
-1. **Subnet ID** (`subnet_id`)
-   - AWS Console → VPC → Subnets
-   - Must be a public subnet with Internet Gateway
-   - Example: `subnet-0563a2c216fb47323`
-
-2. **EC2 Key Pair Name** (`ssh_key_name`)
-   - AWS Console → EC2 → Key Pairs
-   - Create if needed: EC2 → Key Pairs → Create Key Pair
-   - Download `.pem` file and set permissions: `chmod 400 ~/.ssh/key-name.pem`
-   - Use the **name** (not file path) in Terraform
-   - Example: `brendens-mac`
-
-3. **Your Public IP** (`my_ip_cidr`)
-   - Run: `curl ifconfig.me`
-   - Add `/32` suffix
-   - Example: `70.119.100.238/32`
-
-### Optional AWS Values
-
-- **Elastic IP Allocation ID** - AWS Console → EC2 → Elastic IPs
-- **Domain Name** - Requires Route 53 hosted zone (AWS Console → Route 53)
-- **Snapshot ID** - AWS Console → EC2 → Snapshots (or use `./checkpoint.sh`)
-
-## How to Use
-
-### Initial Deployment
-
-1. **Copy and configure:**
-   ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   ```
-   Edit `terraform.tfvars` with your values:
-   ```hcl
-   my_ip_cidr = "YOUR_IP/32"
-   subnet_id = "subnet-xxxxx"
-   ssh_key_name = "your-key-name"
-   ```
-
-2. **Initialize and deploy:**
-   ```bash
-   terraform init
-   terraform plan
-   terraform apply
-   ```
-
-3. **SSH to instance:**
-   ```bash
-   ssh -i ~/.ssh/your-key-name.pem ubuntu@<instance-ip>
-   ```
-
-### Starting and Stopping Infrastructure
-
-**Start (turn ON):**
-```bash
-./up.sh
-```
-- Starts EC2 instances
-- Creates ALB (if `enable_alb = true`)
-- Updates DNS records
-
-**Stop (turn OFF - saves costs):**
-```bash
-./down.sh
-```
-- Stops EC2 instances (data preserved)
-- Destroys ALB (saves ~$16-22/month)
-- Updates DNS to point to Elastic IP
-
-**Note:** When stopped, you only pay for storage (~$1.50/month for 250GB). No compute charges.
-
-### Creating Checkpoints
-
-Save your progress at milestones (e.g., "n8n working", "mlflow configured"):
+## Installation
 
 ```bash
-./checkpoint.sh
+pip install mlcloud
 ```
 
-This automatically:
-- Creates a snapshot of your current instance
-- Creates an AMI from that snapshot
-- Updates `terraform.tfvars` with the new snapshot ID
-- Tags everything for easy identification
+Or install from source:
 
-**Manual method:**
-1. AWS Console → EC2 → Volumes → Create snapshot
-2. Edit `terraform.tfvars`: `root_volume_snapshot_id = "snap-xxxxx"`
-
-### Restoring from a Checkpoint
-
-If `root_volume_snapshot_id` is set in `terraform.tfvars`, Terraform will automatically:
-- Create an AMI from the snapshot (if one doesn't exist)
-- Launch the instance from that AMI
-- Preserve all your data and configuration
-
-Just run:
 ```bash
-terraform apply
+git clone <repository-url>
+cd mlcloud
+pip install -e .
 ```
 
-### Switching Between Checkpoints
+## Quick Start
 
-1. Edit `terraform.tfvars`:
-   ```hcl
-   root_volume_snapshot_id = "snap-YOUR-CHECKPOINT-ID"
-   ```
-2. Apply:
-   ```bash
-   terraform apply
-   ```
-   Terraform will destroy the existing instance and create a new one from the checkpoint.
+### Three Ways to Configure Deployments
 
-### Creating a Fresh Instance
+**1. Interactive Wizard (Recommended for first-time users)**
+```bash
+mlcloud cvat up --wizard
+# Follow the prompts to configure your deployment
+```
 
-To start completely fresh (not from a checkpoint):
+**2. Blueprint File (Best for repeatable deployments)**
+```bash
+# Create a blueprint
+mlcloud blueprint create aws --type cvat --output my-config.yaml
 
-1. In `terraform.tfvars`, set:
-   ```hcl
-   root_volume_snapshot_id = ""
-   ```
-2. Apply:
-   ```bash
-   terraform apply
-   ```
+# Use the blueprint
+mlcloud cvat up --blueprint my-config.yaml
+```
 
-## General Architecture
+**3. CLI Flags (Quick one-off deployments)**
+```bash
+mlcloud cvat up --provider aws --subnet-id subnet-xxx --ssh-key-name my-key
+```
 
-### Core Resources
+### Basic Usage
 
-- **EC2 Instance** (`t3.xlarge`, Ubuntu 22.04)
-  - Always created, can be stopped when `enable_infrastructure = false`
-  - Root volume: 60GB (or matches snapshot size if restoring)
-  - IAM role for SSM access
-  - Automatic SSH host key cleanup on replacement
+```bash
+# Show version
+mlcloud --version
 
-- **Security Group**
-  - SSH access from your IP only
-  - Service ports (8080 CVAT, 5000 MLflow, 5678 n8n):
-    - Direct access from your IP (when ALB disabled)
-    - Or only from ALB security group (when ALB enabled)
+# Deploy CVAT locally (requires Docker)
+mlcloud cvat up --provider local
 
-### Optional Resources (when enabled)
+# Deploy CVAT on AWS with wizard
+mlcloud cvat up --provider aws --wizard
 
-- **Application Load Balancer** (`enable_alb = true`)
-  - HTTPS/SSL termination
-  - Routes traffic to EC2 instance
-  - Requires `domain_name` to be set
-  - Cost: ~$16-22/month when running
+# Auto-annotate images
+mlcloud auto-annotate ./images --model sam2
 
-- **ACM Certificate** (when ALB + domain enabled)
-  - Free SSL/TLS certificate
-  - Wildcard support for subdomains
-  - Automatic DNS validation via Route 53
+# List active sessions
+mlcloud list sessions
 
-- **Route 53 DNS Records** (when `domain_name` set)
-  - Main domain: `example.com`
-  - Subdomains: `cvat.example.com`, `mlflow.example.com`, `n8n.example.com`
-  - Points to ALB (when enabled) or Elastic IP (when disabled)
+# Check session status
+mlcloud status
 
-- **Elastic IP** (optional, via `elastic_ip_allocation_id`)
-  - Static public IP address
-  - Automatically reassociated on instance replacement
+# Get shell access
+mlcloud shell --provider local
 
-- **AMI from Snapshot** (when `root_volume_snapshot_id` set)
-  - Created automatically from snapshot
-  - Reused if AMI already exists (prevents duplicates)
-  - One AMI per checkpoint snapshot
+# Sync files with CVAT
+mlcloud cvat sync --direction both
 
-### Network Architecture
+# Destroy resources
+mlcloud destroy --provider local
+```
 
-- **Public Subnet** (user-provided)
-  - Must have Internet Gateway route
-  - EC2 instance launched here
+## Commands
 
-- **Alternate Subnet** (created automatically if ALB enabled)
-  - Created in different AZ for ALB high availability
-  - Only created if needed (when ALB enabled and only 1 AZ available)
+### Core Commands
 
-### Cost Optimization
+- `mlcloud auto-annotate <path>` - Fully automatic labeling (images or video frames)
+  - Supports images, video files, and directories
+  - Models: sam2, yolo11-seg, yolo11-obb, grounding-dino, detectron2
+  - Outputs CVAT-compatible JSON annotations
 
-- **Stopped Infrastructure**: Only pay for EBS storage (~$1.50/month for 250GB)
-- **ALB Disabled**: Access services directly via IP (HTTP only, saves ~$16-22/month)
-- **No Domain**: Skip DNS/SSL setup entirely
+- `mlcloud cvat up` - Spin up full CVAT instance with optional pre-annotation + HTTPS
+  - Local: Docker Compose deployment
+  - AWS: EC2 Spot + EFS + ALB with HTTPS
+  - Auto-generates secure admin password stored in keyring
 
-## Configuration Variables
+- `mlcloud cvat sync` - Bidirectional sync with running CVAT
+  - Sync direction: up, down, or both
+  - Uses EFS (AWS) or Docker volumes (Local)
 
-**Required:**
-- `my_ip_cidr`: Your IP in CIDR notation (e.g., "1.2.3.4/32")
-- `subnet_id`: Public subnet ID
-- `ssh_key_name`: EC2 Key Pair name
+- `mlcloud cvat down` - Stop CVAT instance (preserves data)
 
-**Optional:**
-- `aws_region`: AWS region (default: "us-east-2")
-- `elastic_ip_allocation_id`: Static IP allocation ID (default: "")
-- `domain_name`: Domain for DNS/SSL (default: "")
-- `root_volume_snapshot_id`: Snapshot ID to restore from (default: "")
-- `enable_infrastructure`: Enable infrastructure (default: `true`)
-- `enable_alb`: Enable ALB with HTTPS (default: `false`, requires `domain_name`)
+- `mlcloud train <config.yaml>` - Launch YOLO/SAM/Detectron2 training job
+  - Provisions GPU instance for training
+  - Supports YAML configuration files
 
-See `terraform.tfvars.example` for a complete example.
+- `mlcloud shell` - Instant SSH or VSCode Remote / JupyterLab into the GPU node
+  - Modes: ssh, vscode, jupyter
 
-## Outputs
+- `mlcloud destroy` - Guaranteed zero-cost teardown
+  - Removes all resources with tag-based cleanup
+  - Verifies zero recurring charges
 
-- `instance_id`: EC2 instance ID
-- `public_ip`: Public IP address
-- `domain_name`: Main domain (if set)
-- `load_balancer_dns`: ALB DNS name (if ALB enabled)
-- `https_url`: HTTPS URL (if ALB + domain enabled)
-- `cvat_url_subdomain`, `mlflow_url_subdomain`, `n8n_url_subdomain`: Service URLs
-- `infrastructure_status`: Current status (UP/DOWN)
+### Utility Commands
+
+- `mlcloud list sessions` - List all active sessions
+- `mlcloud status` - Show current session status and resource information
+
+## Providers
+
+### Local (✅ Fully Implemented)
+- Docker Compose + NVIDIA Container Toolkit
+- Zero cloud costs
+- Perfect for development and testing
+
+### AWS (✅ Fully Implemented)
+- EC2 Spot instances for cost savings
+- EFS for persistent storage
+- Application Load Balancer with HTTPS
+- Automatic least-privilege IAM role creation
+- Terraform-based infrastructure
+
+### CoreWeave (🔄 Skeleton)
+- Kubernetes API integration
+- Block storage for CVAT data
+- GPU instances
+
+### RunPod (🔄 Skeleton)
+- REST API integration
+- Secure Cloud only
+- GPU pod management
+
+## Models (v1.0)
+
+All models are automatically downloaded and cached:
+
+- **SAM 2.1 hiera-large** - Segment Anything Model 2.1
+- **YOLO11x-seg** - YOLOv11x segmentation model
+- **YOLO11x-obb** - YOLOv11x oriented bounding box model
+- **Grounding DINO 1.5 + SAM 2** - Text-prompted segmentation
+- **Detectron2 Mask R-CNN** - Pretrained on COCO
+
+## Security Features
+
+- ✅ **Least-privilege credentials** - Automatic IAM role creation with minimal permissions
+- ✅ **Credential validation** - Rejects AdministratorAccess credentials
+- ✅ **Secure password storage** - Random 32-char CVAT passwords stored only in OS keyring
+- ✅ **HTTPS enforcement** - All CVAT deployments use HTTPS by default
+- ✅ **Security scanning** - Terraform code checked with checkov and tfsec before deployment
+- ✅ **Tag-based cleanup** - All resources tagged for guaranteed teardown
+
+## Cost Tracking
+
+Every command displays:
+- Live hourly cost estimate
+- Projected monthly cost (hourly × 730)
+- Cost warnings for expensive operations
+
+Local provider: **$0.00/hour**
+
+## State Management
+
+All state is stored in `~/.mlcloud/`:
+- **Sessions**: `~/.mlcloud/sessions/<session-id>/`
+  - Session metadata and Terraform state
+- **Models**: `~/.mlcloud/models/`
+  - Cached model weights and checkpoints
+- **Credentials**: OS keyring (never stored in files)
+  - CVAT passwords
+  - Provider API keys
+
+## Configuration
+
+Settings can be configured via:
+- Environment variables (prefix: `MLCLOUD_`)
+- `.env` file
+- Defaults in `mlcloud/config/settings.py`
+
+Key settings:
+- `MLCLOUD_DEFAULT_PROVIDER` - Default cloud provider
+- `MLCLOUD_AWS_REGION` - Default AWS region
+- `MLCLOUD_COST_WARNING_THRESHOLD_USD` - Cost warning threshold
+
+## Examples
+
+### Deploy CVAT on AWS
+
+**Option 1: Interactive Wizard (Easiest)**
+```bash
+mlcloud cvat up --provider aws --wizard
+# Guides you through all configuration options
+```
+
+**Option 2: Blueprint File (Most Flexible)**
+```bash
+# Create blueprint interactively
+mlcloud blueprint create aws --type cvat --output my-cvat.yaml
+
+# Edit the blueprint file if needed
+# Then use it
+mlcloud cvat up --blueprint my-cvat.yaml
+```
+
+**Option 3: CLI Flags (Quick Setup)**
+```bash
+mlcloud cvat up \
+  --provider aws \
+  --subnet-id subnet-0123456789abcdef0 \
+  --ssh-key-name my-key \
+  --domain-name cvat.example.com \
+  --https
+```
+
+**Using Existing Terraform Files**
+```bash
+# If you have existing terraform.tfvars
+mlcloud cvat up --blueprint terraform.tfvars
+```
+
+### Auto-annotate Images
+
+```bash
+# Single image
+mlcloud auto-annotate image.jpg --model sam2
+
+# Directory of images
+mlcloud auto-annotate ./dataset/images --model yolo11-seg
+
+# Video file (extracts frames automatically)
+mlcloud auto-annotate video.mp4 --model detectron2 --output ./annotations
+```
+
+### Training Job
+
+```bash
+# Create training config
+cat > train-config.yaml <<EOF
+instance_type: p3.2xlarge
+framework: yolo
+dataset_path: /mnt/efs/datasets/my-dataset
+epochs: 100
+batch_size: 16
+EOF
+
+# Launch training
+mlcloud train train-config.yaml --provider aws
+```
+
+## Development
+
+```bash
+# Install in development mode
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run CLI
+python -m mlcloud --help
+
+# Check code quality
+black mlcloud/
+ruff check mlcloud/
+mypy mlcloud/
+```
+
+## Architecture
+
+```
+mlcloud/
+├── mlcloud/
+│   ├── cli.py              # Typer CLI entrypoint
+│   ├── commands/           # Command implementations
+│   ├── core/               # Types, session, state, cost
+│   ├── providers/          # Provider implementations
+│   │   ├── local/         # Docker Compose
+│   │   ├── aws/           # EC2 + EFS + Terraform
+│   │   ├── coreweave/     # Kubernetes
+│   │   └── runpod/        # REST API
+│   ├── models/            # Model registry & inference
+│   ├── utils/             # Utilities (keyring, SSO, etc.)
+│   └── security/          # Security hardening
+├── tests/                 # Test suite
+└── .github/workflows/     # CI/CD
+```
+
+## Requirements
+
+- Python 3.9+
+- Docker (for local provider)
+- Terraform (for AWS provider)
+- AWS CLI (optional, for AWS SSO)
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file
+
+## Contributing
+
+Contributions welcome! Please ensure:
+- All code passes security checks (checkov, tfsec)
+- Tests pass (`pytest`)
+- Code is formatted (`black`, `ruff`)
+- Documentation is updated

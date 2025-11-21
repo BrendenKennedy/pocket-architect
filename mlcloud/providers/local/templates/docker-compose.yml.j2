@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  cvat_db:
+    image: postgres:13-alpine
+    container_name: cvat_db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_DB: cvat
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - cvat_db_data:/var/lib/postgresql/data
+    networks:
+      - cvat
+
+  cvat_redis:
+    image: redis:7-alpine
+    container_name: cvat_redis
+    restart: always
+    networks:
+      - cvat
+
+  cvat:
+    image: {{ cvat_image }}
+    container_name: cvat
+    restart: always
+    depends_on:
+      - cvat_db
+      - cvat_redis
+    environment:
+      DJANGO_SETTINGS_MODULE: cvat.settings.production
+      CVAT_HOST: {{ cvat_host }}
+      CVAT_PORT: {{ cvat_port }}
+      POSTGRES_HOST: cvat_db
+      POSTGRES_DB: cvat
+      POSTGRES_USER: root
+      POSTGRES_PORT: 5432
+      REDIS_HOST: cvat_redis
+      REDIS_PORT: 6379
+    ports:
+      - "{{ cvat_port }}:8080"
+    volumes:
+      - cvat_data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+      - cvat_models:/home/django/data/models
+    networks:
+      - cvat
+    {% if gpu_available %}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    {% endif %}
+
+  cvat_worker:
+    image: {{ cvat_image }}
+    container_name: cvat_worker
+    restart: always
+    depends_on:
+      - cvat_redis
+      - cvat_db
+    environment:
+      DJANGO_SETTINGS_MODULE: cvat.settings.production
+      POSTGRES_HOST: cvat_db
+      POSTGRES_DB: cvat
+      POSTGRES_USER: root
+      POSTGRES_PORT: 5432
+      REDIS_HOST: cvat_redis
+      REDIS_PORT: 6379
+    volumes:
+      - cvat_data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+      - cvat_models:/home/django/data/models
+    networks:
+      - cvat
+    command: /usr/bin/python3 /opt/cvat/moon/prod/gunicorn/gunicorn.conf.py
+    {% if gpu_available %}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    {% endif %}
+
+volumes:
+  cvat_db_data:
+    driver: local
+  cvat_data:
+    driver: local
+  cvat_keys:
+    driver: local
+  cvat_logs:
+    driver: local
+  cvat_models:
+    driver: local
+
+networks:
+  cvat:
+    driver: bridge
+

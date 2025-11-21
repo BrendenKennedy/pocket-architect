@@ -1,0 +1,19 @@
+# Example AWS CVAT Blueprint
+# Use with: mlcloud cvat up --blueprint blueprint-aws-cvat.yaml
+
+aws_region: us-east-2
+subnet_id: subnet-0123456789abcdef0
+ssh_key_name: my-ssh-key
+my_ip_cidr: 1.2.3.4/32
+
+# HTTPS Configuration
+enable_https: true
+domain_name: cvat.example.com
+
+# Instance Configuration
+instance_type: t3.xlarge
+use_spot: true
+
+# Storage
+efs_enabled: true
+

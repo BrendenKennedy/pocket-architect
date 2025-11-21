@@ -1,90 +1,119 @@
-# Terraform files
-*.tfstate
-*.tfstate.*
-*.tfstate.backup
-.terraform/
-.terraform.lock.hcl
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Variable files (may contain sensitive info)
-terraform.tfvars
-terraform.tfvars.bak
-*.auto.tfvars
-*.tfvars.json
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
 
-# Override files
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-
-# Crash log files
-crash.log
-crash.*.log
-
-# CLI configuration files
-.terraformrc
-terraform.rc
-
-# SSH keys and certificates
-*.pem
-*.key
-*.p12
-*.pfx
-id_rsa*
-id_ed25519*
-*.pub
-!*.pub.example
-
-# AWS credentials and config (if stored locally)
-.aws/
-aws-credentials
-aws-config
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-*.env
-
-# Secrets and passwords
-*secret*
-*password*
-*credential*
-secrets/
-.secrets
-
-# Backup files
-*.bak
-*.backup
-*.old
-*~
-
-# Log files (may contain sensitive info)
-*.log
-logs/
-
-# OS files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Desktop.ini
-
-# Editor files
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.project
-.classpath
-.settings/
 
-# Temporary files
-tmp/
-temp/
-*.tmp
+# mlcloud state
+.mlcloud/
+~/.mlcloud/
 
+# Legacy infrastructure (not part of CLI package, but tracked in git)
+# Note: Excluded from package build in pyproject.toml, but files are tracked in git
+# Only ignore build artifacts within legacy-infrastructure
+legacy-infrastructure/**/__pycache__/
+legacy-infrastructure/**/*.pyc
+legacy-infrastructure/**/.terraform/
+legacy-infrastructure/**/*.tfstate*
+legacy-infrastructure/**/*.tfvars
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!terraform.tfvars.example
+
+# AWS credentials (should use keyring)
+.aws/
+aws-credentials
+
+# Environment variables
+.env
+.env.local
+*.env
+
+# Secrets
+*secret*
+*password*
+*credential*
+secrets/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.coverage.*
+coverage.xml
+
+# Build artifacts
+*.whl
+*.tar.gz
+dist/
+build/
+
+# Pre-commit
+.pre-commit-config.yaml.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
