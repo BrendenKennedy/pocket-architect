@@ -116,7 +116,7 @@ class Blueprint:
                         solution=(
                             f"1. Ensure file is UTF-8 encoded\n"
                             f"2. Convert encoding: `iconv -f <old-encoding> -t UTF-8 {file_path} > {file_path}.utf8`\n"
-                            f"3. Recreate with: `mlcloud blueprint create`"
+                            f"3. Recreate with: `pocket-architect blueprint create`"
                         ),
                     )
             elif suffix == ".json":
@@ -136,7 +136,7 @@ class Blueprint:
                     solution=(
                         f"1. Supported formats: .yaml, .yml, .json, .tfvars\n"
                         f"2. Rename file to use supported extension\n"
-                        f"3. Or create new blueprint: `mlcloud blueprint create`"
+                        f"3. Or create new blueprint: `pocket-architect blueprint create`"
                     ),
                     hint=f"Current file: {file_path}",
                 )
@@ -153,7 +153,7 @@ class Blueprint:
                 f"Blueprint file is empty: {file_path}",
                 solution=(
                     f"1. Add configuration to the file\n"
-                    f"2. Or recreate with: `mlcloud blueprint create`\n"
+                    f"2. Or recreate with: `pocket-architect blueprint create`\n"
                     f"3. See examples in: examples/blueprint-*.yaml"
                 ),
             )
@@ -504,7 +504,7 @@ class Blueprint:
                 solution=(
                     f"1. Ensure file is UTF-8 encoded\n"
                     f"2. Convert encoding if needed\n"
-                    f"3. Recreate with: `mlcloud blueprint create --format tfvars`"
+                    f"3. Recreate with: `pocket-architect blueprint create --format tfvars`"
                 ),
             )
         

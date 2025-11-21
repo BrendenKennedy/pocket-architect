@@ -173,14 +173,14 @@ All state is stored in `~/.pocket-architect/`:
 ## Configuration
 
 Settings can be configured via:
-- Environment variables (prefix: `MLCLOUD_`)
+- Environment variables (prefix: `POCKET_ARCHITECT_`)
 - `.env` file
 - Defaults in `pocket-architect/config/settings.py`
 
 Key settings:
-- `MLCLOUD_DEFAULT_PROVIDER` - Default cloud provider
-- `MLCLOUD_AWS_REGION` - Default AWS region
-- `MLCLOUD_COST_WARNING_THRESHOLD_USD` - Cost warning threshold
+- `POCKET_ARCHITECT_DEFAULT_PROVIDER` - Default cloud provider
+- `POCKET_ARCHITECT_AWS_REGION` - Default AWS region
+- `POCKET_ARCHITECT_COST_WARNING_THRESHOLD_USD` - Cost warning threshold
 
 ## Examples
 

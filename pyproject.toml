@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mlcloud"
+name = "pocket-architect"
 version = "1.0.0"
 description = "A zero-install, platform-agnostic Python CLI that turns any laptop into an on-demand GPU computer-vision workstation with zero vendor lock-in."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "mlcloud contributors"}
+    {name = "pocket-architect contributors"}
 ]
 keywords = ["cvat", "computer-vision", "annotation", "gpu", "aws", "coreweave", "runpod"]
 classifiers = [
@@ -55,20 +55,20 @@ dev = [
 ]
 
 [project.scripts]
-mlcloud = "mlcloud.cli:app"
+pocket-architect = "pocket_architect.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/your-org/mlcloud"
-Documentation = "https://github.com/your-org/mlcloud#readme"
-Repository = "https://github.com/your-org/mlcloud"
-Issues = "https://github.com/your-org/mlcloud/issues"
+Homepage = "https://github.com/your-org/pocket-architect"
+Documentation = "https://github.com/your-org/pocket-architect#readme"
+Repository = "https://github.com/your-org/pocket-architect"
+Issues = "https://github.com/your-org/pocket-architect/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["mlcloud"]
+packages = ["pocket_architect"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/mlcloud",
+    "/pocket_architect",
     "/tests",
     "/examples",
     "/docs",
@@ -92,7 +92,7 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=mlcloud",
+    "--cov=pocket_architect",
     "--cov-report=term-missing",
     "--cov-report=html",
 ]

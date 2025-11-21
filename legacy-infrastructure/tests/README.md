@@ -36,5 +36,5 @@ These tests cover the old Click-based CLI and are kept for reference:
 
 ## Note
 
-These tests are for the **legacy code** and are not part of the new mlcloud CLI test suite. The new CLI tests are in `tests/` at the project root.
+These tests are for the **legacy code** and are not part of the new pocket-architect CLI test suite. The new CLI tests are in `tests/` at the project root.
 

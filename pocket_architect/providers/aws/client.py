@@ -240,7 +240,7 @@ class AWSProvider(BaseProvider):
         state_file = module_dir / "terraform.tfstate"
         
         if not state_file.exists():
-            raise RuntimeError("CVAT instance not provisioned. Run 'mlcloud cvat up' first.")
+            raise RuntimeError("CVAT instance not provisioned. Run 'pocket-architect cvat up' first.")
         
         tf = TerraformBackend(module_dir)
         outputs = tf.output(state_file=state_file, json=True)
@@ -412,7 +412,7 @@ class AWSProvider(BaseProvider):
         state_file = module_dir / "terraform.tfstate"
         
         if not state_file.exists():
-            raise RuntimeError("CVAT instance not provisioned. Run 'mlcloud cvat up' first.")
+            raise RuntimeError("CVAT instance not provisioned. Run 'pocket-architect cvat up' first.")
         
         tf = TerraformBackend(module_dir)
         outputs = tf.output(state_file=state_file, json=True)

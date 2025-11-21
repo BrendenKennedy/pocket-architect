@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 
 def create_aws_role_template() -> Dict[str, Any]:
-    """Create minimal IAM policy document for mlcloud CVAT deployments.
+    """Create minimal IAM policy document for pocket-architect CVAT deployments.
     
     Returns:
         IAM policy document dictionary
@@ -35,7 +35,7 @@ def create_aws_role_template() -> Dict[str, Any]:
                 "Resource": "*",
                 "Condition": {
                     "StringEquals": {
-                        "ec2:ResourceTag/CreatedBy": "mlcloud",
+                        "ec2:ResourceTag/CreatedBy": "pocket-architect",
                     }
                 },
             },
@@ -54,7 +54,7 @@ def create_aws_role_template() -> Dict[str, Any]:
                 "Resource": "*",
                 "Condition": {
                     "StringEquals": {
-                        "elasticfilesystem:ResourceTag/CreatedBy": "mlcloud",
+                        "elasticfilesystem:ResourceTag/CreatedBy": "pocket-architect",
                     }
                 },
             },
@@ -78,7 +78,7 @@ def create_aws_role_template() -> Dict[str, Any]:
                 "Resource": "*",
                 "Condition": {
                     "StringEquals": {
-                        "elasticloadbalancing:ResourceTag/CreatedBy": "mlcloud",
+                        "elasticloadbalancing:ResourceTag/CreatedBy": "pocket-architect",
                     }
                 },
             },
@@ -94,7 +94,7 @@ def create_aws_role_template() -> Dict[str, Any]:
                 "Resource": "*",
                 "Condition": {
                     "StringEquals": {
-                        "acm:ResourceTag/CreatedBy": "mlcloud",
+                        "acm:ResourceTag/CreatedBy": "pocket-architect",
                     }
                 },
             },
@@ -119,7 +119,7 @@ def create_aws_role_template() -> Dict[str, Any]:
                     "iam:ListRolePolicies",
                     "iam:ListAttachedRolePolicies",
                 ],
-                "Resource": "arn:aws:iam::*:role/mlcloud-*",
+                "Resource": "arn:aws:iam::*:role/pocket-architect-*",
             },
             {
                 "Effect": "Allow",

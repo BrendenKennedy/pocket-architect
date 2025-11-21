@@ -30,7 +30,7 @@ variable "my_ip_cidr" {
 }
 
 variable "session_id" {
-  description = "mlcloud session ID"
+  description = "pocket-architect session ID"
   type        = string
 }
 
@@ -79,8 +79,8 @@ data "aws_availability_zones" "available" {
 
 # Security Group for CVAT
 resource "aws_security_group" "cvat" {
-  name        = "mlcloud-cvat-${var.session_id}"
-  description = "Security group for mlcloud CVAT instance"
+  name        = "pocket-architect-cvat-${var.session_id}"
+  description = "Security group for pocket-architect CVAT instance"
   vpc_id      = data.aws_vpc.target.id
 
   ingress {
@@ -109,15 +109,15 @@ resource "aws_security_group" "cvat" {
   }
 
   tags = {
-    Name      = "mlcloud-cvat-${var.session_id}"
-    CreatedBy = "mlcloud"
+    Name      = "pocket-architect-cvat-${var.session_id}"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 }
 
 # IAM Role for EC2 instance
 resource "aws_iam_role" "cvat" {
-  name = "mlcloud-cvat-${var.session_id}"
+  name = "pocket-architect-cvat-${var.session_id}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -133,26 +133,26 @@ resource "aws_iam_role" "cvat" {
   })
 
   tags = {
-    CreatedBy = "mlcloud"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 }
 
 resource "aws_iam_instance_profile" "cvat" {
-  name = "mlcloud-cvat-${var.session_id}"
+  name = "pocket-architect-cvat-${var.session_id}"
   role = aws_iam_role.cvat.name
 }
 
 # EFS File System
 resource "aws_efs_file_system" "cvat" {
   count            = var.efs_enabled ? 1 : 0
-  creation_token   = "mlcloud-cvat-${var.session_id}"
+  creation_token   = "pocket-architect-cvat-${var.session_id}"
   performance_mode = "generalPurpose"
   throughput_mode  = "bursting"
 
   tags = {
-    Name      = "mlcloud-cvat-${var.session_id}"
-    CreatedBy = "mlcloud"
+    Name      = "pocket-architect-cvat-${var.session_id}"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 }
@@ -166,7 +166,7 @@ resource "aws_efs_mount_target" "cvat" {
 
 resource "aws_security_group" "efs" {
   count       = var.efs_enabled ? 1 : 0
-  name        = "mlcloud-efs-${var.session_id}"
+  name        = "pocket-architect-efs-${var.session_id}"
   description = "Security group for EFS"
   vpc_id      = data.aws_vpc.target.id
 
@@ -187,8 +187,8 @@ resource "aws_security_group" "efs" {
   }
 
   tags = {
-    Name      = "mlcloud-efs-${var.session_id}"
-    CreatedBy = "mlcloud"
+    Name      = "pocket-architect-efs-${var.session_id}"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 }
@@ -218,8 +218,8 @@ resource "aws_instance" "cvat" {
   }))
 
   tags = {
-    Name      = "mlcloud-cvat-${var.session_id}"
-    CreatedBy = "mlcloud"
+    Name      = "pocket-architect-cvat-${var.session_id}"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 
@@ -247,22 +247,22 @@ data "aws_ami" "ubuntu" {
 # ALB for HTTPS (optional)
 resource "aws_lb" "cvat" {
   count              = var.enable_https ? 1 : 0
-  name               = "mlcloud-cvat-${var.session_id}"
+  name               = "pocket-architect-cvat-${var.session_id}"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb[0].id]
   subnets            = [var.subnet_id]
 
   tags = {
-    Name      = "mlcloud-cvat-${var.session_id}"
-    CreatedBy = "mlcloud"
+    Name      = "pocket-architect-cvat-${var.session_id}"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 }
 
 resource "aws_security_group" "alb" {
   count       = var.enable_https ? 1 : 0
-  name        = "mlcloud-alb-${var.session_id}"
+  name        = "pocket-architect-alb-${var.session_id}"
   description = "Security group for ALB"
   vpc_id      = data.aws_vpc.target.id
 
@@ -291,8 +291,8 @@ resource "aws_security_group" "alb" {
   }
 
   tags = {
-    Name      = "mlcloud-alb-${var.session_id}"
-    CreatedBy = "mlcloud"
+    Name      = "pocket-architect-alb-${var.session_id}"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 }

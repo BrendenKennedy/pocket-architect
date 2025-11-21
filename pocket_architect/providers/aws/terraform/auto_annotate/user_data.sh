@@ -24,5 +24,5 @@ fi
 apt-get install -y python3 python3-pip
 pip3 install torch torchvision ultralytics segment-anything-2 groundingdino detectron2
 
-# Auto-annotation service will be started by mlcloud
+# Auto-annotation service will be started by pocket-architect
 

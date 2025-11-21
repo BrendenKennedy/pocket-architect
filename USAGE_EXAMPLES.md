@@ -206,9 +206,9 @@ pocket-architect cvat up --blueprint custom-blueprint.yaml
 ### Environment Variables
 ```bash
 # Set defaults
-export MLCLOUD_DEFAULT_PROVIDER=aws
-export MLCLOUD_AWS_REGION=us-west-2
-export MLCLOUD_COST_WARNING_THRESHOLD_USD=10.0
+export POCKET_ARCHITECT_DEFAULT_PROVIDER=aws
+export POCKET_ARCHITECT_AWS_REGION=us-west-2
+export POCKET_ARCHITECT_COST_WARNING_THRESHOLD_USD=10.0
 
 # Now you can omit --provider
 pocket-architect cvat up --wizard

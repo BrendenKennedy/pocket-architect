@@ -1,5 +1,5 @@
 # Example AWS CVAT Blueprint
-# Use with: mlcloud cvat up --blueprint blueprint-aws-cvat.yaml
+# Use with: pocket-architect cvat up --blueprint blueprint-aws-cvat.yaml
 
 aws_region: us-east-2
 subnet_id: subnet-0123456789abcdef0

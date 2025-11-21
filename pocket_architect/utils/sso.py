@@ -49,7 +49,7 @@ def authenticate_aws() -> Dict[str, str]:
     """
     console.print("\n[bold cyan]AWS Authentication[/bold cyan]")
     console.print(
-        "mlcloud needs AWS credentials to provision resources.\n"
+        "pocket-architect needs AWS credentials to provision resources.\n"
         "We'll use the least-privilege IAM role approach.\n"
     )
     
@@ -138,7 +138,7 @@ def authenticate_coreweave() -> Dict[str, str]:
     """
     console.print("\n[bold cyan]CoreWeave Authentication[/bold cyan]")
     console.print(
-        "mlcloud needs a CoreWeave API key to provision resources.\n"
+        "pocket-architect needs a CoreWeave API key to provision resources.\n"
         "You can generate one at: https://cloud.coreweave.com/\n"
     )
     
@@ -174,7 +174,7 @@ def authenticate_runpod() -> Dict[str, str]:
     """
     console.print("\n[bold cyan]RunPod Authentication[/bold cyan]")
     console.print(
-        "mlcloud needs a RunPod API key to provision resources.\n"
+        "pocket-architect needs a RunPod API key to provision resources.\n"
         "You can generate one at: https://www.runpod.io/console/user/settings\n"
     )
     

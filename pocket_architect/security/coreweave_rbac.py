@@ -3,7 +3,7 @@
 from typing import Dict, Any
 
 
-def create_coreweave_rbac(namespace: str = "mlcloud") -> Dict[str, Any]:
+def create_coreweave_rbac(namespace: str = "pocket-architect") -> Dict[str, Any]:
     """Create Kubernetes RBAC resources for CoreWeave.
     
     Args:
@@ -18,14 +18,14 @@ def create_coreweave_rbac(namespace: str = "mlcloud") -> Dict[str, Any]:
         "metadata": {
             "name": namespace,
             "labels": {
-                "created-by": "mlcloud",
+                "created-by": "pocket-architect",
             },
         },
     }
     # Additional RBAC resources (Role, RoleBinding, ServiceAccount) would be added here
 
 
-def create_coreweave_service_account(namespace: str = "mlcloud") -> Dict[str, Any]:
+def create_coreweave_service_account(namespace: str = "pocket-architect") -> Dict[str, Any]:
     """Create Kubernetes ServiceAccount for CoreWeave.
     
     Args:
@@ -38,10 +38,10 @@ def create_coreweave_service_account(namespace: str = "mlcloud") -> Dict[str, An
         "apiVersion": "v1",
         "kind": "ServiceAccount",
         "metadata": {
-            "name": "mlcloud-service-account",
+            "name": "pocket-architect-service-account",
             "namespace": namespace,
             "labels": {
-                "created-by": "mlcloud",
+                "created-by": "pocket-architect",
             },
         },
     }

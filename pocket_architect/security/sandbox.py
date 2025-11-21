@@ -60,8 +60,8 @@ class CredentialValidator:
                     if policy["PolicyArn"] == "arn:aws:iam::aws:policy/AdministratorAccess":
                         raise ValueError(
                             "Credentials have AdministratorAccess which is not allowed for security.\n"
-                            "mlcloud requires least-privilege IAM roles. Please create a scoped role\n"
-                            "or let mlcloud create one automatically with minimal permissions."
+                            "pocket-architect requires least-privilege IAM roles. Please create a scoped role\n"
+                            "or let pocket-architect create one automatically with minimal permissions."
                         )
             except ClientError as e:
                 # May not have permission to list policies, check inline policies
@@ -131,9 +131,9 @@ class CredentialValidator:
             role = iam.create_role(
                 RoleName=role_name,
                 AssumeRolePolicyDocument=json.dumps(trust_policy),
-                Description="mlcloud least-privilege role for CVAT deployments",
+                Description="pocket-architect least-privilege role for CVAT deployments",
                 Tags=[
-                    {"Key": "CreatedBy", "Value": "mlcloud"},
+                    {"Key": "CreatedBy", "Value": "pocket-architect"},
                     {"Key": "Purpose", "Value": "CVAT deployment"},
                 ],
             )
@@ -142,7 +142,7 @@ class CredentialValidator:
             policy_doc = create_aws_role_template()
             policy = iam.put_role_policy(
                 RoleName=role_name,
-                PolicyName="mlcloud-minimal-policy",
+                PolicyName="pocket-architect-minimal-policy",
                 PolicyDocument=json.dumps(policy_doc),
             )
             

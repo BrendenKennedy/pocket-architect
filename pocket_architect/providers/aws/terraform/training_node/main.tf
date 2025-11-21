@@ -29,7 +29,7 @@ variable "my_ip_cidr" {
 }
 
 variable "session_id" {
-  description = "mlcloud session ID"
+  description = "pocket-architect session ID"
   type        = string
 }
 
@@ -72,8 +72,8 @@ data "aws_ami" "ubuntu" {
 
 # Security Group
 resource "aws_security_group" "training" {
-  name        = "mlcloud-training-${var.session_id}"
-  description = "Security group for mlcloud training node"
+  name        = "pocket-architect-training-${var.session_id}"
+  description = "Security group for pocket-architect training node"
   vpc_id      = data.aws_vpc.target.id
 
   ingress {
@@ -101,15 +101,15 @@ resource "aws_security_group" "training" {
   }
 
   tags = {
-    Name      = "mlcloud-training-${var.session_id}"
-    CreatedBy = "mlcloud"
+    Name      = "pocket-architect-training-${var.session_id}"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 }
 
 # IAM Role
 resource "aws_iam_role" "training" {
-  name = "mlcloud-training-${var.session_id}"
+  name = "pocket-architect-training-${var.session_id}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -125,13 +125,13 @@ resource "aws_iam_role" "training" {
   })
 
   tags = {
-    CreatedBy = "mlcloud"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 }
 
 resource "aws_iam_instance_profile" "training" {
-  name = "mlcloud-training-${var.session_id}"
+  name = "pocket-architect-training-${var.session_id}"
   role = aws_iam_role.training.name
 }
 
@@ -159,8 +159,8 @@ resource "aws_instance" "training" {
   }))
 
   tags = {
-    Name      = "mlcloud-training-${var.session_id}"
-    CreatedBy = "mlcloud"
+    Name      = "pocket-architect-training-${var.session_id}"
+    CreatedBy = "pocket-architect"
     SessionID = var.session_id
   }
 }

@@ -2,23 +2,23 @@
 
 ⚠️ **DEPRECATED** - These scripts are deprecated and will be removed in a future version.
 
-## Migration to mlcloud CLI
+## Migration to pocket-architect CLI
 
-All functionality has been migrated to the `mlcloud` CLI:
+All functionality has been migrated to the `pocket-architect` CLI:
 
 | Old Script | New Command |
 |------------|-------------|
-| `scripts/setup.sh` | `mlcloud cvat up --wizard` |
-| `scripts/up.sh` | `mlcloud cvat up --provider aws` |
-| `scripts/down.sh` | `mlcloud cvat down --provider aws` |
+| `scripts/setup.sh` | `pocket-architect cvat up --wizard` |
+| `scripts/up.sh` | `pocket-architect cvat up --provider aws` |
+| `scripts/down.sh` | `pocket-architect cvat down --provider aws` |
 | `scripts/checkpoint.sh` | Checkpoint functionality integrated into session management |
-| `python scripts/cvat.py setup` | `mlcloud cvat up --wizard` |
-| `python scripts/cvat.py up` | `mlcloud cvat up` |
-| `python scripts/cvat.py down` | `mlcloud cvat down` |
+| `python scripts/cvat.py setup` | `pocket-architect cvat up --wizard` |
+| `python scripts/cvat.py up` | `pocket-architect cvat up` |
+| `python scripts/cvat.py down` | `pocket-architect cvat down` |
 
 ## Why Deprecated?
 
-The mlcloud CLI provides:
+The pocket-architect CLI provides:
 - ✅ Unified interface across all providers (AWS, CoreWeave, RunPod, Local)
 - ✅ Better error handling and user guidance
 - ✅ Blueprint system for repeatable deployments

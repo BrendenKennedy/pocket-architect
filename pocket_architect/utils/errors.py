@@ -94,7 +94,7 @@ def handle_file_error(error: Exception, file_path: str, file_type: str = "file")
                 f"2. Verify the path is correct (use absolute path if needed)\n"
                 f"3. Create the {file_type} if it doesn't exist"
             ),
-            hint=f"Use `mlcloud blueprint create` to generate a new blueprint",
+            hint=f"Use `pocket-architect blueprint create` to generate a new blueprint",
         )
     elif isinstance(error, PermissionError):
         raise BlueprintError(
@@ -111,7 +111,7 @@ def handle_file_error(error: Exception, file_path: str, file_type: str = "file")
             solution=(
                 f"1. Verify the file is readable: `cat {file_path}`\n"
                 f"2. Check file format (YAML, JSON, or .tfvars)\n"
-                f"3. Validate syntax with: `mlcloud blueprint validate {file_path}`"
+                f"3. Validate syntax with: `pocket-architect blueprint validate {file_path}`"
             ),
         )
 
@@ -165,12 +165,12 @@ def handle_provider_error(
                     "1. Configure AWS credentials:\n"
                     "   - Run: `aws configure`\n"
                     "   - Or set: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY\n"
-                    "   - Or use: `mlcloud --provider aws` (will prompt for setup)\n"
+                    "   - Or use: `pocket-architect --provider aws` (will prompt for setup)\n"
                     "2. Verify credentials: `aws sts get-caller-identity`\n"
                     "3. Check IAM permissions for required operations"
                 ),
                 docs_url="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html",
-                hint="Use `mlcloud --provider aws` to set up credentials interactively",
+                hint="Use `pocket-architect --provider aws` to set up credentials interactively",
             )
         elif "region" in error_msg.lower():
             raise ProviderError(
@@ -295,7 +295,7 @@ def handle_blueprint_parse_error(
                 f"   - Incorrect indentation (use spaces, not tabs)\n"
                 f"   - Unclosed quotes or brackets\n"
                 f"3. Use a YAML validator online\n"
-                f"4. Recreate with: `mlcloud blueprint create`"
+                f"4. Recreate with: `pocket-architect blueprint create`"
             ),
             hint="YAML is sensitive to indentation - use 2 spaces per level",
         )
@@ -309,7 +309,7 @@ def handle_blueprint_parse_error(
                 f"   - Unclosed brackets or braces\n"
                 f"   - Trailing commas\n"
                 f"3. Use a JSON validator online\n"
-                f"4. Recreate with: `mlcloud blueprint create`"
+                f"4. Recreate with: `pocket-architect blueprint create`"
             ),
         )
     elif file_format == "tfvars":
@@ -321,7 +321,7 @@ def handle_blueprint_parse_error(
                 f"   - Use: `key = true` for booleans\n"
                 f"   - Use: `key = 123` for numbers\n"
                 f"2. Validate with: `terraform validate`\n"
-                f"3. Recreate with: `mlcloud blueprint create --format tfvars`"
+                f"3. Recreate with: `pocket-architect blueprint create --format tfvars`"
             ),
         )
     else:
@@ -330,7 +330,7 @@ def handle_blueprint_parse_error(
             solution=(
                 f"1. Verify file format is correct\n"
                 f"2. Check file encoding (should be UTF-8)\n"
-                f"3. Validate with: `mlcloud blueprint validate {file_path}`"
+                    f"3. Validate with: `pocket-architect blueprint validate {file_path}`"
             ),
         )
 
@@ -354,7 +354,7 @@ def handle_missing_required_field(
     raise ValidationError(
         f"Missing required field: {field}",
         solution=solution,
-        hint=f"Use `mlcloud blueprint create` to generate a complete {context}",
+        hint=f"Use `pocket-architect blueprint create` to generate a complete {context}",
     )
 
 

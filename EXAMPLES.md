@@ -301,13 +301,13 @@ my_ip_cidr: 1.2.3.4/32
 
 ```bash
 # Set default provider
-export MLCLOUD_DEFAULT_PROVIDER=aws
+export POCKET_ARCHITECT_DEFAULT_PROVIDER=aws
 
 # Set AWS region
-export MLCLOUD_AWS_REGION=us-west-2
+export POCKET_ARCHITECT_AWS_REGION=us-west-2
 
 # Set cost warning threshold
-export MLCLOUD_COST_WARNING_THRESHOLD_USD=10.0
+export POCKET_ARCHITECT_COST_WARNING_THRESHOLD_USD=10.0
 ```
 
 ### State Management
