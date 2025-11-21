@@ -1,13 +1,13 @@
 # Project Structure
 
-This document describes the file and directory organization of the mlcloud project.
+This document describes the file and directory organization of the pocket-architect project.
 
 > **Note**: For system architecture and design principles, see [ARCHITECTURE.md](ARCHITECTURE.md). This document focuses on where files are located and how the project is organized.
 
 ## Directory Structure
 
 ```
-mlcloud/
+pocket-architect/
 ├── .github/                    # GitHub configuration
 │   └── workflows/             # CI/CD workflows
 ├── docs/                       # Documentation
@@ -29,9 +29,9 @@ mlcloud/
 │   └── README.md              # Documentation index
 ├── examples/                   # Example configurations
 │   └── blueprint-*.yaml       # Example blueprints
-├── mlcloud/                    # Main CLI package (src-layout)
+├── pocket-architect/                    # Main CLI package (src-layout)
 │   ├── __init__.py            # Package initialization
-│   ├── __main__.py            # python -m mlcloud entry point
+│   ├── __main__.py            # python -m pocket-architect entry point
 │   ├── cli.py                 # CLI application (Typer)
 │   ├── backends/              # Backend integrations
 │   │   └── terraform.py       # Terraform wrapper
@@ -118,7 +118,7 @@ mlcloud/
 
 ### Core CLI Code (Root Level)
 
-- **`mlcloud/`** - Main Python package containing all CLI code
+- **`pocket-architect/`** - Main Python package containing all CLI code
 - **`tests/`** - Test suite for the CLI
 - **`examples/`** - Example blueprints and configurations
 - **`docs/`** - Documentation
@@ -142,7 +142,7 @@ mlcloud/
 
 ## Package Organization
 
-The `mlcloud/` package follows Python packaging best practices:
+The `pocket-architect/` package follows Python packaging best practices:
 
 1. **Flat structure** - No unnecessary nesting
 2. **Clear separation** - Commands, core, providers, models are separate

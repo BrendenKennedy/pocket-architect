@@ -34,9 +34,9 @@ ENV/
 *.swo
 *~
 
-# mlcloud state
-.mlcloud/
-~/.mlcloud/
+# pocket-architect state
+.pocket-architect/
+~/.pocket-architect/
 
 # Legacy infrastructure (not part of CLI package, but tracked in git)
 # Note: Excluded from package build in pyproject.toml, but files are tracked in git

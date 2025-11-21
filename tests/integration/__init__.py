@@ -1,2 +1,2 @@
-"""Integration tests for mlcloud."""
+"""Integration tests for pocket_architect."""
 

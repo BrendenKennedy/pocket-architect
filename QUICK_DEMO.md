@@ -1,8 +1,8 @@
-# mlcloud Quick Demo
+# pocket-architect Quick Demo
 
-## What is mlcloud?
+## What is pocket-architect?
 
-`mlcloud` is a zero-install, platform-agnostic Python CLI that turns any laptop into an on-demand GPU computer-vision workstation with zero vendor lock-in.
+`pocket-architect` is a zero-install, platform-agnostic Python CLI that turns any laptop into an on-demand GPU computer-vision workstation with zero vendor lock-in.
 
 ## Key Features
 
@@ -18,13 +18,13 @@
 ## Installation
 
 ```bash
-pip install mlcloud
+pip install pocket-architect
 ```
 
 Or from source:
 ```bash
 git clone <repository-url>
-cd mlcloud
+cd pocket-architect
 pip install -e ".[dev]"
 ```
 
@@ -34,30 +34,30 @@ pip install -e ".[dev]"
 
 ```bash
 # Start CVAT locally
-mlcloud cvat up --provider local
+pocket-architect cvat up --provider local
 
 # Access CVAT at http://localhost:8080
 # Default credentials: admin / (password stored in keyring)
 
 # Sync your images
-mlcloud cvat sync ./my-images --direction up
+pocket-architect cvat sync ./my-images --direction up
 
 # Access container shell
-mlcloud shell --provider local --mode ssh
+pocket-architect shell --provider local --mode ssh
 
 # Launch JupyterLab
-mlcloud shell --provider local --mode jupyter
+pocket-architect shell --provider local --mode jupyter
 # Access at http://localhost:8888
 
 # Stop CVAT
-mlcloud destroy --provider local
+pocket-architect destroy --provider local
 ```
 
 ### 2. AWS Deployment (Interactive)
 
 ```bash
 # Guided setup
-mlcloud cvat up --provider aws --wizard
+pocket-architect cvat up --provider aws --wizard
 
 # The wizard prompts for:
 # - AWS region
@@ -77,26 +77,26 @@ mlcloud cvat up --provider aws --wizard
 
 ```bash
 # Create a blueprint
-mlcloud blueprint create aws --type cvat --output my-cvat.yaml
+pocket-architect blueprint create aws --type cvat --output my-cvat.yaml
 
 # Edit if needed
 nano my-cvat.yaml
 
 # Deploy
-mlcloud cvat up --blueprint my-cvat.yaml
+pocket-architect cvat up --blueprint my-cvat.yaml
 ```
 
 ### 4. File Synchronization
 
 ```bash
 # Upload dataset to CVAT
-mlcloud cvat sync ./dataset --provider aws --direction up
+pocket-architect cvat sync ./dataset --provider aws --direction up
 
 # Download annotations
-mlcloud cvat sync ./annotations --provider aws --direction down
+pocket-architect cvat sync ./annotations --provider aws --direction down
 
 # Bidirectional sync (default)
-mlcloud cvat sync ./data --provider aws
+pocket-architect cvat sync ./data --provider aws
 ```
 
 **How it works:**
@@ -108,17 +108,17 @@ mlcloud cvat sync ./data --provider aws
 
 ```bash
 # SSH access (uses SSM if available)
-mlcloud shell --provider aws --mode ssh
+pocket-architect shell --provider aws --mode ssh
 
 # Launch JupyterLab on instance
-mlcloud shell --provider aws --mode jupyter
+pocket-architect shell --provider aws --mode jupyter
 # Output:
 # ✓ JupyterLab started
 # Access at: http://<public-ip>:8888
 # Token: <token>
 
 # Get VSCode Remote SSH config
-mlcloud shell --provider aws --mode vscode
+pocket-architect shell --provider aws --mode vscode
 ```
 
 ### 6. Training Jobs
@@ -135,7 +135,7 @@ output_path: /mnt/efs/models
 EOF
 
 # Launch training
-mlcloud train train-config.yaml --provider aws
+pocket-architect train train-config.yaml --provider aws
 
 # Output:
 # Estimated cost: $3.0600/hour ($2233.80/month)
@@ -150,13 +150,13 @@ mlcloud train train-config.yaml --provider aws
 
 ```bash
 # Single image with SAM 2
-mlcloud auto-annotate image.jpg --model sam2 --output ./annotations
+pocket-architect auto-annotate image.jpg --model sam2 --output ./annotations
 
 # Directory of images with YOLO
-mlcloud auto-annotate ./images --model yolo11-seg --output ./annotations
+pocket-architect auto-annotate ./images --model yolo11-seg --output ./annotations
 
 # Video file (extracts frames)
-mlcloud auto-annotate video.mp4 --model detectron2 --output ./annotations
+pocket-architect auto-annotate video.mp4 --model detectron2 --output ./annotations
 ```
 
 **Available Models:**
@@ -170,13 +170,13 @@ mlcloud auto-annotate video.mp4 --model detectron2 --output ./annotations
 
 ```bash
 # List all active sessions
-mlcloud list sessions
+pocket-architect list sessions
 
 # Check session status
-mlcloud status --provider aws
+pocket-architect status --provider aws
 
 # Destroy all resources (zero-cost guarantee)
-mlcloud destroy --provider aws
+pocket-architect destroy --provider aws
 # Output:
 # ✓ All resources destroyed successfully!
 # ✓ Verified: $0.00/hour estimated cost
@@ -186,38 +186,38 @@ mlcloud destroy --provider aws
 
 | Command | Description |
 |---------|-------------|
-| `mlcloud cvat up` | Deploy CVAT instance |
-| `mlcloud cvat sync` | Sync files with CVAT |
-| `mlcloud cvat down` | Stop CVAT (preserves data) |
-| `mlcloud shell` | Access instance shell (ssh/jupyter/vscode) |
-| `mlcloud train` | Launch training job |
-| `mlcloud auto-annotate` | Auto-annotate images/video |
-| `mlcloud list sessions` | List active sessions |
-| `mlcloud status` | Show session status |
-| `mlcloud destroy` | Destroy all resources |
-| `mlcloud blueprint create` | Create deployment blueprint |
+| `pocket-architect cvat up` | Deploy CVAT instance |
+| `pocket-architect cvat sync` | Sync files with CVAT |
+| `pocket-architect cvat down` | Stop CVAT (preserves data) |
+| `pocket-architect shell` | Access instance shell (ssh/jupyter/vscode) |
+| `pocket-architect train` | Launch training job |
+| `pocket-architect auto-annotate` | Auto-annotate images/video |
+| `pocket-architect list sessions` | List active sessions |
+| `pocket-architect status` | Show session status |
+| `pocket-architect destroy` | Destroy all resources |
+| `pocket-architect blueprint create` | Create deployment blueprint |
 
 ## Cost Management
 
 Every command displays cost estimates:
 
 ```bash
-mlcloud cvat up --provider aws --wizard
+pocket-architect cvat up --provider aws --wizard
 # Estimated cost: $0.1234/hour ($90.08/month)
 ```
 
 Destroy command verifies zero cost:
 
 ```bash
-mlcloud destroy --provider aws
+pocket-architect destroy --provider aws
 # ✓ Verified: $0.00/hour estimated cost
 ```
 
 ## State Management
 
-All state stored in `~/.mlcloud/`:
-- **Sessions**: `~/.mlcloud/sessions/<session-id>/`
-- **Models**: `~/.mlcloud/models/`
+All state stored in `~/.pocket-architect/`:
+- **Sessions**: `~/.pocket-architect/sessions/<session-id>/`
+- **Models**: `~/.pocket-architect/models/`
 - **Credentials**: OS keyring (never in files)
 
 ## Security Features

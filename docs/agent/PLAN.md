@@ -1,6 +1,6 @@
-# mlcloud v1.0 Complete Requirements & Build Plan
+# pocket-architect v1.0 Complete Requirements & Build Plan
 
-**Project Name**: mlcloud  
+**Project Name**: pocket-architect  
 **Description**: A zero-install, platform-agnostic Python CLI that turns any laptop into an on-demand GPU computer-vision workstation with zero vendor lock-in.
 
 **Status**: Ready for implementation  
@@ -12,12 +12,12 @@
 
 ### Core Commands (Exactly Six)
 
-1. `mlcloud auto-annotate <path>` → fully automatic labeling (images or video frames)
-2. `mlcloud cvat up` → spin full CVAT instance with optional pre-annotation + HTTPS
-3. `mlcloud cvat sync` → bidirectional sync with running CVAT
-4. `mlcloud train <config.yaml>` → launch YOLO/SAM/Detectron2 training job
-5. `mlcloud shell` → instant SSH or VSCode Remote / JupyterLab into the GPU node
-6. `mlcloud destroy` → guaranteed zero-cost teardown
+1. `pocket-architect auto-annotate <path>` → fully automatic labeling (images or video frames)
+2. `pocket-architect cvat up` → spin full CVAT instance with optional pre-annotation + HTTPS
+3. `pocket-architect cvat sync` → bidirectional sync with running CVAT
+4. `pocket-architect train <config.yaml>` → launch YOLO/SAM/Detectron2 training job
+5. `pocket-architect shell` → instant SSH or VSCode Remote / JupyterLab into the GPU node
+6. `pocket-architect destroy` → guaranteed zero-cost teardown
 
 ### Supported Providers (v1.0)
 
@@ -36,11 +36,11 @@
 
 ### Non-Functional Requirements (Mandatory)
 
-- `pip install mlcloud` works with zero pre-installed CLIs (AWS/GCP/Azure)
+- `pip install pocket-architect` works with zero pre-installed CLIs (AWS/GCP/Azure)
 - First run triggers SSO/API-key flow automatically
 - Cold start < 3 min to first mask (CoreWeave/RunPod target)
 - Every command shows live $/hour + projected monthly cost
-- `mlcloud destroy` leaves exactly $0.00 recurring charges
+- `pocket-architect destroy` leaves exactly $0.00 recurring charges
 - All cloud credentials are sandboxed with least privilege
 - CVAT defaults to HTTPS + random 32-char admin password stored only in OS keyring
 - All infrastructure passes checkov --compact and tfsec (CI-enforced)
@@ -93,10 +93,10 @@
 ## Repository & Package Structure (Exact Skeleton)
 
 ```
-mlcloud/
-├── mlcloud/                      # src-layout package
+pocket-architect/
+├── pocket-architect/                      # src-layout package
 │   ├── __init__.py
-│   ├── __main__.py               # python -m mlcloud
+│   ├── __main__.py               # python -m pocket-architect
 │   ├── cli.py                    # Typer app (single entrypoint)
 │   ├── config/                   # pydantic-settings
 │   │   ├── settings.py
@@ -105,7 +105,7 @@ mlcloud/
 │   │   ├── types.py              # shared pydantic models
 │   │   ├── session.py            # unified Session with provider client
 │   │   ├── cost.py               # live pricing + normalisation
-│   │   └── state.py              # ~/.mlcloud/sessions/
+│   │   └── state.py              # ~/.pocket-architect/sessions/
 │   ├── providers/
 │   │   ├── __init__.py
 │   │   ├── base.py               # abstract Provider(ABC)
@@ -159,9 +159,9 @@ mlcloud/
 - Project init with hatch + src layout
 - Typer + Rich skeleton CLI with --version, --provider global option
 - Pydantic v2 settings + keyring utils
-- `mlcloud --version` works
+- `pocket-architect --version` works
 
-**Deliverable**: `mlcloud --version` works, all commands show help text
+**Deliverable**: `pocket-architect --version` works, all commands show help text
 
 ---
 
@@ -170,9 +170,9 @@ mlcloud/
 **Tasks:**
 - `providers/base.py` ABC with methods: `provision_cvat`, `provision_worker`, `sync`, `shell`, `destroy`, `cost_estimate`
 - Implement local provider fully (docker-compose + nvidia)
-- `mlcloud cvat up --provider local` works end-to-end
+- `pocket-architect cvat up --provider local` works end-to-end
 
-**Deliverable**: `mlcloud cvat up --provider local` works end-to-end
+**Deliverable**: `pocket-architect cvat up --provider local` works end-to-end
 
 ---
 
@@ -191,10 +191,10 @@ mlcloud/
 
 **Tasks:**
 - Full embedded Terraform modules (CVAT + auto-annotate worker)
-- `mlcloud cvat up --provider aws` works
-- `mlcloud auto-annotate --provider aws` works
+- `pocket-architect cvat up --provider aws` works
+- `pocket-architect auto-annotate --provider aws` works
 
-**Deliverable**: `mlcloud cvat up --provider aws` and `mlcloud auto-annotate --provider aws` work
+**Deliverable**: `pocket-architect cvat up --provider aws` and `pocket-architect auto-annotate --provider aws` work
 
 **Note**: Existing `terraform/main.tf` from aws-cvat-infrastructure can be adapted for CVAT module
 
@@ -218,7 +218,7 @@ mlcloud/
 - Implement all 5 models (SAM 2.1, YOLO11x-seg, YOLO11x-obb, Grounding DINO 1.5 + SAM 2, Detectron2)
 - Provider-specific inference backends
 
-**Deliverable**: `mlcloud auto-annotate <path>` works with all models
+**Deliverable**: `pocket-architect auto-annotate <path>` works with all models
 
 ---
 
@@ -226,7 +226,7 @@ mlcloud/
 
 **Tasks:**
 - Cost estimation on every command
-- `mlcloud destroy` with tag-based cleanup
+- `pocket-architect destroy` with tag-based cleanup
 - Auto-shutdown defaults
 - Sigstore signing workflow
 

@@ -10,7 +10,7 @@ This guide explains the purpose of each documentation file and when to read it.
   - How the system is designed
   - Component interactions and data flow
   - Design principles and extension points
-  - **When to read**: Understanding how mlcloud works internally
+  - **When to read**: Understanding how pocket-architect works internally
 
 - **[STRUCTURE.md](STRUCTURE.md)** - Read this to understand:
   - File and directory organization
@@ -87,12 +87,12 @@ These are **not** for end users and may be outdated. They're kept for historical
 
 **I want to...**
 
-- **Understand how mlcloud works** → [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Understand how pocket-architect works** → [ARCHITECTURE.md](ARCHITECTURE.md)
 - **Find a specific file** → [STRUCTURE.md](STRUCTURE.md)
 - **Run tests quickly** → [TESTING.md](TESTING.md)
 - **Set up testing from scratch** → [TESTING_SETUP.md](TESTING_SETUP.md)
 - **Deploy securely** → [SECURITY.md](SECURITY.md)
-- **Get started using mlcloud** → [../README.md](../README.md)
+- **Get started using pocket-architect** → [../README.md](../README.md)
 - **See usage examples** → [../EXAMPLES.md](../EXAMPLES.md)
 
 ## Contributing

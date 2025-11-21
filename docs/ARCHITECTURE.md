@@ -2,7 +2,7 @@
 
 ## Overview
 
-mlcloud is a Python CLI application that provides a unified interface for deploying and managing GPU computer-vision workstations across multiple cloud providers.
+pocket-architect is a Python CLI application that provides a unified interface for deploying and managing GPU computer-vision workstations across multiple cloud providers.
 
 > **Note**: For detailed file and directory structure, see [STRUCTURE.md](STRUCTURE.md). This document focuses on system design and component interactions.
 
@@ -15,29 +15,29 @@ mlcloud is a Python CLI application that provides a unified interface for deploy
 
 ## Key Components
 
-### CLI Layer (`mlcloud/cli.py`, `mlcloud/commands/`)
+### CLI Layer (`pocket-architect/cli.py`, `pocket-architect/commands/`)
 - Typer-based command-line interface
 - Command registration and routing
 - Global error handling
 
-### Core Layer (`mlcloud/core/`)
+### Core Layer (`pocket-architect/core/`)
 - Session management
 - Cost tracking
 - Blueprint system
 - Type definitions
 
-### Provider Layer (`mlcloud/providers/`)
+### Provider Layer (`pocket-architect/providers/`)
 - Abstract base class for all providers
 - Provider-specific implementations (AWS, Local, CoreWeave, RunPod)
 - Terraform modules embedded in AWS provider
 
-### Model Layer (`mlcloud/models/`)
+### Model Layer (`pocket-architect/models/`)
 - Model registry
 - Model downloader
 - Inference engine
 - Model-specific adapters
 
-### Security Layer (`mlcloud/security/`)
+### Security Layer (`pocket-architect/security/`)
 - Credential sandboxing
 - Least-privilege role creation
 - Provider-specific security policies

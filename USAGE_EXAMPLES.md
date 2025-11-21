@@ -1,18 +1,18 @@
-# mlcloud Usage Examples
+# pocket-architect Usage Examples
 
-Quick reference guide for common mlcloud workflows.
+Quick reference guide for common pocket-architect workflows.
 
 ## Basic Commands
 
 ### Check Installation
 ```bash
-mlcloud --version
-mlcloud --help
+pocket-architect --version
+pocket-architect --help
 ```
 
 ### List Available Commands
 ```bash
-mlcloud --help
+pocket-architect --help
 ```
 
 ## Local Development Workflow
@@ -20,7 +20,7 @@ mlcloud --help
 ### 1. Start CVAT Locally
 ```bash
 # Deploy CVAT with Docker
-mlcloud cvat up --provider local
+pocket-architect cvat up --provider local
 
 # Output:
 # ✓ CVAT deployed successfully!
@@ -30,38 +30,38 @@ mlcloud cvat up --provider local
 ### 2. Sync Files
 ```bash
 # Upload images to CVAT
-mlcloud cvat sync ./my-images --direction up
+pocket-architect cvat sync ./my-images --direction up
 
 # Download annotations
-mlcloud cvat sync ./annotations --direction down
+pocket-architect cvat sync ./annotations --direction down
 
 # Bidirectional sync (default)
-mlcloud cvat sync ./data
+pocket-architect cvat sync ./data
 ```
 
 ### 3. Access Container Shell
 ```bash
 # SSH into container
-mlcloud shell --provider local --mode ssh
+pocket-architect shell --provider local --mode ssh
 
 # Launch JupyterLab
-mlcloud shell --provider local --mode jupyter
+pocket-architect shell --provider local --mode jupyter
 # Then access at http://localhost:8888
 
 # Get VSCode instructions
-mlcloud shell --provider local --mode vscode
+pocket-architect shell --provider local --mode vscode
 ```
 
 ### 4. Stop CVAT
 ```bash
-mlcloud destroy --provider local
+pocket-architect destroy --provider local
 ```
 
 ## AWS Deployment Workflow
 
 ### 1. Deploy CVAT on AWS (Interactive)
 ```bash
-mlcloud cvat up --provider aws --wizard
+pocket-architect cvat up --provider aws --wizard
 
 # Follow prompts:
 # - AWS region: us-west-2
@@ -75,49 +75,49 @@ mlcloud cvat up --provider aws --wizard
 ### 2. Deploy with Blueprint
 ```bash
 # Create blueprint
-mlcloud blueprint create aws --type cvat --output my-cvat.yaml
+pocket-architect blueprint create aws --type cvat --output my-cvat.yaml
 
 # Edit blueprint (optional)
 nano my-cvat.yaml
 
 # Deploy
-mlcloud cvat up --blueprint my-cvat.yaml
+pocket-architect cvat up --blueprint my-cvat.yaml
 ```
 
 ### 3. Sync with AWS Instance
 ```bash
 # Upload dataset
-mlcloud cvat sync ./dataset --provider aws --direction up
+pocket-architect cvat sync ./dataset --provider aws --direction up
 
 # Download results
-mlcloud cvat sync ./results --provider aws --direction down
+pocket-architect cvat sync ./results --provider aws --direction down
 ```
 
 ### 4. Access AWS Instance
 ```bash
 # SSH access (uses SSM if available, falls back to SSH)
-mlcloud shell --provider aws --mode ssh
+pocket-architect shell --provider aws --mode ssh
 
 # Launch JupyterLab
-mlcloud shell --provider aws --mode jupyter
+pocket-architect shell --provider aws --mode jupyter
 # Access at http://<public-ip>:8888
 
 # VSCode Remote SSH config
-mlcloud shell --provider aws --mode vscode
+pocket-architect shell --provider aws --mode vscode
 ```
 
 ### 5. Check Status
 ```bash
 # List all sessions
-mlcloud list sessions
+pocket-architect list sessions
 
 # Check specific session
-mlcloud status --provider aws
+pocket-architect status --provider aws
 ```
 
 ### 6. Destroy Resources
 ```bash
-mlcloud destroy --provider aws
+pocket-architect destroy --provider aws
 
 # Output:
 # ✓ All resources destroyed successfully!
@@ -139,7 +139,7 @@ output_path: /mnt/efs/models
 
 ### 2. Launch Training
 ```bash
-mlcloud train train-config.yaml --provider aws
+pocket-architect train train-config.yaml --provider aws
 
 # Output:
 # Estimated cost: $3.0600/hour ($2233.80/month)
@@ -152,10 +152,10 @@ mlcloud train train-config.yaml --provider aws
 ### 3. Monitor Training
 ```bash
 # Check status
-mlcloud status --provider aws
+pocket-architect status --provider aws
 
 # SSH to instance and check logs
-mlcloud shell --provider aws --mode ssh
+pocket-architect shell --provider aws --mode ssh
 # Then: tail -f /tmp/training.log
 ```
 
@@ -163,12 +163,12 @@ mlcloud shell --provider aws --mode ssh
 
 ### Single Image
 ```bash
-mlcloud auto-annotate image.jpg --model sam2 --output ./annotations
+pocket-architect auto-annotate image.jpg --model sam2 --output ./annotations
 ```
 
 ### Directory of Images
 ```bash
-mlcloud auto-annotate ./dataset/images \
+pocket-architect auto-annotate ./dataset/images \
   --model yolo11-seg \
   --output ./annotations \
   --format coco
@@ -176,7 +176,7 @@ mlcloud auto-annotate ./dataset/images \
 
 ### Video File
 ```bash
-mlcloud auto-annotate video.mp4 \
+pocket-architect auto-annotate video.mp4 \
   --model detectron2 \
   --output ./annotations
 ```
@@ -200,7 +200,7 @@ my_ip_cidr: 1.2.3.4/32
 ```
 
 ```bash
-mlcloud cvat up --blueprint custom-blueprint.yaml
+pocket-architect cvat up --blueprint custom-blueprint.yaml
 ```
 
 ### Environment Variables
@@ -211,17 +211,17 @@ export MLCLOUD_AWS_REGION=us-west-2
 export MLCLOUD_COST_WARNING_THRESHOLD_USD=10.0
 
 # Now you can omit --provider
-mlcloud cvat up --wizard
+pocket-architect cvat up --wizard
 ```
 
 ### Cost Monitoring
 ```bash
 # Every command shows cost estimate
-mlcloud cvat up --provider aws --wizard
+pocket-architect cvat up --provider aws --wizard
 # Estimated cost: $0.1234/hour ($90.08/month)
 
 # Destroy verifies zero cost
-mlcloud destroy --provider aws
+pocket-architect destroy --provider aws
 # ✓ Verified: $0.00/hour estimated cost
 ```
 
@@ -240,13 +240,13 @@ aws sts get-caller-identity
 
 ### View Session State
 ```bash
-ls ~/.mlcloud/sessions/
-cat ~/.mlcloud/sessions/<session-id>/session.json
+ls ~/.pocket-architect/sessions/
+cat ~/.pocket-architect/sessions/<session-id>/session.json
 ```
 
 ### View Terraform State (AWS)
 ```bash
-cd ~/.mlcloud/sessions/<session-id>/terraform/cvat
+cd ~/.pocket-architect/sessions/<session-id>/terraform/cvat
 terraform output
 ```
 
@@ -254,14 +254,14 @@ terraform output
 
 | Command | Description |
 |---------|-------------|
-| `mlcloud cvat up` | Deploy CVAT instance |
-| `mlcloud cvat sync` | Sync files with CVAT |
-| `mlcloud cvat down` | Stop CVAT (preserves data) |
-| `mlcloud shell` | Access instance shell |
-| `mlcloud train` | Launch training job |
-| `mlcloud auto-annotate` | Auto-annotate images |
-| `mlcloud list sessions` | List active sessions |
-| `mlcloud status` | Show session status |
-| `mlcloud destroy` | Destroy all resources |
-| `mlcloud blueprint create` | Create deployment blueprint |
+| `pocket-architect cvat up` | Deploy CVAT instance |
+| `pocket-architect cvat sync` | Sync files with CVAT |
+| `pocket-architect cvat down` | Stop CVAT (preserves data) |
+| `pocket-architect shell` | Access instance shell |
+| `pocket-architect train` | Launch training job |
+| `pocket-architect auto-annotate` | Auto-annotate images |
+| `pocket-architect list sessions` | List active sessions |
+| `pocket-architect status` | Show session status |
+| `pocket-architect destroy` | Destroy all resources |
+| `pocket-architect blueprint create` | Create deployment blueprint |
 

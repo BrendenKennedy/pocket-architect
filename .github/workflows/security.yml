@@ -3,16 +3,16 @@ name: Security Checks
 on:
   pull_request:
     paths:
-      - 'mlcloud/providers/**/*.tf'
-      - 'mlcloud/providers/**/*.tf.json'
+      - 'pocket-architect/providers/**/*.tf'
+      - 'pocket-architect/providers/**/*.tf.json'
       - 'terraform/**/*.tf'
       - 'terraform_modules/**/*.tf'
   push:
     branches:
       - main
     paths:
-      - 'mlcloud/providers/**/*.tf'
-      - 'mlcloud/providers/**/*.tf.json'
+      - 'pocket-architect/providers/**/*.tf'
+      - 'pocket-architect/providers/**/*.tf.json'
       - 'terraform/**/*.tf'
       - 'terraform_modules/**/*.tf'
 

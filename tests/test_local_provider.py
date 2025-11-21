@@ -3,8 +3,8 @@
 import pytest
 from pathlib import Path
 
-from mlcloud.providers.local.client import LocalProvider
-from mlcloud.core.types import Provider
+from pocket_architect.providers.local.client import LocalProvider
+from pocket_architect.core.types import Provider
 
 
 @pytest.fixture

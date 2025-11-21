@@ -17,18 +17,18 @@ test: ## Run tests
 	pytest
 
 test-cov: ## Run tests with coverage
-	pytest --cov=mlcloud --cov-report=html --cov-report=term
+	pytest --cov=pocket_architect --cov-report=html --cov-report=term
 
 lint: ## Run linters
-	ruff check mlcloud tests
-	mypy mlcloud
+	ruff check pocket_architect tests
+	mypy pocket_architect
 
 format: ## Format code
-	black mlcloud tests
-	ruff format mlcloud tests
+	black pocket_architect tests
+	ruff format pocket_architect tests
 
 type-check: ## Run type checker
-	mypy mlcloud
+	mypy pocket_architect
 
 clean: ## Clean build artifacts
 	rm -rf build/

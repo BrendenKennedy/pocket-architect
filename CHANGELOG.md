@@ -34,6 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cost estimation and tracking
 - Session management
 
-[Unreleased]: https://github.com/your-org/mlcloud/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/your-org/mlcloud/releases/tag/v1.0.0
+[Unreleased]: https://github.com/your-org/pocket-architect/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/your-org/pocket-architect/releases/tag/v1.0.0
 

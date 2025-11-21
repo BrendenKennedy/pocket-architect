@@ -26,11 +26,11 @@ All documentation files:
 - **`docs/project/IMPLEMENTATION_STATUS.md`** - Implementation status
 - **`docs/project/STRUCTURE.md`** - Project structure
 
-## Python Code (`mlcloud/`)
+## Python Code (`pocket-architect/`)
 
 All Python code for the CLI:
 
-- **`mlcloud/`** - Main package
+- **`pocket-architect/`** - Main package
   - No markdown files
   - No shell scripts (except embedded Terraform user_data.sh which are part of infrastructure)
   - Only Python code
@@ -62,7 +62,7 @@ Example configurations:
 
 1. **No markdown files in root** (except README.md)
 2. **No shell scripts in root** (all in legacy-infrastructure/)
-3. **No markdown files in mlcloud/** (only Python code)
+3. **No markdown files in pocket-architect/** (only Python code)
 4. **All documentation in docs/**
 5. **All project docs in docs/project/**
 

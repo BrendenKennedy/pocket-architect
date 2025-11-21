@@ -1,16 +1,16 @@
-# mlcloud v1.0 Project Status Report
+# pocket-architect v1.0 Project Status Report
 
 **Date**: 2024-12-19  
-**Project**: mlcloud v1.0 Implementation  
+**Project**: pocket-architect v1.0 Implementation  
 **Current Codebase**: aws-cvat-infrastructure (separate project)
 
 ---
 
 ## Executive Summary
 
-**Current Status**: **0% Complete** - mlcloud project has not been started
+**Current Status**: **0% Complete** - pocket-architect project has not been started
 
-The current codebase (`aws-cvat-infrastructure`) is a **separate, AWS-only CVAT management tool** that is **not** the mlcloud project. It can serve as reference material for Phase 4 (AWS provider implementation), but the mlcloud project itself needs to be built from scratch.
+The current codebase (`aws-cvat-infrastructure`) is a **separate, AWS-only CVAT management tool** that is **not** the pocket-architect project. It can serve as reference material for Phase 4 (AWS provider implementation), but the pocket-architect project itself needs to be built from scratch.
 
 ---
 
@@ -23,7 +23,7 @@ The current codebase (`aws-cvat-infrastructure`) is a **separate, AWS-only CVAT 
 aws-cvat-infrastructure/
 ├── scripts/
 │   ├── cvat.py              # Click-based CLI (not Typer)
-│   ├── cvat/                # Package (not mlcloud/)
+│   ├── cvat/                # Package (not pocket-architect/)
 │   │   ├── aws.py           # AWS client wrapper
 │   │   ├── setup.py        # Setup command
 │   │   ├── up.py           # Start infrastructure
@@ -61,8 +61,8 @@ aws-cvat-infrastructure/
 - ✅ Resource import functionality
 - ✅ Cost optimization (stop/start cycles)
 
-**What's Missing for mlcloud:**
-- ❌ All 6 mlcloud commands
+**What's Missing for pocket-architect:**
+- ❌ All 6 pocket-architect commands
 - ❌ Multi-provider support (only AWS exists)
 - ❌ Model registry and inference
 - ❌ Auto-annotation functionality
@@ -79,7 +79,7 @@ aws-cvat-infrastructure/
 
 | Component | Current | Required | Status |
 |-----------|---------|----------|--------|
-| Package name | `scripts/cvat/` | `mlcloud/` | ❌ Wrong structure |
+| Package name | `scripts/cvat/` | `pocket-architect/` | ❌ Wrong structure |
 | Build system | `requirements.txt` | `pyproject.toml` (hatch) | ❌ Not created |
 | CLI framework | Click | Typer | ❌ Wrong framework |
 | Package layout | Flat scripts | src-layout | ❌ Wrong layout |
@@ -96,10 +96,10 @@ aws-cvat-infrastructure/
 | `destroy` | ⚠️ Partial (`down`) | ✅ Required | ⚠️ Exists but wrong interface |
 
 **Current commands that exist:**
-- `setup` - Not in mlcloud spec (interactive setup handled differently)
+- `setup` - Not in pocket-architect spec (interactive setup handled differently)
 - `up` - Similar to `cvat up` but different interface
 - `down` - Similar to `destroy` but different interface
-- `checkpoint` - Not in mlcloud spec (checkpointing handled differently)
+- `checkpoint` - Not in pocket-architect spec (checkpointing handled differently)
 
 ### 3. Provider Support
 
@@ -113,7 +113,7 @@ aws-cvat-infrastructure/
 **AWS Provider Status:**
 - ✅ Terraform modules exist (`terraform/main.tf`)
 - ✅ AWS client wrapper exists (`scripts/cvat/aws.py`)
-- ⚠️ Needs restructuring into `mlcloud/providers/aws/`
+- ⚠️ Needs restructuring into `pocket-architect/providers/aws/`
 - ⚠️ Needs provider abstraction layer
 - ⚠️ Missing auto-annotation worker infrastructure
 - ⚠️ Missing training node infrastructure
@@ -147,7 +147,7 @@ aws-cvat-infrastructure/
 
 | Requirement | Current | Required | Status |
 |-------------|---------|----------|--------|
-| `pip install mlcloud` | ❌ Not installable | ✅ Required | ❌ Not implemented |
+| `pip install pocket-architect` | ❌ Not installable | ✅ Required | ❌ Not implemented |
 | Zero pre-installed CLIs | ⚠️ Requires AWS CLI | ✅ Required | ❌ Not met |
 | SSO/API-key flow | ❌ Manual setup | ✅ Auto-triggered | ❌ Not implemented |
 | Cold start < 3 min | ❌ N/A (no models) | ✅ Required | ❌ Not applicable |
@@ -166,12 +166,12 @@ aws-cvat-infrastructure/
 **Status**: ❌ **Not Started (0%)**
 
 **What's Missing:**
-- ❌ `mlcloud/` package directory structure
+- ❌ `pocket-architect/` package directory structure
 - ❌ `pyproject.toml` with hatch build system
 - ❌ Typer CLI framework (currently using Click)
 - ❌ Pydantic v2 settings
 - ❌ Keyring utilities
-- ❌ `mlcloud --version` command
+- ❌ `pocket-architect --version` command
 
 **What Exists:**
 - ✅ Rich UI library (already in use)
@@ -222,7 +222,7 @@ aws-cvat-infrastructure/
 - ✅ Basic infrastructure deployment
 
 **What's Missing:**
-- ❌ Restructure into `mlcloud/providers/aws/`
+- ❌ Restructure into `pocket-architect/providers/aws/`
 - ❌ Provider abstraction implementation
 - ❌ Auto-annotation worker Terraform module
 - ❌ Training node Terraform module
@@ -290,9 +290,9 @@ aws-cvat-infrastructure/
 
 ### Immediate Next Steps (Phase 1)
 
-1. **Create mlcloud package structure**
+1. **Create pocket-architect package structure**
    ```bash
-   mkdir -p mlcloud/mlcloud/{config,core,providers,backends,commands,models,utils,security}
+   mkdir -p pocket-architect/pocket-architect/{config,core,providers,backends,commands,models,utils,security}
    ```
 
 2. **Create `pyproject.toml`**
@@ -301,31 +301,31 @@ aws-cvat-infrastructure/
    - Configure entry points
 
 3. **Migrate from Click to Typer**
-   - Replace `scripts/cvat.py` with `mlcloud/cli.py`
+   - Replace `scripts/cvat.py` with `pocket-architect/cli.py`
    - Implement `--version` and `--provider` global options
    - Create command stubs for all 6 commands
 
 4. **Set up Pydantic v2 settings**
-   - Create `mlcloud/config/settings.py`
-   - Create `mlcloud/config/profiles.py`
-   - Set up `~/.mlcloud/` directory structure
+   - Create `pocket-architect/config/settings.py`
+   - Create `pocket-architect/config/profiles.py`
+   - Set up `~/.pocket-architect/` directory structure
 
 5. **Implement keyring utilities**
-   - Create `mlcloud/utils/keyring.py`
+   - Create `pocket-architect/utils/keyring.py`
    - Support macOS Keychain, Linux Secret Service, Windows Credential Manager
 
 ### Reusable from Current Codebase
 
 **Can be adapted for Phase 4 (AWS Provider):**
-- ✅ `terraform/main.tf` → `mlcloud/providers/aws/terraform/cvat/main.tf`
-- ✅ `scripts/cvat/aws.py` → `mlcloud/providers/aws/client.py`
-- ✅ `scripts/cvat/terraform.py` → `mlcloud/backends/terraform.py`
+- ✅ `terraform/main.tf` → `pocket-architect/providers/aws/terraform/cvat/main.tf`
+- ✅ `scripts/cvat/aws.py` → `pocket-architect/providers/aws/client.py`
+- ✅ `scripts/cvat/terraform.py` → `pocket-architect/backends/terraform.py`
 - ✅ `scripts/cvat/config.py` → Can inform config system design
 
 **Cannot be reused (wrong approach):**
 - ❌ `scripts/cvat.py` (Click, not Typer)
 - ❌ `scripts/cvat/setup.py` (different workflow)
-- ❌ `scripts/cvat/checkpoint.py` (not in mlcloud spec)
+- ❌ `scripts/cvat/checkpoint.py` (not in pocket-architect spec)
 
 ---
 
@@ -352,8 +352,8 @@ aws-cvat-infrastructure/
 ## Key Decisions Needed
 
 1. **Project Location**: 
-   - Create new `mlcloud/` directory?
-   - Or transform current `aws-cvat-infrastructure/` into `mlcloud/`?
+   - Create new `pocket-architect/` directory?
+   - Or transform current `aws-cvat-infrastructure/` into `pocket-architect/`?
 
 2. **Migration Strategy**:
    - Start fresh with Phase 1?
@@ -361,14 +361,14 @@ aws-cvat-infrastructure/
 
 3. **AWS Provider**:
    - Adapt existing Terraform modules?
-   - Or rewrite to match mlcloud structure?
+   - Or rewrite to match pocket-architect structure?
 
 ---
 
 ## Recommendations
 
 1. **Start Fresh with Phase 1**
-   - Create new `mlcloud/` package structure
+   - Create new `pocket-architect/` package structure
    - Don't try to adapt existing Click-based code
    - Build Typer CLI from scratch
 
@@ -386,9 +386,9 @@ aws-cvat-infrastructure/
 
 ## Conclusion
 
-**Current State**: The mlcloud v1.0 project has **not been started**. The existing `aws-cvat-infrastructure` codebase is a separate project that can serve as reference material, particularly for the AWS provider implementation in Phase 4.
+**Current State**: The pocket-architect v1.0 project has **not been started**. The existing `aws-cvat-infrastructure` codebase is a separate project that can serve as reference material, particularly for the AWS provider implementation in Phase 4.
 
-**Next Action**: Begin Phase 1 - Foundation, creating the mlcloud package structure from scratch with Typer, Pydantic v2, and keyring utilities.
+**Next Action**: Begin Phase 1 - Foundation, creating the pocket-architect package structure from scratch with Typer, Pydantic v2, and keyring utilities.
 
 **Estimated Completion**: 8-10 weeks of full-time work for a senior developer.
 

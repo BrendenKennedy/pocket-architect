@@ -1,1 +1,1 @@
-"""Unit tests for mlcloud."""
+"""Unit tests for pocket_architect."""

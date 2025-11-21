@@ -1,6 +1,6 @@
 # Test Suite
 
-This directory contains tests for the **mlcloud CLI** (the new Typer-based CLI).
+This directory contains tests for the **pocket-architect CLI** (the new Typer-based CLI).
 
 ## Test Structure
 
@@ -26,7 +26,7 @@ pytest tests/unit/
 pytest tests/integration/
 
 # Run with coverage
-pytest --cov=mlcloud
+pytest --cov=pocket-architect
 
 # Run specific test file
 pytest tests/test_cli.py

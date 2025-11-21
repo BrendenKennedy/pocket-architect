@@ -1,4 +1,4 @@
-# mlcloud v1.0 Implementation Progress Tracker
+# pocket-architect v1.0 Implementation Progress Tracker
 
 **Last Updated**: 2024-12-19  
 **Project Status**: Planning Complete, Implementation Not Started
@@ -19,13 +19,13 @@
 
 ### Phase 1: Foundation (1-2 days)
 **Status**: ⏳ Not Started  
-**Target Deliverable**: `mlcloud --version` works, all commands show help text
+**Target Deliverable**: `pocket-architect --version` works, all commands show help text
 
 #### Tasks:
 - [ ] Project init with hatch + src layout
 - [ ] Typer + Rich skeleton CLI with --version, --provider global option
 - [ ] Pydantic v2 settings + keyring utils
-- [ ] `mlcloud --version` works
+- [ ] `pocket-architect --version` works
 
 **Notes**: 
 - Architecture guide completed (2024-12-19)
@@ -35,7 +35,7 @@
 
 ### Phase 2: Provider Abstraction (2-3 days)
 **Status**: ⏳ Not Started  
-**Target Deliverable**: `mlcloud cvat up --provider local` works end-to-end
+**Target Deliverable**: `pocket-architect cvat up --provider local` works end-to-end
 
 #### Tasks:
 - [ ] Create `providers/base.py` ABC with required methods
@@ -43,7 +43,7 @@
 - [ ] Implement `core/session.py` for unified session handling
 - [ ] Implement `core/state.py` for session persistence
 - [ ] Implement Local provider fully (docker-compose + nvidia)
-- [ ] Test: `mlcloud cvat up --provider local` works end-to-end
+- [ ] Test: `pocket-architect cvat up --provider local` works end-to-end
 
 **Dependencies**: Phase 1
 
@@ -68,7 +68,7 @@
 
 ### Phase 4: AWS Provider (4-5 days)
 **Status**: ⏳ Not Started  
-**Target Deliverable**: `mlcloud cvat up --provider aws` and `mlcloud auto-annotate --provider aws` work
+**Target Deliverable**: `pocket-architect cvat up --provider aws` and `pocket-architect auto-annotate --provider aws` work
 
 #### Tasks:
 - [ ] Create `providers/aws/client.py` wrapper
@@ -80,8 +80,8 @@
 - [ ] Implement auto-annotation worker provisioning
 - [ ] Implement training node provisioning
 - [ ] Create `providers/aws/blueprints.py` with templates
-- [ ] Test: `mlcloud cvat up --provider aws` works
-- [ ] Test: `mlcloud auto-annotate --provider aws` works
+- [ ] Test: `pocket-architect cvat up --provider aws` works
+- [ ] Test: `pocket-architect auto-annotate --provider aws` works
 
 **Dependencies**: Phase 3
 
@@ -121,7 +121,7 @@
 
 ### Phase 6: Model Registry & Inference (3 days)
 **Status**: ⏳ Not Started  
-**Target Deliverable**: `mlcloud auto-annotate <path>` works with all models
+**Target Deliverable**: `pocket-architect auto-annotate <path>` works with all models
 
 #### Tasks:
 - [ ] Create `models/registry.py` with hard-coded v1.0 model list:
@@ -131,7 +131,7 @@
   - [ ] Grounding DINO 1.5 + SAM 2
   - [ ] Detectron2 Mask R-CNN
 - [ ] Implement model metadata (size, download URLs, requirements)
-- [ ] Implement download cache in `~/.mlcloud/models/`
+- [ ] Implement download cache in `~/.pocket-architect/models/`
 - [ ] Create `models/inference.py` with unified InferenceEngine
 - [ ] Implement provider-specific inference backends:
   - [ ] Local: Docker container execution
@@ -145,7 +145,7 @@
   - [ ] Run inference
   - [ ] Format output (COCO, CVAT XML, etc.)
   - [ ] Show cost estimate
-- [ ] Test: `mlcloud auto-annotate <path>` works with all models
+- [ ] Test: `pocket-architect auto-annotate <path>` works with all models
 
 **Dependencies**: Phase 5
 
@@ -193,7 +193,7 @@
   - [ ] Reproducible builds configuration
   - [ ] Release signing process
 - [ ] Test: All commands show live $/hour + projected monthly cost
-- [ ] Test: `mlcloud destroy` leaves exactly $0.00 recurring charges
+- [ ] Test: `pocket-architect destroy` leaves exactly $0.00 recurring charges
 - [ ] Test: All infrastructure passes checkov --compact and tfsec
 - [ ] Test: CVAT defaults to HTTPS + random 32-char admin password in keyring
 - [ ] Test: Refuses to run with AdministratorAccess/root keys
@@ -244,12 +244,12 @@
 ## Requirements Checklist
 
 ### Core Commands (Exactly Six)
-- [ ] `mlcloud auto-annotate <path>` → fully automatic labeling
-- [ ] `mlcloud cvat up` → spin full CVAT instance
-- [ ] `mlcloud cvat sync` → bidirectional sync
-- [ ] `mlcloud train <config.yaml>` → launch training job
-- [ ] `mlcloud shell` → instant SSH/VSCode/JupyterLab
-- [ ] `mlcloud destroy` → guaranteed zero-cost teardown
+- [ ] `pocket-architect auto-annotate <path>` → fully automatic labeling
+- [ ] `pocket-architect cvat up` → spin full CVAT instance
+- [ ] `pocket-architect cvat sync` → bidirectional sync
+- [ ] `pocket-architect train <config.yaml>` → launch training job
+- [ ] `pocket-architect shell` → instant SSH/VSCode/JupyterLab
+- [ ] `pocket-architect destroy` → guaranteed zero-cost teardown
 
 ### Supported Providers (v1.0)
 - [ ] AWS (EC2 Spot + EFS) — full
@@ -265,11 +265,11 @@
 - [ ] Detectron2 Mask R-CNN (pretrained)
 
 ### Non-Functional Requirements
-- [ ] `pip install mlcloud` works with zero pre-installed CLIs
+- [ ] `pip install pocket-architect` works with zero pre-installed CLIs
 - [ ] First run triggers SSO/API-key flow automatically
 - [ ] Cold start < 3 min to first mask (CoreWeave/RunPod target)
 - [ ] Every command shows live $/hour + projected monthly cost
-- [ ] `mlcloud destroy` leaves exactly $0.00 recurring charges
+- [ ] `pocket-architect destroy` leaves exactly $0.00 recurring charges
 - [ ] All cloud credentials are sandboxed with least privilege
 - [ ] CVAT defaults to HTTPS + random 32-char admin password stored only in OS keyring
 - [ ] All infrastructure passes checkov --compact and tfsec (CI-enforced)
@@ -288,8 +288,8 @@
 
 ### Target Structure
 ```
-mlcloud/
-├── mlcloud/                      # src-layout package
+pocket-architect/
+├── pocket-architect/                      # src-layout package
 │   ├── __init__.py              [ ]
 │   ├── __main__.py              [ ]
 │   ├── cli.py                   [ ]

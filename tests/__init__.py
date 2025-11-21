@@ -1,2 +1,2 @@
-"""Test suite for mlcloud."""
+"""Test suite for pocket_architect."""
 

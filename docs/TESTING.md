@@ -1,6 +1,6 @@
 # Testing Guide
 
-This guide explains how to run the test suite for mlcloud.
+This guide explains how to run the test suite for pocket-architect.
 
 > **Note**: For detailed setup instructions and script documentation, see [TESTING_SETUP.md](TESTING_SETUP.md). This guide focuses on running tests during development.
 
@@ -26,7 +26,7 @@ make test
 pytest -x  # Stop on first failure
 
 # Tests with coverage
-pytest --cov=mlcloud --cov-report=html
+pytest --cov=pocket-architect --cov-report=html
 ```
 
 ## Test Structure
@@ -62,7 +62,7 @@ pytest -v
 
 #### Run with Coverage
 ```bash
-pytest --cov=mlcloud --cov-report=html
+pytest --cov=pocket-architect --cov-report=html
 ```
 
 #### Run Specific Test Category
@@ -108,7 +108,7 @@ pip install -e ".[dev]"
 pip install pytest-cov
 
 # Run with explicit coverage
-pytest --cov=mlcloud --cov-report=html
+pytest --cov=pocket-architect --cov-report=html
 ```
 
 ### Tests Hang or Timeout
@@ -127,7 +127,7 @@ Some tests use mocks and should be fast. If tests hang:
 
 2. **Check coverage regularly**
    ```bash
-   pytest --cov=mlcloud --cov-report=html
+   pytest --cov=pocket-architect --cov-report=html
    ```
 
 3. **Write tests for new code**

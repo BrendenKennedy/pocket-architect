@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains documentation for the mlcloud project.
+This directory contains documentation for the pocket-architect project.
 
 > **New to the docs?** Start with [DOCUMENTATION_GUIDE.md](DOCUMENTATION_GUIDE.md) to understand what each file is for.
 

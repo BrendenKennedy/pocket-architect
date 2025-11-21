@@ -6,8 +6,8 @@ import shutil
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from mlcloud.providers.local.client import LocalProvider
-from mlcloud.core.types import Provider
+from pocket_architect.providers.local.client import LocalProvider
+from pocket_architect.core.types import Provider
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def temp_session_dir(tmp_path):
 @pytest.fixture
 def local_provider(temp_session_dir, monkeypatch):
     """Create LocalProvider instance with mocked session directory."""
-    with patch('mlcloud.providers.local.client.SessionStore') as mock_store:
+    with patch('pocket_architect.providers.local.client.SessionStore') as mock_store:
         mock_store.return_value.get_session_dir.return_value = temp_session_dir
         provider = LocalProvider("test-session")
         provider.compose_file = temp_session_dir / "docker-compose.yml"
@@ -37,8 +37,8 @@ class TestLocalProviderSync:
         local_dir.mkdir()
         (local_dir / "test.txt").write_text("test content")
         
-        with patch('mlcloud.providers.local.client.docker_exec') as mock_exec, \
-             patch('mlcloud.providers.local.client.docker_compose_ps') as mock_ps, \
+        with patch('pocket_architect.providers.local.client.docker_exec') as mock_exec, \
+             patch('pocket_architect.providers.local.client.docker_compose_ps') as mock_ps, \
              patch('subprocess.run') as mock_run:
             
             mock_ps.return_value = [{"Service": "cvat", "Name": "test_cvat"}]
@@ -57,7 +57,7 @@ class TestLocalProviderSync:
         local_dir = tmp_path / "local_data"
         # Don't create directory - sync should create it
         
-        with patch('mlcloud.providers.local.client.docker_compose_ps') as mock_ps, \
+        with patch('pocket_architect.providers.local.client.docker_compose_ps') as mock_ps, \
              patch('subprocess.run') as mock_run:
             
             mock_ps.return_value = [{"Service": "cvat", "Name": "test_cvat"}]
@@ -75,8 +75,8 @@ class TestLocalProviderSync:
         local_dir.mkdir()
         (local_dir / "test.txt").write_text("test")
         
-        with patch('mlcloud.providers.local.client.docker_exec') as mock_exec, \
-             patch('mlcloud.providers.local.client.docker_compose_ps') as mock_ps, \
+        with patch('pocket_architect.providers.local.client.docker_exec') as mock_exec, \
+             patch('pocket_architect.providers.local.client.docker_compose_ps') as mock_ps, \
              patch('subprocess.run') as mock_run:
             
             mock_ps.return_value = [{"Service": "cvat", "Name": "test_cvat"}]
@@ -102,7 +102,7 @@ class TestLocalProviderShell:
     
     def test_shell_ssh_mode(self, local_provider):
         """Test SSH mode (docker exec)."""
-        with patch('mlcloud.providers.local.client.docker_compose_ps') as mock_ps, \
+        with patch('pocket_architect.providers.local.client.docker_compose_ps') as mock_ps, \
              patch('subprocess.run') as mock_run:
             
             mock_ps.return_value = [{"Service": "cvat", "Name": "test_cvat"}]
@@ -118,11 +118,11 @@ class TestLocalProviderShell:
     
     def test_shell_jupyter_mode(self, local_provider):
         """Test Jupyter mode."""
-        with patch('mlcloud.providers.local.client.docker_compose_ps') as mock_ps, \
-             patch('mlcloud.providers.local.client.docker_exec') as mock_exec, \
+        with patch('pocket_architect.providers.local.client.docker_compose_ps') as mock_ps, \
+             patch('pocket_architect.providers.local.client.docker_exec') as mock_exec, \
              patch('subprocess.run') as mock_run, \
              patch('json.loads') as mock_json, \
-             patch('mlcloud.providers.local.client.console.print') as mock_print:
+             patch('pocket_architect.providers.local.client.console.print') as mock_print:
             
             mock_ps.return_value = [{"Service": "cvat", "Name": "test_cvat"}]
             mock_exec.return_value = MagicMock(returncode=0, stdout="")
@@ -136,8 +136,8 @@ class TestLocalProviderShell:
     
     def test_shell_vscode_mode(self, local_provider):
         """Test VSCode mode provides instructions."""
-        from mlcloud.providers.local import client
-        with patch('mlcloud.providers.local.client.docker_compose_ps') as mock_ps, \
+        from pocket_architect.providers.local import client
+        with patch('pocket_architect.providers.local.client.docker_compose_ps') as mock_ps, \
              patch.object(client.console, 'print') as mock_print:
             mock_ps.return_value = [{"Service": "cvat", "Name": "test_cvat"}]
             
@@ -170,11 +170,11 @@ class TestLocalProviderProvision:
     
     def test_provision_cvat_creates_compose_file(self, local_provider, tmp_path):
         """Test that provision_cvat creates docker-compose.yml."""
-        with patch('mlcloud.providers.local.client.check_docker_available', return_value=True), \
-             patch('mlcloud.providers.local.client.check_docker_compose_available', return_value=True), \
-             patch('mlcloud.providers.local.client.check_nvidia_container_toolkit', return_value=False), \
-             patch('mlcloud.providers.local.client.docker_compose_up') as mock_up, \
-             patch('mlcloud.providers.local.client.docker_exec') as mock_exec:
+        with patch('pocket_architect.providers.local.client.check_docker_available', return_value=True), \
+             patch('pocket_architect.providers.local.client.check_docker_compose_available', return_value=True), \
+             patch('pocket_architect.providers.local.client.check_nvidia_container_toolkit', return_value=False), \
+             patch('pocket_architect.providers.local.client.docker_compose_up') as mock_up, \
+             patch('pocket_architect.providers.local.client.docker_exec') as mock_exec:
             
             mock_up.return_value = MagicMock(returncode=0)
             mock_exec.return_value = MagicMock(returncode=0)

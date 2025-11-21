@@ -4,16 +4,16 @@ import pytest
 from unittest.mock import patch, MagicMock, Mock
 from pathlib import Path
 
-from mlcloud.providers.aws.client import AWSProvider
-from mlcloud.core.types import Provider
+from pocket_architect.providers.aws.client import AWSProvider
+from pocket_architect.core.types import Provider
 
 
 @pytest.fixture
 def mock_aws_provider(tmp_path, monkeypatch):
     """Create AWSProvider instance with mocked dependencies."""
-    with patch('mlcloud.providers.aws.client.boto3') as mock_boto3, \
-         patch('mlcloud.providers.aws.client.check_first_run', return_value=False), \
-         patch('mlcloud.providers.aws.client.AWSBlueprint') as mock_blueprint:
+    with patch('pocket_architect.providers.aws.client.boto3') as mock_boto3, \
+         patch('pocket_architect.providers.aws.client.check_first_run', return_value=False), \
+         patch('pocket_architect.providers.aws.client.AWSBlueprint') as mock_blueprint:
         
         # Mock boto3 session
         mock_session = MagicMock()
@@ -48,7 +48,7 @@ class TestAWSProviderSync:
         state_file = module_dir / "terraform.tfstate"
         state_file.touch()  # Create empty file so exists() returns True
         
-        with patch('mlcloud.providers.aws.client.TerraformBackend') as mock_tf, \
+        with patch('pocket_architect.providers.aws.client.TerraformBackend') as mock_tf, \
              patch('shutil.which', return_value=True), \
              patch('subprocess.run') as mock_run:
             
@@ -83,7 +83,7 @@ class TestAWSProviderSync:
         state_file = module_dir / "terraform.tfstate"
         state_file.touch()  # Create empty file so exists() returns True
         
-        with patch('mlcloud.providers.aws.client.TerraformBackend') as mock_tf:
+        with patch('pocket_architect.providers.aws.client.TerraformBackend') as mock_tf:
             mock_tf_instance = MagicMock()
             mock_tf_instance.output.return_value = {
                 "instance_id": {"value": "i-123"},
@@ -111,7 +111,7 @@ class TestAWSProviderShell:
         state_file = module_dir / "terraform.tfstate"
         state_file.touch()
         
-        with patch('mlcloud.providers.aws.client.TerraformBackend') as mock_tf, \
+        with patch('pocket_architect.providers.aws.client.TerraformBackend') as mock_tf, \
              patch('subprocess.run') as mock_run:
             
             mock_tf_instance = MagicMock()
@@ -142,7 +142,7 @@ class TestAWSProviderShell:
         state_file = module_dir / "terraform.tfstate"
         state_file.touch()
         
-        with patch('mlcloud.providers.aws.client.TerraformBackend') as mock_tf, \
+        with patch('pocket_architect.providers.aws.client.TerraformBackend') as mock_tf, \
              patch('subprocess.run') as mock_run:
             
             mock_tf_instance = MagicMock()
@@ -177,7 +177,7 @@ class TestAWSProviderTraining:
         state_file = module_dir / "terraform.tfstate"
         state_file.touch()
         
-        with patch('mlcloud.providers.aws.client.TerraformBackend') as mock_tf, \
+        with patch('pocket_architect.providers.aws.client.TerraformBackend') as mock_tf, \
              patch('subprocess.run') as mock_run, \
              patch('tempfile.NamedTemporaryFile') as mock_temp, \
              patch('pathlib.Path.unlink') as mock_unlink:
@@ -211,7 +211,7 @@ class TestAWSProviderTraining:
         module_dir = mock_aws_provider.blueprint.terraform_dir / "training"
         module_dir.mkdir(parents=True)
         
-        with patch('mlcloud.providers.aws.client.TerraformBackend') as mock_tf, \
+        with patch('pocket_architect.providers.aws.client.TerraformBackend') as mock_tf, \
              patch.object(mock_aws_provider, '_find_ssh_key', return_value=Path("/tmp/test-key.pem")), \
              patch('subprocess.run') as mock_run:
             
@@ -237,7 +237,7 @@ class TestAWSProviderCost:
     
     def test_cost_estimate_uses_cost_estimator(self, mock_aws_provider):
         """Test that cost estimate uses CostEstimator."""
-        with patch('mlcloud.providers.aws.client.CostEstimator') as mock_estimator_class:
+        with patch('pocket_architect.providers.aws.client.CostEstimator') as mock_estimator_class:
             mock_cost = MagicMock()
             mock_cost.hourly_rate_usd = 0.5
             mock_cost.monthly_projection_usd = 365.0

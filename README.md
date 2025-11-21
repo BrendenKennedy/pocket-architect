@@ -1,18 +1,18 @@
-# mlcloud
+# pocket-architect
 
 A zero-install, platform-agnostic Python CLI that turns any laptop into an on-demand GPU computer-vision workstation with zero vendor lock-in.
 
 ## Installation
 
 ```bash
-pip install mlcloud
+pip install pocket-architect
 ```
 
 Or install from source:
 
 ```bash
 git clone <repository-url>
-cd mlcloud
+cd pocket-architect
 pip install -e .
 ```
 
@@ -22,90 +22,90 @@ pip install -e .
 
 **1. Interactive Wizard (Recommended for first-time users)**
 ```bash
-mlcloud cvat up --wizard
+pocket-architect cvat up --wizard
 # Follow the prompts to configure your deployment
 ```
 
 **2. Blueprint File (Best for repeatable deployments)**
 ```bash
 # Create a blueprint
-mlcloud blueprint create aws --type cvat --output my-config.yaml
+pocket-architect blueprint create aws --type cvat --output my-config.yaml
 
 # Use the blueprint
-mlcloud cvat up --blueprint my-config.yaml
+pocket-architect cvat up --blueprint my-config.yaml
 ```
 
 **3. CLI Flags (Quick one-off deployments)**
 ```bash
-mlcloud cvat up --provider aws --subnet-id subnet-xxx --ssh-key-name my-key
+pocket-architect cvat up --provider aws --subnet-id subnet-xxx --ssh-key-name my-key
 ```
 
 ### Basic Usage
 
 ```bash
 # Show version
-mlcloud --version
+pocket-architect --version
 
 # Deploy CVAT locally (requires Docker)
-mlcloud cvat up --provider local
+pocket-architect cvat up --provider local
 
 # Deploy CVAT on AWS with wizard
-mlcloud cvat up --provider aws --wizard
+pocket-architect cvat up --provider aws --wizard
 
 # Auto-annotate images
-mlcloud auto-annotate ./images --model sam2
+pocket-architect auto-annotate ./images --model sam2
 
 # List active sessions
-mlcloud list sessions
+pocket-architect list sessions
 
 # Check session status
-mlcloud status
+pocket-architect status
 
 # Get shell access
-mlcloud shell --provider local
+pocket-architect shell --provider local
 
 # Sync files with CVAT
-mlcloud cvat sync --direction both
+pocket-architect cvat sync --direction both
 
 # Destroy resources
-mlcloud destroy --provider local
+pocket-architect destroy --provider local
 ```
 
 ## Commands
 
 ### Core Commands
 
-- `mlcloud auto-annotate <path>` - Fully automatic labeling (images or video frames)
+- `pocket-architect auto-annotate <path>` - Fully automatic labeling (images or video frames)
   - Supports images, video files, and directories
   - Models: sam2, yolo11-seg, yolo11-obb, grounding-dino, detectron2
   - Outputs CVAT-compatible JSON annotations
 
-- `mlcloud cvat up` - Spin up full CVAT instance with optional pre-annotation + HTTPS
+- `pocket-architect cvat up` - Spin up full CVAT instance with optional pre-annotation + HTTPS
   - Local: Docker Compose deployment
   - AWS: EC2 Spot + EFS + ALB with HTTPS
   - Auto-generates secure admin password stored in keyring
 
-- `mlcloud cvat sync` - Bidirectional sync with running CVAT
+- `pocket-architect cvat sync` - Bidirectional sync with running CVAT
   - Sync direction: up, down, or both
   - Uses EFS (AWS) or Docker volumes (Local)
 
-- `mlcloud cvat down` - Stop CVAT instance (preserves data)
+- `pocket-architect cvat down` - Stop CVAT instance (preserves data)
 
-- `mlcloud train <config.yaml>` - Launch YOLO/SAM/Detectron2 training job
+- `pocket-architect train <config.yaml>` - Launch YOLO/SAM/Detectron2 training job
   - Provisions GPU instance for training
   - Supports YAML configuration files
 
-- `mlcloud shell` - Instant SSH or VSCode Remote / JupyterLab into the GPU node
+- `pocket-architect shell` - Instant SSH or VSCode Remote / JupyterLab into the GPU node
   - Modes: ssh, vscode, jupyter
 
-- `mlcloud destroy` - Guaranteed zero-cost teardown
+- `pocket-architect destroy` - Guaranteed zero-cost teardown
   - Removes all resources with tag-based cleanup
   - Verifies zero recurring charges
 
 ### Utility Commands
 
-- `mlcloud list sessions` - List all active sessions
-- `mlcloud status` - Show current session status and resource information
+- `pocket-architect list sessions` - List all active sessions
+- `pocket-architect status` - Show current session status and resource information
 
 ## Providers
 
@@ -161,10 +161,10 @@ Local provider: **$0.00/hour**
 
 ## State Management
 
-All state is stored in `~/.mlcloud/`:
-- **Sessions**: `~/.mlcloud/sessions/<session-id>/`
+All state is stored in `~/.pocket-architect/`:
+- **Sessions**: `~/.pocket-architect/sessions/<session-id>/`
   - Session metadata and Terraform state
-- **Models**: `~/.mlcloud/models/`
+- **Models**: `~/.pocket-architect/models/`
   - Cached model weights and checkpoints
 - **Credentials**: OS keyring (never stored in files)
   - CVAT passwords
@@ -175,7 +175,7 @@ All state is stored in `~/.mlcloud/`:
 Settings can be configured via:
 - Environment variables (prefix: `MLCLOUD_`)
 - `.env` file
-- Defaults in `mlcloud/config/settings.py`
+- Defaults in `pocket-architect/config/settings.py`
 
 Key settings:
 - `MLCLOUD_DEFAULT_PROVIDER` - Default cloud provider
@@ -188,23 +188,23 @@ Key settings:
 
 **Option 1: Interactive Wizard (Easiest)**
 ```bash
-mlcloud cvat up --provider aws --wizard
+pocket-architect cvat up --provider aws --wizard
 # Guides you through all configuration options
 ```
 
 **Option 2: Blueprint File (Most Flexible)**
 ```bash
 # Create blueprint interactively
-mlcloud blueprint create aws --type cvat --output my-cvat.yaml
+pocket-architect blueprint create aws --type cvat --output my-cvat.yaml
 
 # Edit the blueprint file if needed
 # Then use it
-mlcloud cvat up --blueprint my-cvat.yaml
+pocket-architect cvat up --blueprint my-cvat.yaml
 ```
 
 **Option 3: CLI Flags (Quick Setup)**
 ```bash
-mlcloud cvat up \
+pocket-architect cvat up \
   --provider aws \
   --subnet-id subnet-0123456789abcdef0 \
   --ssh-key-name my-key \
@@ -215,20 +215,20 @@ mlcloud cvat up \
 **Using Existing Terraform Files**
 ```bash
 # If you have existing terraform.tfvars
-mlcloud cvat up --blueprint terraform.tfvars
+pocket-architect cvat up --blueprint terraform.tfvars
 ```
 
 ### Auto-annotate Images
 
 ```bash
 # Single image
-mlcloud auto-annotate image.jpg --model sam2
+pocket-architect auto-annotate image.jpg --model sam2
 
 # Directory of images
-mlcloud auto-annotate ./dataset/images --model yolo11-seg
+pocket-architect auto-annotate ./dataset/images --model yolo11-seg
 
 # Video file (extracts frames automatically)
-mlcloud auto-annotate video.mp4 --model detectron2 --output ./annotations
+pocket-architect auto-annotate video.mp4 --model detectron2 --output ./annotations
 ```
 
 ### Training Job
@@ -244,7 +244,7 @@ batch_size: 16
 EOF
 
 # Launch training
-mlcloud train train-config.yaml --provider aws
+pocket-architect train train-config.yaml --provider aws
 ```
 
 ## Development
@@ -257,19 +257,19 @@ pip install -e ".[dev]"
 pytest
 
 # Run CLI
-python -m mlcloud --help
+python -m pocket-architect --help
 
 # Check code quality
-black mlcloud/
-ruff check mlcloud/
-mypy mlcloud/
+black pocket-architect/
+ruff check pocket-architect/
+mypy pocket-architect/
 ```
 
 ## Architecture
 
 ```
-mlcloud/
-├── mlcloud/
+pocket-architect/
+├── pocket-architect/
 │   ├── cli.py              # Typer CLI entrypoint
 │   ├── commands/           # Command implementations
 │   ├── core/               # Types, session, state, cost

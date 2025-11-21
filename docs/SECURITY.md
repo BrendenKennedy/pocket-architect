@@ -1,6 +1,6 @@
 # Security Documentation
 
-This document provides comprehensive security information for mlcloud, including security checklist, quick start guide, and best practices.
+This document provides comprehensive security information for pocket-architect, including security checklist, quick start guide, and best practices.
 
 ## Quick Start
 
@@ -84,13 +84,13 @@ except SecurityError as e:
 
 #### 1. Credential Management
 - [ ] **CRITICAL**: Validate that AWS credentials have least-privilege permissions
-  - **Location**: `mlcloud/providers/aws/client.py`
+  - **Location**: `pocket-architect/providers/aws/client.py`
   - **Issue**: Code should check if credentials have `AdministratorAccess` or overly broad permissions
   - **Risk**: Accidental privilege escalation, unauthorized resource access
   - **Recommendation**: Add credential validation to refuse `AdministratorAccess` and validate IAM permissions
 
 - [ ] **CRITICAL**: Terraform state files may contain sensitive data
-  - **Location**: `~/.mlcloud/sessions/*/terraform.tfstate`
+  - **Location**: `~/.pocket-architect/sessions/*/terraform.tfstate`
   - **Issue**: State files contain resource IDs, IPs, and potentially sensitive configuration
   - **Risk**: State file exposure could leak infrastructure details
   - **Recommendation**: 
@@ -152,8 +152,8 @@ except SecurityError as e:
 ### Pattern 1: Setup with Validation
 
 ```python
-from mlcloud.providers.aws.client import SecureAWSClients
-from mlcloud.utils.validation import InputValidator
+from pocket-architect.providers.aws.client import SecureAWSClients
+from pocket-architect.utils.validation import InputValidator
 from rich.prompt import Prompt
 
 # Get and validate subnet ID
@@ -173,7 +173,7 @@ with SecureAWSClients(region="us-east-2") as aws:
 ### Pattern 2: Secure File Operations
 
 ```python
-from mlcloud.utils.validation import InputValidator
+from pocket-architect.utils.validation import InputValidator
 from pathlib import Path
 
 # User provides path
@@ -193,7 +193,7 @@ except SecurityError as e:
 ### Pattern 3: Secure Subprocess Calls
 
 ```python
-from mlcloud.utils.validation import InputValidator
+from pocket-architect.utils.validation import InputValidator
 import subprocess
 
 # User input
@@ -209,9 +209,9 @@ subprocess.run(["aws", "ec2", "describe-subnets", "--subnet-ids", safe_arg])
 ## Error Handling
 
 ```python
-from mlcloud.providers.aws.client import SecureAWSClients
-from mlcloud.utils.errors import SecurityError
-from mlcloud.utils.validation import InputValidator
+from pocket-architect.providers.aws.client import SecureAWSClients
+from pocket-architect.utils.errors import SecurityError
+from pocket-architect.utils.validation import InputValidator
 
 try:
     with SecureAWSClients(region="us-east-2") as aws:

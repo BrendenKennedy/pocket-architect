@@ -1,4 +1,4 @@
-# mlcloud v1.0 Implementation Status Review
+# pocket-architect v1.0 Implementation Status Review
 
 **Date**: 2024-12-21  
 **Review**: Comprehensive status check against PLAN.md
@@ -20,20 +20,20 @@ The project has a solid foundation with the correct structure, but many core fea
 **Status**: ✅ Fully implemented
 
 **Completed:**
-- ✅ Package structure with src-layout (`mlcloud/` directory)
+- ✅ Package structure with src-layout (`pocket-architect/` directory)
 - ✅ Hatch build system (`pyproject.toml`)
 - ✅ Typer CLI framework (replaced Click)
 - ✅ Pydantic v2 settings management
 - ✅ Keyring utilities for credential storage
-- ✅ `mlcloud --version` works
+- ✅ `pocket-architect --version` works
 - ✅ All 6 core commands + 2 utility commands registered
 - ✅ Rich UI utilities
 
 **Evidence:**
-- `mlcloud/cli.py` - Typer app with all commands
-- `mlcloud/config/settings.py` - Pydantic v2 settings
-- `mlcloud/utils/keyring.py` - OS keyring integration
-- Tests pass: `mlcloud --version` works
+- `pocket-architect/cli.py` - Typer app with all commands
+- `pocket-architect/config/settings.py` - Pydantic v2 settings
+- `pocket-architect/utils/keyring.py` - OS keyring integration
+- Tests pass: `pocket-architect --version` works
 
 ---
 
@@ -53,9 +53,9 @@ The project has a solid foundation with the correct structure, but many core fea
 - ⚠️ Some provider methods have NotImplementedError (see below)
 
 **Evidence:**
-- `mlcloud/providers/base.py` - Complete ABC
-- `mlcloud/providers/local/client.py` - Full implementation
-- `mlcloud/core/session.py` - Session management working
+- `pocket-architect/providers/base.py` - Complete ABC
+- `pocket-architect/providers/local/client.py` - Full implementation
+- `pocket-architect/core/session.py` - Session management working
 - Tests: Local provider tests pass
 
 ---
@@ -78,9 +78,9 @@ The project has a solid foundation with the correct structure, but many core fea
 - ⚠️ Automatic least-privilege role creation (templates exist, auto-creation incomplete)
 
 **Evidence:**
-- `mlcloud/security/sandbox.py` - CredentialValidator implemented
-- `mlcloud/utils/keyring.py` - Keyring storage working
-- `mlcloud/security/aws_roles.py` - IAM role templates exist
+- `pocket-architect/security/sandbox.py` - CredentialValidator implemented
+- `pocket-architect/utils/keyring.py` - Keyring storage working
+- `pocket-architect/security/aws_roles.py` - IAM role templates exist
 
 ---
 
@@ -105,8 +105,8 @@ The project has a solid foundation with the correct structure, but many core fea
 - ❌ End-to-end testing with real AWS
 
 **Evidence:**
-- `mlcloud/providers/aws/client.py:261` - `sync()` raises NotImplementedError
-- `mlcloud/providers/aws/client.py:295` - Jupyter mode not implemented
+- `pocket-architect/providers/aws/client.py:261` - `sync()` raises NotImplementedError
+- `pocket-architect/providers/aws/client.py:295` - Jupyter mode not implemented
 - Terraform modules exist but need integration testing
 
 ---
@@ -131,8 +131,8 @@ The project has a solid foundation with the correct structure, but many core fea
 - ❌ Network volume mounts (RunPod)
 
 **Evidence:**
-- `mlcloud/providers/coreweave/client.py` - All methods are NotImplementedError
-- `mlcloud/providers/runpod/client.py` - All methods are NotImplementedError
+- `pocket-architect/providers/coreweave/client.py` - All methods are NotImplementedError
+- `pocket-architect/providers/runpod/client.py` - All methods are NotImplementedError
 
 ---
 
@@ -156,8 +156,8 @@ The project has a solid foundation with the correct structure, but many core fea
 - ❌ No actual inference execution
 
 **Evidence:**
-- `mlcloud/models/adapters/sam2.py:27` - Returns `None` (placeholder)
-- `mlcloud/models/adapters/sam2.py:41` - Returns empty masks (placeholder)
+- `pocket-architect/models/adapters/sam2.py:27` - Returns `None` (placeholder)
+- `pocket-architect/models/adapters/sam2.py:41` - Returns empty masks (placeholder)
 - All adapters follow same pattern - structure exists but no real implementation
 
 ---
@@ -185,37 +185,37 @@ The project has a solid foundation with the correct structure, but many core fea
 - ❌ CI/CD security checks (workflows exist but may not be fully configured)
 
 **Evidence:**
-- `mlcloud/commands/train.py:28` - Has `pass` placeholder
-- `mlcloud/commands/shell.py:24` - Has `pass` placeholder
-- `mlcloud/commands/cvat.py:45` - Has `pass` placeholder
+- `pocket-architect/commands/train.py:28` - Has `pass` placeholder
+- `pocket-architect/commands/shell.py:24` - Has `pass` placeholder
+- `pocket-architect/commands/cvat.py:45` - Has `pass` placeholder
 - Multiple `NotImplementedError` in provider sync/shell methods
 
 ---
 
 ## Core Commands Status
 
-### 1. `mlcloud auto-annotate <path>` ⚠️ **PARTIAL (40%)**
+### 1. `pocket-architect auto-annotate <path>` ⚠️ **PARTIAL (40%)**
 - ✅ Command structure exists
 - ✅ Model registry exists
 - ✅ Image/video detection
 - ❌ Model adapters are placeholders (no actual inference)
 - ❌ No provider-specific inference backends
 
-### 2. `mlcloud cvat up` ⚠️ **PARTIAL (70%)**
+### 2. `pocket-architect cvat up` ⚠️ **PARTIAL (70%)**
 - ✅ Command structure exists
 - ✅ Local provider fully works
 - ✅ AWS provider structure exists (Terraform modules ready)
 - ⚠️ AWS provider needs integration testing
 - ❌ CoreWeave/RunPod providers not implemented
 
-### 3. `mlcloud cvat sync` ❌ **NOT IMPLEMENTED (10%)**
+### 3. `pocket-architect cvat sync` ❌ **NOT IMPLEMENTED (10%)**
 - ✅ Command structure exists
 - ❌ All providers raise NotImplementedError
 - ❌ No EFS mount/sync logic
 - ❌ No SSH/SSM integration
 - ❌ No rclone integration
 
-### 4. `mlcloud train <config.yaml>` ⚠️ **PARTIAL (30%)**
+### 4. `pocket-architect train <config.yaml>` ⚠️ **PARTIAL (30%)**
 - ✅ Command structure exists
 - ✅ Config parsing
 - ✅ Cost estimation
@@ -224,14 +224,14 @@ The project has a solid foundation with the correct structure, but many core fea
 - ❌ Progress monitoring not implemented
 - ❌ Log streaming not implemented
 
-### 5. `mlcloud shell` ⚠️ **PARTIAL (40%)**
+### 5. `pocket-architect shell` ⚠️ **PARTIAL (40%)**
 - ✅ Command structure exists
 - ✅ SSH mode structure exists
 - ❌ Jupyter mode not implemented (all providers)
 - ❌ VSCode Remote mode not implemented
 - ❌ Connection setup incomplete
 
-### 6. `mlcloud destroy` ⚠️ **PARTIAL (60%)**
+### 6. `pocket-architect destroy` ⚠️ **PARTIAL (60%)**
 - ✅ Command structure exists
 - ✅ Local provider destroy works
 - ✅ AWS provider destroy structure exists
@@ -319,7 +319,7 @@ The project has a solid foundation with the correct structure, but many core fea
 
 | Requirement | Status | Notes |
 |-------------|--------|-------|
-| `pip install mlcloud` works | ✅ | Package installable |
+| `pip install pocket-architect` works | ✅ | Package installable |
 | Zero pre-installed CLIs | ⚠️ | Terraform still required |
 | First run triggers SSO | ✅ | SSO flow implemented |
 | Cold start < 3 min | ❌ | Not testable (models not implemented) |

@@ -1,6 +1,6 @@
-# mlcloud CLI Examples
+# pocket-architect CLI Examples
 
-This document demonstrates how to use the `mlcloud` CLI for various computer vision workflows.
+This document demonstrates how to use the `pocket-architect` CLI for various computer vision workflows.
 
 ## Table of Contents
 
@@ -14,25 +14,25 @@ This document demonstrates how to use the `mlcloud` CLI for various computer vis
 
 ## Quick Start
 
-### Install mlcloud
+### Install pocket-architect
 
 ```bash
-pip install mlcloud
+pip install pocket-architect
 ```
 
 Or install from source:
 
 ```bash
 git clone <repository-url>
-cd mlcloud
+cd pocket-architect
 pip install -e ".[dev]"
 ```
 
 ### Check Installation
 
 ```bash
-mlcloud --version
-mlcloud --help
+pocket-architect --version
+pocket-architect --help
 ```
 
 ## Local Development
@@ -41,10 +41,10 @@ mlcloud --help
 
 ```bash
 # Start CVAT with Docker Compose
-mlcloud cvat up --provider local
+pocket-architect cvat up --provider local
 
 # Check status
-mlcloud status
+pocket-architect status
 
 # Access CVAT at http://localhost:8080
 ```
@@ -53,33 +53,33 @@ mlcloud status
 
 ```bash
 # Upload images to CVAT
-mlcloud cvat sync ./my-images --direction up
+pocket-architect cvat sync ./my-images --direction up
 
 # Download annotations from CVAT
-mlcloud cvat sync ./annotations --direction down
+pocket-architect cvat sync ./annotations --direction down
 
 # Bidirectional sync (default)
-mlcloud cvat sync ./data
+pocket-architect cvat sync ./data
 ```
 
 ### Shell Access to Local Container
 
 ```bash
 # SSH into container
-mlcloud shell --provider local --mode ssh
+pocket-architect shell --provider local --mode ssh
 
 # Launch JupyterLab in container
-mlcloud shell --provider local --mode jupyter
+pocket-architect shell --provider local --mode jupyter
 # Access at http://localhost:8888
 
 # Get VSCode Remote-Containers instructions
-mlcloud shell --provider local --mode vscode
+pocket-architect shell --provider local --mode vscode
 ```
 
 ### Stop Local CVAT
 
 ```bash
-mlcloud destroy --provider local
+pocket-architect destroy --provider local
 ```
 
 ## AWS Deployment
@@ -88,7 +88,7 @@ mlcloud destroy --provider local
 
 ```bash
 # Guided setup for first-time users
-mlcloud cvat up --provider aws --wizard
+pocket-architect cvat up --provider aws --wizard
 
 # The wizard will prompt for:
 # - AWS region
@@ -103,19 +103,19 @@ mlcloud cvat up --provider aws --wizard
 
 ```bash
 # Create a blueprint
-mlcloud blueprint create aws --type cvat --output my-cvat.yaml
+pocket-architect blueprint create aws --type cvat --output my-cvat.yaml
 
 # Edit the blueprint file if needed
 cat my-cvat.yaml
 
 # Deploy using blueprint
-mlcloud cvat up --blueprint my-cvat.yaml
+pocket-architect cvat up --blueprint my-cvat.yaml
 ```
 
 ### CLI Flags (Quick Setup)
 
 ```bash
-mlcloud cvat up \
+pocket-architect cvat up \
   --provider aws \
   --subnet-id subnet-0123456789abcdef0 \
   --ssh-key-name my-key \
@@ -127,10 +127,10 @@ mlcloud cvat up \
 
 ```bash
 # List all sessions
-mlcloud list sessions
+pocket-architect list sessions
 
 # Check specific session
-mlcloud status --provider aws
+pocket-architect status --provider aws
 ```
 
 ## File Synchronization
@@ -139,13 +139,13 @@ mlcloud status --provider aws
 
 ```bash
 # Upload dataset to CVAT
-mlcloud cvat sync ./dataset --provider aws --direction up
+pocket-architect cvat sync ./dataset --provider aws --direction up
 
 # Download annotations
-mlcloud cvat sync ./annotations --provider aws --direction down
+pocket-architect cvat sync ./annotations --provider aws --direction down
 
 # Bidirectional sync (default)
-mlcloud cvat sync ./data --provider aws
+pocket-architect cvat sync ./data --provider aws
 ```
 
 The sync command uses:
@@ -158,7 +158,7 @@ The sync command uses:
 
 ```bash
 # Connect via SSH
-mlcloud shell --provider aws --mode ssh
+pocket-architect shell --provider aws --mode ssh
 
 # Uses SSM Session Manager if available, falls back to SSH
 ```
@@ -167,7 +167,7 @@ mlcloud shell --provider aws --mode ssh
 
 ```bash
 # Launch JupyterLab on AWS instance
-mlcloud shell --provider aws --mode jupyter
+pocket-architect shell --provider aws --mode jupyter
 
 # Output:
 # ✓ JupyterLab started
@@ -179,7 +179,7 @@ mlcloud shell --provider aws --mode jupyter
 
 ```bash
 # Get VSCode Remote SSH configuration
-mlcloud shell --provider aws --mode vscode
+pocket-architect shell --provider aws --mode vscode
 
 # Output includes SSH config to add to ~/.ssh/config
 ```
@@ -202,7 +202,7 @@ output_path: /mnt/efs/models
 
 ```bash
 # Deploy training node and start training
-mlcloud train train-config.yaml --provider aws
+pocket-architect train train-config.yaml --provider aws
 
 # Output:
 # ✓ Training node provisioned successfully!
@@ -215,10 +215,10 @@ mlcloud train train-config.yaml --provider aws
 
 ```bash
 # List active sessions
-mlcloud list sessions
+pocket-architect list sessions
 
 # Check training job status
-mlcloud status --provider aws
+pocket-architect status --provider aws
 ```
 
 ## Auto-Annotation
@@ -227,13 +227,13 @@ mlcloud status --provider aws
 
 ```bash
 # Single image
-mlcloud auto-annotate image.jpg --model sam2
+pocket-architect auto-annotate image.jpg --model sam2
 
 # Directory of images
-mlcloud auto-annotate ./dataset/images --model sam2 --output ./annotations
+pocket-architect auto-annotate ./dataset/images --model sam2 --output ./annotations
 
 # Video file (extracts frames automatically)
-mlcloud auto-annotate video.mp4 --model sam2 --output ./annotations
+pocket-architect auto-annotate video.mp4 --model sam2 --output ./annotations
 ```
 
 ### Available Models
@@ -248,7 +248,7 @@ mlcloud auto-annotate video.mp4 --model sam2 --output ./annotations
 
 ```bash
 # Annotate all images in directory
-mlcloud auto-annotate ./images \
+pocket-architect auto-annotate ./images \
   --model yolo11-seg \
   --output ./annotations \
   --format coco
@@ -261,7 +261,7 @@ mlcloud auto-annotate ./images \
 Every command displays cost estimates:
 
 ```bash
-mlcloud cvat up --provider aws --wizard
+pocket-architect cvat up --provider aws --wizard
 # Output includes:
 # Estimated cost: $0.1234/hour ($90.08/month)
 ```
@@ -270,7 +270,7 @@ mlcloud cvat up --provider aws --wizard
 
 ```bash
 # Destroy all resources for a provider
-mlcloud destroy --provider aws
+pocket-architect destroy --provider aws
 
 # Verify zero cost
 # Output:
@@ -312,14 +312,14 @@ export MLCLOUD_COST_WARNING_THRESHOLD_USD=10.0
 
 ### State Management
 
-All state is stored in `~/.mlcloud/`:
+All state is stored in `~/.pocket-architect/`:
 
 ```bash
 # View session state
-ls ~/.mlcloud/sessions/
+ls ~/.pocket-architect/sessions/
 
 # View cached models
-ls ~/.mlcloud/models/
+ls ~/.pocket-architect/models/
 
 # Credentials stored in OS keyring (never in files)
 ```
@@ -336,7 +336,7 @@ docker ps
 docker-compose --version
 
 # View CVAT logs
-docker-compose -f ~/.mlcloud/sessions/<session-id>/docker-compose.yml logs
+docker-compose -f ~/.pocket-architect/sessions/<session-id>/docker-compose.yml logs
 ```
 
 ### AWS Provider Issues
@@ -346,10 +346,10 @@ docker-compose -f ~/.mlcloud/sessions/<session-id>/docker-compose.yml logs
 aws sts get-caller-identity
 
 # Check Terraform state
-ls ~/.mlcloud/sessions/<session-id>/terraform/cvat/
+ls ~/.pocket-architect/sessions/<session-id>/terraform/cvat/
 
 # View Terraform outputs
-cd ~/.mlcloud/sessions/<session-id>/terraform/cvat
+cd ~/.pocket-architect/sessions/<session-id>/terraform/cvat
 terraform output
 ```
 

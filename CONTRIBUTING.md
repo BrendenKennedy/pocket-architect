@@ -1,6 +1,6 @@
-# Contributing to mlcloud
+# Contributing to pocket-architect
 
-Thank you for your interest in contributing to mlcloud!
+Thank you for your interest in contributing to pocket-architect!
 
 ## Development Setup
 
@@ -46,7 +46,7 @@ Thank you for your interest in contributing to mlcloud!
 
 - Follow the existing provider abstraction pattern
 - Use Pydantic models for data validation
-- Store all state in `~/.mlcloud/`
+- Store all state in `~/.pocket-architect/`
 - Use Rich for all user-facing output
 - Implement proper error handling with custom exceptions
 
