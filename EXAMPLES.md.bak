@@ -1,0 +1,561 @@
+# Pocket Architect - Testing Examples
+
+## Prerequisites
+
+1. Set up the conda environment:
+```bash
+# Option 1: Use environment.yml (recommended)
+conda env create -f environment.yml
+conda activate pocket-architect
+pip install -e .
+
+# Option 2: Manual setup
+conda create -n pocket-architect python=3.12 -y
+conda activate pocket-architect
+pip install -e .
+```
+
+2. Ensure AWS credentials are configured:
+```bash
+aws configure
+# OR set environment variables:
+# export AWS_ACCESS_KEY_ID=your_key
+# export AWS_SECRET_ACCESS_KEY=your_secret
+```
+
+## Example 1: Deploy a Basic Web Server
+
+Deploy a simple web server using the built-in `basic-web` blueprint:
+
+```bash
+pocket-architect deploy basic-web --project test-web-1
+```
+
+This will:
+- Create a VPC with CIDR 10.1.0.0/16
+- Launch a t3.large EC2 instance
+- Open ports 22 (SSH) and 8080 (web)
+- Allocate an Elastic IP
+- Output SSH and web access information
+
+**Expected output:**
+- SSH command: `ssh -i ~/.ssh/pa-test-web-1-key.pem ec2-user@<public-ip>`
+- Service URL: `http://<public-ip>:8080`
+
+## Example 2: Deploy with Interactive Mode
+
+Deploy with custom parameters:
+
+```bash
+pocket-architect deploy basic-web --project test-web-2 --interactive
+```
+
+You'll be prompted for:
+- Instance type (default: t3.large)
+- ACM Certificate ARN (if using ALB)
+
+## Example 3: Deploy Bare Metal Instance
+
+Deploy a minimal instance with just SSH access:
+
+```bash
+pocket-architect deploy bare-metal --project test-bare-1
+```
+
+This creates:
+- t3.medium instance
+- Only port 22 open
+- Elastic IP for access
+
+## Example 4: List All Projects
+
+Check what projects are deployed:
+
+```bash
+pocket-architect list
+```
+
+Shows a table with:
+- Project name
+- Blueprint used
+- Creation date
+- Current status (Running, Stopped, etc.)
+
+## Example 5: Create a Snapshot
+
+After setting up your instance, create a snapshot:
+
+```bash
+# First, SSH into your instance and set it up
+ssh -i ~/.ssh/pa-test-web-1-key.pem ec2-user@<public-ip>
+
+# Install nginx or your app, configure it, etc.
+# Then exit and create snapshot:
+
+pocket-architect snapshot create test-web-1 --name nginx-ready --note "Nginx installed and configured"
+```
+
+This will:
+- Create an EBS snapshot of the root volume
+- Create an AMI from the snapshot
+- Save metadata for later use
+- Take a few minutes to complete
+
+## Example 6: List Snapshots
+
+View all saved snapshots:
+
+```bash
+pocket-architect snapshot list
+```
+
+Shows:
+- Snapshot name
+- Snapshot ID
+- Source project
+- AMI ID (for deployment)
+- Creation date
+- Notes
+
+## Example 7: Deploy from Snapshot
+
+Deploy a new project using a saved snapshot:
+
+```bash
+pocket-architect deploy basic-web --project test-web-3 --snapshot nginx-ready
+```
+
+This will:
+- Find the snapshot and its cached AMI
+- Launch a new instance from that AMI
+- Your previous configuration will be preserved
+
+## Example 8: Create Custom Blueprint
+
+Create your own blueprint interactively:
+
+```bash
+pocket-architect blueprint create
+```
+
+Follow the prompts:
+- Blueprint name: `my-app`
+- Instance type: `t3.small`
+- Ports: `22,3000`
+- Use ALB? `no`
+- Use Elastic IP? `yes`
+- User data? (optional)
+
+The blueprint will be saved to `~/.pocket-architect/templates/my-app.yaml`
+
+## Example 9: List Blueprints
+
+See all available blueprints:
+
+```bash
+pocket-architect blueprint list
+```
+
+Shows built-in and user-created blueprints.
+
+## Example 10: Deploy Custom Blueprint
+
+Use your custom blueprint:
+
+```bash
+pocket-architect deploy my-app --project test-custom-1
+```
+
+## Example 11: Stop a Project (Pause Without Deleting)
+
+Stop a project's instance to save compute costs while keeping everything:
+
+```bash
+pocket-architect stop test-web-1
+```
+
+This will:
+- Stop the EC2 instance (saves compute costs)
+- Keep all resources (VPC, subnet, security groups, Elastic IP, etc.)
+- Keep project state and resource tracking
+- **Note**: You still pay for EBS storage and Elastic IP while stopped
+
+## Example 12: Start a Stopped Project
+
+Restart a stopped project:
+
+```bash
+pocket-architect start test-web-1
+```
+
+This will:
+- Start the stopped EC2 instance
+- Wait for it to be running
+- Show SSH and access information
+
+## Example 13: Tear Down a Project
+
+Remove a project and all its resources:
+
+```bash
+pocket-architect teardown test-web-1
+```
+
+You'll be prompted for confirmation. To skip confirmation:
+
+```bash
+pocket-architect teardown test-web-1 --force
+```
+
+This deletes:
+- EC2 instance
+- Elastic IP (if used)
+- ALB and target groups (if used)
+- Security groups
+- Subnets
+- VPC and internet gateway
+- Key pair (AWS and local .pem file)
+- Project state
+
+## Example 14: Delete a Snapshot
+
+Remove a snapshot and its AMI:
+
+```bash
+pocket-architect snapshot delete nginx-ready
+```
+
+This will:
+- Deregister the AMI
+- Delete the EBS snapshot
+- Remove from snapshot index
+
+## Example 15: Full Workflow
+
+Complete workflow from deployment to snapshot to redeploy:
+
+```bash
+# 1. Deploy initial project
+pocket-architect deploy basic-web --project my-app
+
+# 2. SSH in and set it up
+ssh -i ~/.ssh/pa-my-app-key.pem ec2-user@<public-ip>
+# ... install software, configure ...
+
+# 3. Create snapshot
+pocket-architect snapshot create my-app --name v1-stable
+
+# 4. Tear down original
+pocket-architect teardown my-app --force
+
+# 5. Deploy from snapshot later
+pocket-architect deploy basic-web --project my-app-v2 --snapshot v1-stable
+
+# 6. Clean up when done
+pocket-architect teardown my-app-v2 --force
+pocket-architect snapshot delete v1-stable
+```
+
+## Example 16: Using ALB with Certificate
+
+If you have an ACM certificate ARN, deploy with ALB:
+
+```bash
+# Get your certificate ARN first
+aws acm list-certificates --region us-east-1
+
+# Deploy with ALB (requires certificate ARN in interactive mode)
+pocket-architect deploy basic-web --project web-with-alb --interactive
+# When prompted, provide your certificate ARN
+```
+
+Or create a custom blueprint with ALB configured.
+
+## Example 17: Stop/Start Workflow
+
+Pause and resume projects to save costs:
+
+```bash
+# Deploy a project
+pocket-architect deploy basic-web --project my-app
+
+# Work on it, set it up...
+
+# Stop it when not in use (saves compute costs)
+pocket-architect stop my-app
+
+# Later, start it again
+pocket-architect start my-app
+
+# When done, tear it down completely
+pocket-architect teardown my-app --force
+```
+
+**Cost savings:**
+- Stopped instance: No compute charges, but you pay for:
+  - EBS storage (~$0.10/GB/month)
+  - Elastic IP (~$0.005/hour if not attached to running instance)
+  - ALB (if used, ~$0.0225/hour even when idle)
+
+**When to use stop vs teardown:**
+- Use `stop` when you'll resume work soon
+- Use `teardown` when you're completely done
+
+## Example 18: Verbose Logging
+
+See detailed AWS API calls:
+
+```bash
+pocket-architect deploy basic-web --project debug-test --verbose
+```
+
+## ML Architecture Examples
+
+### Example 19: Deploy GPU Training Instance
+
+Deploy a GPU instance for ML model training with Jupyter Lab:
+
+```bash
+pocket-architect deploy ml-training-gpu --project my-ml-training
+```
+
+This will:
+- Create a g4dn.xlarge instance (NVIDIA T4 GPU)
+- Auto-detect and use the latest Deep Learning AMI
+- Install PyTorch, TensorFlow, Jupyter Lab
+- Open ports 22 (SSH) and 8888 (Jupyter)
+- Allocate an Elastic IP
+
+**Expected output:**
+- SSH command: `ssh -i ~/.ssh/pa-my-ml-training-key.pem ec2-user@<public-ip>`
+- Jupyter Lab: `http://<public-ip>:8888`
+
+**Note:** GPU instances may not be available in all regions. Check availability with:
+```bash
+aws ec2 describe-instance-type-offerings --location-type region --filters "Name=instance-type,Values=g4dn.xlarge"
+```
+
+### Example 20: Deploy Multi-GPU Training Instance
+
+Deploy a multi-GPU instance for distributed training:
+
+```bash
+pocket-architect deploy ml-training-multi-gpu --project distributed-training
+```
+
+This creates:
+- g4dn.4xlarge instance (4x NVIDIA T4 GPUs)
+- Same ML stack as single GPU instance
+- Ready for distributed training with PyTorch DDP or TensorFlow MirroredStrategy
+
+**Cost note:** Multi-GPU instances are significantly more expensive (~$1.20/hour for g4dn.4xlarge). Use `stop` when not training.
+
+### Example 21: Deploy Model Serving API
+
+Deploy a model serving endpoint with ALB:
+
+```bash
+pocket-architect deploy ml-serving-api --project model-api
+```
+
+This will:
+- Create a t3.large instance
+- Install FastAPI and model serving framework
+- Create an ALB for load balancing
+- Open ports 22 (SSH) and 8000 (API)
+- API accessible via ALB DNS name
+
+**Expected output:**
+- ALB URL: `http://<alb-dns-name>`
+- Health check: `http://<alb-dns-name>/health`
+- API endpoint: `http://<alb-dns-name>/predict`
+
+**Next steps:**
+1. SSH into the instance
+2. Edit `~/model-serving/app.py` to load your model
+3. Restart the service: `sudo systemctl restart ml-serving`
+
+### Example 22: Deploy Jupyter Notebook Server
+
+Deploy a CPU-based Jupyter Lab server for experimentation:
+
+```bash
+pocket-architect deploy ml-jupyter-server --project my-notebooks
+```
+
+This creates:
+- t3.large instance (CPU-optimized)
+- Jupyter Lab pre-installed and configured
+- Accessible on port 8888
+
+**Access:**
+- Jupyter Lab: `http://<public-ip>:8888`
+- No password required (configured for development use)
+
+**Security note:** For production, modify the user_data script to add authentication.
+
+### Example 23: Deploy MLflow Tracking Server
+
+Deploy an MLflow server for experiment tracking:
+
+```bash
+pocket-architect deploy ml-mlflow-server --project mlflow-tracking
+```
+
+This will:
+- Create a t3.medium instance
+- Install and configure MLflow server
+- Open ports 22 (SSH) and 5000 (MLflow UI)
+- Start MLflow server automatically
+
+**Expected output:**
+- MLflow UI: `http://<public-ip>:5000`
+- Backend store: Local file system (`~/mlflow/mlruns`)
+- Artifact store: S3 (configure bucket in service file)
+
+**Configuration:**
+1. SSH into instance
+2. Edit `/etc/systemd/system/mlflow.service` to set your S3 bucket
+3. Restart: `sudo systemctl restart mlflow`
+
+**Using MLflow:**
+```python
+import mlflow
+mlflow.set_tracking_uri("http://<public-ip>:5000")
+mlflow.set_experiment("my-experiment")
+# Your training code here
+```
+
+### Example 24: Deploy Complete ML Pipeline
+
+Deploy a full ML environment with training, tracking, and serving:
+
+```bash
+pocket-architect deploy ml-pipeline-full --project complete-ml-stack
+```
+
+This creates:
+- g4dn.xlarge GPU instance
+- Jupyter Lab (port 8888)
+- MLflow server (port 5000)
+- Full ML frameworks (PyTorch, TensorFlow)
+- Serving framework (FastAPI)
+
+**Access points:**
+- Jupyter Lab: `http://<public-ip>:8888`
+- MLflow UI: `http://<public-ip>:5000`
+- SSH: `ssh -i ~/.ssh/pa-complete-ml-stack-key.pem ec2-user@<public-ip>`
+
+**Workflow:**
+1. Use Jupyter Lab to develop and train models
+2. Log experiments to MLflow
+3. Export trained models for serving
+4. Deploy models using the serving framework
+
+### Example 25: ML Training Workflow with Snapshots
+
+Complete ML training workflow with snapshot management:
+
+```bash
+# 1. Deploy GPU training instance
+pocket-architect deploy ml-training-gpu --project training-v1
+
+# 2. SSH in and train your model
+ssh -i ~/.ssh/pa-training-v1-key.pem ec2-user@<public-ip>
+# ... train model, save checkpoints ...
+
+# 3. Create snapshot with trained model
+pocket-architect snapshot create training-v1 --name model-v1-trained --note "ResNet50 trained on custom dataset"
+
+# 4. Stop instance to save costs
+pocket-architect stop training-v1
+
+# 5. Later, deploy from snapshot for inference
+pocket-architect deploy ml-serving-api --project inference-api --snapshot model-v1-trained
+```
+
+### Example 26: Cost Optimization for ML Training
+
+Save costs by stopping GPU instances when not in use:
+
+```bash
+# Deploy training instance
+pocket-architect deploy ml-training-gpu --project training
+
+# Train your model...
+# When done training, stop the instance
+pocket-architect stop training
+
+# Later, resume training
+pocket-architect start training
+
+# When completely done, tear down
+pocket-architect teardown training --force
+```
+
+**Cost comparison:**
+- g4dn.xlarge running: ~$0.50/hour
+- g4dn.xlarge stopped: ~$0.10/hour (EBS storage only)
+- Savings: ~80% when stopped
+
+### Example 27: Multi-Instance ML Setup
+
+Deploy separate instances for different ML tasks:
+
+```bash
+# Training instance
+pocket-architect deploy ml-training-gpu --project ml-training
+
+# Tracking server
+pocket-architect deploy ml-mlflow-server --project mlflow
+
+# Serving endpoint
+pocket-architect deploy ml-serving-api --project ml-api
+```
+
+This setup allows:
+- Independent scaling of each component
+- Training on GPU, serving on CPU (cost optimization)
+- Centralized experiment tracking
+
+**Connect them:**
+- Point training instance to MLflow server: `mlflow.set_tracking_uri("http://<mlflow-ip>:5000")`
+- Deploy models from training to serving instance
+
+## Troubleshooting
+
+### Check AWS Identity
+Every command verifies your AWS credentials and shows:
+```
+You are operating as: arn:aws:iam::123456789012:user/yourname
+All resources will be created in this account: 123456789012
+```
+
+### View Project State
+Project state is stored in:
+```
+~/.pocket-architect/projects/<project-name>/state.json
+```
+
+### View Snapshots Index
+```
+~/.pocket-architect/snapshots.json
+```
+
+### Common Issues
+
+1. **"AWS credentials not configured"**
+   - Run `aws configure` or set environment variables
+
+2. **"Project already exists"**
+   - Tear down the existing project first, or use a different name
+
+3. **"Snapshot not found"**
+   - List snapshots to see available names/IDs
+   - Use exact name or snapshot ID
+
+4. **Instance not accessible**
+   - Check security group rules
+   - Verify Elastic IP is associated
+   - Check instance status: `aws ec2 describe-instances`
+

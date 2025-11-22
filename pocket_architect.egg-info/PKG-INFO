@@ -1,3 +1,18 @@
+Metadata-Version: 2.4
+Name: pocket-architect
+Version: 0.1.0
+Summary: Personal, isolated, cost-effective cloud environment CLI
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: boto3>=1.35.0
+Requires-Dist: typer>=0.12.0
+Requires-Dist: pydantic>=2.9.0
+Requires-Dist: rich>=13.7.0
+Requires-Dist: pyyaml>=6.0.1
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: localstack>=2.0.0; extra == "dev"
+
 # Pocket Architect
 
 Personal, isolated, cost-effective cloud environment CLI for AWS.
@@ -65,48 +80,23 @@ export AWS_SECRET_ACCESS_KEY=your_secret
 
 Deploy a built-in blueprint:
 ```bash
-pocket-architect deploy basic-web my-web-app
+pocket-architect deploy basic-web --project my-web-app
 ```
 
 Deploy from a snapshot:
 ```bash
-pocket-architect deploy basic-web my-app --snapshot stable-nginx
-```
-
-Deploy with cost limit:
-```bash
-pocket-architect deploy ml-training-gpu training --cost-limit 100.0 --cost-action stop
+pocket-architect deploy basic-web --project my-app --snapshot stable-nginx
 ```
 
 Interactive mode:
 ```bash
-pocket-architect deploy basic-web my-app --interactive
+pocket-architect deploy basic-web --project my-app --interactive
 ```
-
-**Note:** For detailed usage instructions, see [EXAMPLES.md](EXAMPLES.md) - the complete usage guide.
 
 ### List Projects
 
 ```bash
 pocket-architect list
-```
-
-### Stop a Project (Pause Without Deleting)
-
-Stop the instance to save compute costs while keeping all resources:
-
-```bash
-pocket-architect stop my-web-app
-```
-
-**Note**: You still pay for EBS storage and Elastic IP while stopped.
-
-### Start a Stopped Project
-
-Restart a stopped project:
-
-```bash
-pocket-architect start my-web-app
 ```
 
 ### Tear Down a Project
@@ -151,23 +141,8 @@ pocket-architect blueprint create
 
 ## Built-in Blueprints
 
-### Web Server Blueprints
 - **basic-web**: t3.large instance, ports 22+8080, optional ALB or Elastic IP
 - **bare-metal**: t3.medium instance, port 22 only, Elastic IP
-
-### ML Training Blueprints
-- **ml-training-gpu**: g4dn.xlarge (NVIDIA T4), Jupyter Lab, PyTorch, TensorFlow, IAM role with S3 access
-- **ml-training-multi-gpu**: g4dn.4xlarge (4x NVIDIA T4), distributed training ready
-
-### ML Serving Blueprints
-- **ml-serving-api**: t3.large, FastAPI, ALB, port 8000, IAM role with S3 access
-
-### ML Development Blueprints
-- **ml-jupyter-server**: t3.large, Jupyter Lab, port 8888, IAM role with S3 access
-- **ml-mlflow-server**: t3.medium, MLflow tracking server, port 5000, IAM role with S3 access
-
-### ML Pipeline Blueprints
-- **ml-pipeline-full**: g4dn.xlarge, complete ML stack (Jupyter + MLflow + serving), IAM role with S3 access
 
 ## Project Structure
 
@@ -175,41 +150,15 @@ All state is stored in `~/.pocket-architect/`:
 - `projects/<name>/state.json` — project state
 - `snapshots.json` — snapshot index
 - `templates/*.yaml` — user blueprints
-- `cost_limits.json` — cost limit configurations
-- `cost_history.json` — cost tracking history
 
 ## Features
 
 - **Complete isolation**: Each project gets its own VPC with unique CIDR
-- **ML-ready blueprints**: Pre-configured GPU training, model serving, and experiment tracking environments
-- **Cost tracking & guardrails**: Real-time cost estimation, limits, and automated enforcement
-- **IAM roles**: Automatic S3 access for ML workflows (no credential management)
 - **Manual snapshots**: Create EBS snapshots and AMIs on demand
 - **Flexible networking**: ALB with HTTPS (certificate ARN required) or Elastic IP
-- **Stop/start**: Pause projects to save costs while keeping resources
 - **Rich output**: Beautiful tables and progress indicators
 - **Error handling**: Partial cleanup on deployment failure
 - **Extensible**: Add custom blueprints via YAML templates
-
-## Cost Management
-
-Track and limit AWS spending with built-in cost management:
-
-```bash
-# Set cost limit during deployment
-pocket-architect deploy ml-training-gpu training --cost-limit 100.0 --cost-action stop
-
-# Check current costs
-pocket-architect cost check training
-
-# Set cost limit for existing project
-pocket-architect cost set training --limit 100.0 --action stop
-
-# Enforce all cost limits
-pocket-architect cost enforce
-```
-
-See [EXAMPLES.md](EXAMPLES.md) for complete cost management documentation.
 
 ## License
 

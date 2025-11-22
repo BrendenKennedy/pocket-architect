@@ -1,8 +1,6 @@
-"""Entry point for python -m pocket_architect."""
+"""Entry point for pocket-architect CLI."""
 
-import sys
 from pocket_architect.cli import app
 
 if __name__ == "__main__":
-    sys.exit(app())
-
+    app()

@@ -1,17 +1,3 @@
-"""pocket-architect - A zero-install, platform-agnostic Python CLI for GPU computer-vision workstations."""
+"""Pocket Architect - Personal, isolated, cost-effective cloud environment CLI."""
 
-__version__ = "1.0.0"
-__author__ = "pocket-architect contributors"
-__license__ = "MIT"
-
-from pocket_architect.core.types import Provider, Session, SessionState
-
-__all__ = [
-    "__version__",
-    "__author__",
-    "__license__",
-    "Provider",
-    "Session",
-    "SessionState",
-]
-
+__version__ = "0.1.0"

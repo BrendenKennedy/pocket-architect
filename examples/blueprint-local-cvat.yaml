@@ -1,7 +1,0 @@
-# Example Local CVAT Blueprint
-# Use with: pocket-architect cvat up --blueprint blueprint-local-cvat.yaml
-
-cvat_image: cvat/server:latest
-cvat_port: 8080
-https: false
-
