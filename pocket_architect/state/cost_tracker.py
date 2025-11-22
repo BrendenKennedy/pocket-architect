@@ -2,8 +2,6 @@
 
 import json
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any
 
 from pocket_architect.config import PA_HOME
 from pocket_architect.models import CostEstimate, CostLimit
@@ -24,7 +22,7 @@ def load_cost_limits() -> dict[str, CostLimit]:
         return {}
 
     try:
-        with open(COST_LIMITS_FILE, "r") as f:
+        with open(COST_LIMITS_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
         return {project_name: CostLimit(**limit_data) for project_name, limit_data in data.items()}
     except (json.JSONDecodeError, ValueError, KeyError):
@@ -39,7 +37,7 @@ def save_cost_limits(limits: dict[str, CostLimit]) -> None:
         limits: Dictionary mapping project_name to CostLimit
     """
     COST_LIMITS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(COST_LIMITS_FILE, "w") as f:
+    with open(COST_LIMITS_FILE, "w", encoding="utf-8") as f:
         data = {
             project_name: limit.model_dump(mode="json") for project_name, limit in limits.items()
         }
@@ -96,7 +94,7 @@ def load_cost_history() -> dict[str, list[CostEstimate]]:
         return {}
 
     try:
-        with open(COST_HISTORY_FILE, "r") as f:
+        with open(COST_HISTORY_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
         result = {}
         for project_name, estimates in data.items():
@@ -114,7 +112,7 @@ def save_cost_history(history: dict[str, list[CostEstimate]]) -> None:
         history: Dictionary mapping project_name to list of CostEstimate
     """
     COST_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(COST_HISTORY_FILE, "w") as f:
+    with open(COST_HISTORY_FILE, "w", encoding="utf-8") as f:
         data = {
             project_name: [est.model_dump(mode="json") for est in estimates]
             for project_name, estimates in history.items()
@@ -164,7 +162,7 @@ def get_global_cost_limit() -> float | None:
         return None
 
     try:
-        with open(GLOBAL_LIMIT_FILE, "r") as f:
+        with open(GLOBAL_LIMIT_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data.get("limit_amount")
     except (json.JSONDecodeError, ValueError, KeyError):
@@ -184,7 +182,7 @@ def set_global_cost_limit(limit_amount: float | None) -> None:
         return
 
     GLOBAL_LIMIT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(GLOBAL_LIMIT_FILE, "w") as f:
+    with open(GLOBAL_LIMIT_FILE, "w", encoding="utf-8") as f:
         json.dump(
             {
                 "limit_amount": limit_amount,
