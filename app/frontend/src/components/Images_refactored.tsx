@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HardDrive, Eye, Trash2, Edit2, Copy } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -15,82 +15,35 @@ import { useDataFilters } from '../hooks/useDataFilters';
 import { useWizard } from '../hooks/useWizard';
 import { useDialog } from '../hooks/useDialog';
 import { Card } from './ui/card';
+import { bridgeApi } from '../bridge/api';
 
-const mockImages = [
-  {
-    id: 1,
-    name: 'ubuntu-22.04-lts',
-    description: 'Ubuntu 22.04 LTS Server',
-    imageId: 'ami-0c55b159cbfafe1f0',
-    platform: 'aws',
-    osType: 'Linux',
-    osVersion: 'Ubuntu 22.04',
-    architecture: 'x86_64',
-    size: 8,
-    status: 'available',
-    created: '2024-11-10',
-    lastUsed: '2024-11-24',
-    usageCount: 15,
-    region: 'us-east-1',
-    public: true,
-  },
-  {
-    id: 2,
-    name: 'amazon-linux-2023',
-    description: 'Amazon Linux 2023',
-    imageId: 'ami-0c02fb55b2d1c3f0c',
-    platform: 'aws',
-    osType: 'Linux',
-    osVersion: 'Amazon Linux 2023',
-    architecture: 'x86_64',
-    size: 5,
-    status: 'available',
-    created: '2024-11-05',
-    lastUsed: '2024-11-23',
-    usageCount: 28,
-    region: 'us-east-1',
-    public: true,
-  },
-  {
-    id: 3,
-    name: 'windows-server-2022',
-    description: 'Windows Server 2022 Base',
-    imageId: 'ami-0d5eff06f840b4e53',
-    platform: 'aws',
-    osType: 'Windows',
-    osVersion: 'Windows Server 2022',
-    architecture: 'x86_64',
-    size: 30,
-    status: 'available',
-    created: '2024-11-12',
-    lastUsed: '2024-11-20',
-    usageCount: 5,
-    region: 'us-east-1',
-    public: false,
-  },
-  {
-    id: 4,
-    name: 'debian-12-bookworm',
-    description: 'Debian 12 Bookworm',
-    imageId: 'ami-0f5e44a5e5c2f0c2d',
-    platform: 'aws',
-    osType: 'Linux',
-    osVersion: 'Debian 12',
-    architecture: 'x86_64',
-    size: 7,
-    status: 'available',
-    created: '2024-11-08',
-    lastUsed: '2024-11-22',
-    usageCount: 10,
-    region: 'us-east-1',
-    public: true,
-  },
-];
-
-type Image = typeof mockImages[0];
+interface Image {
+  id: number;
+  name: string;
+  description: string;
+  imageId: string;
+  platform: string;
+  region: string;
+  os: string;
+  architecture: string;
+  size: number;
+  created: string;
+  lastModified: string;
+  status: string;
+  tags: string[];
+  public: boolean;
+  sourceInstanceId?: number;
+}
 
 export function Images() {
-  const [images] = useState(mockImages);
+  const [images, setImages] = useState<Image[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // TODO: Implement image fetching when backend bridge supports it
+    setImages([]);
+    setLoading(false);
+  }, []);
 
   // Use custom hooks
   const { searchQuery, setSearchQuery, filterValue, setFilterValue, filteredData } = useDataFilters({

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, Key, Lock, Users, Award, Eye, Trash2, Edit2, Copy } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Input } from './ui/input';
@@ -18,44 +18,84 @@ import { useWizard } from '../hooks/useWizard';
 import { useDialog } from '../hooks/useDialog';
 import { Card } from './ui/card';
 import { securityConfigurations as initialSecurityConfigurations } from '../data/securityConfigs';
+import { bridgeApi } from '../bridge/api';
 
-// Mock data
-const initialKeyPairs = [
-  { id: 1, name: 'prod-keypair', fingerprint: 'a1:b2:c3:d4:e5:f6:g7:h8', type: 'RSA', created: '2024-11-20', usedIn: [{ name: 'production-web-app', color: '#A855F7' }] },
-  { id: 2, name: 'dev-keypair', fingerprint: 'f6:g7:h8:i9:j0:k1:l2:m3', type: 'ED25519', created: '2024-11-15', usedIn: [{ name: 'dev-environment', color: '#3B82F6' }] },
-];
 
-const initialSecurityGroups = [
-  { id: 1, name: 'web-sg', description: 'Web server security group', vpcId: 'vpc-12345', ingressRules: 3, egressRules: 1 },
-  { id: 2, name: 'db-sg', description: 'Database security group', vpcId: 'vpc-12345', ingressRules: 1, egressRules: 1 },
-];
 
-const initialIAMRoles = [
-  { id: 1, name: 'ec2-production-role', description: 'Production EC2 instance role', trustPolicy: 'EC2', policyCount: 2 },
-  { id: 2, name: 'ec2-readonly-role', description: 'Read-only EC2 role', trustPolicy: 'EC2', policyCount: 1 },
-];
+// Type definitions for security resources
+interface KeyPair {
+  id: number;
+  name: string;
+  fingerprint: string;
+  type: string;
+  created: string;
+  usedIn: Array<{ name: string; color: string }>;
+}
 
-const initialCertificates = [
-  { id: 1, domain: '*.example.com', status: 'Issued', type: 'ACM', expiration: '2025-11-20', arn: 'arn:aws:acm:us-east-1:123456789012:certificate/abc123' },
-  { id: 2, domain: 'app.example.com', status: 'Pending', type: 'ACM', expiration: '-', arn: 'arn:aws:acm:us-east-1:123456789012:certificate/def456' },
-];
+interface SecurityGroup {
+  id: number;
+  name: string;
+  description: string;
+  vpcId: string;
+  ingressRules: number;
+  egressRules: number;
+}
+
+interface IAMRole {
+  id: number;
+  name: string;
+  description: string;
+  trustPolicy: string;
+  policyCount: number;
+}
+
+interface Certificate {
+  id: number;
+  domain: string;
+  status: string;
+  type: string;
+  expiration: string;
+  arn: string;
+}
 
 type SecurityConfig = typeof initialSecurityConfigurations[0];
-type KeyPair = typeof initialKeyPairs[0];
-type SecurityGroup = typeof initialSecurityGroups[0];
-type IAMRole = typeof initialIAMRoles[0];
-type Certificate = typeof initialCertificates[0];
 
 export function Security() {
   // Active tab state
   const [activeTab, setActiveTab] = useState('configs');
 
-  // Data state
+  // Security data state - will be populated with real AWS security resources
+  const [keyPairs, setKeyPairs] = useState([]);
+  const [securityGroups, setSecurityGroups] = useState([]);
+  const [iamRoles, setIamRoles] = useState([]);
+  const [certificates, setCertificates] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Data state - using the state variables defined above
   const [securityConfigurations] = useState(initialSecurityConfigurations);
-  const [keyPairs] = useState(initialKeyPairs);
-  const [securityGroups] = useState(initialSecurityGroups);
-  const [iamRoles] = useState(initialIAMRoles);
-  const [certificates] = useState(initialCertificates);
+
+  // Fetch security data
+  useEffect(() => {
+    const fetchSecurityData = async () => {
+      try {
+        // TODO: Add API calls for security data when backend supports it
+        // For now, show empty states - these would be populated with real AWS security resources
+
+        setKeyPairs([]);
+        setSecurityGroups([]);
+        setIamRoles([]);
+        setCertificates([]);
+
+      } catch (error) {
+        console.error('Failed to fetch security data:', error);
+        toast.error('Failed to load security data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSecurityData();
+  }, []);
 
   // Hooks for each tab
   const configsFilters = useDataFilters({

@@ -17,6 +17,7 @@ import { CircularProgress } from './ui/circular-progress';
 import { ProjectColorDot, StatusNeonDot } from './ui/neon-dot';
 import { DataTable, TableColumn, TableAction } from './ui/data-table';
 import { useNeon } from '../contexts/NeonContext';
+import { bridgeApi } from '../bridge/api';
 
 // Project cost tracking with actual costs and rates
 interface ProjectCostData {
@@ -31,56 +32,11 @@ interface ProjectCostData {
   action: string;
 }
 
-const initialProjectCosts: ProjectCostData[] = [
-  { 
-    id: 1, 
-    project: 'production-web-app',
-    projectColor: '#A855F7',
-    instances: 2,
-    actualCost: 118.45, 
-    hourlyRate: 0.156, // t3.medium * 2 instances
-    lastChecked: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    limit: 150.00, 
-    action: 'warn_only' 
-  },
-  { 
-    id: 2, 
-    project: 'dev-environment',
-    projectColor: '#3B82F6',
-    instances: 1,
-    actualCost: 41.20, 
-    hourlyRate: 0.042, // t3.small
-    lastChecked: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-    limit: 50.00, 
-    action: 'stop' 
-  },
-  { 
-    id: 3, 
-    project: 'staging-cluster',
-    projectColor: '#10B981',
-    instances: 3,
-    actualCost: 85.30, 
-    hourlyRate: 0.208, // t3.large * 3 nodes
-    lastChecked: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-    limit: 200.00, 
-    action: 'warn_only' 
-  },
-  { 
-    id: 4, 
-    project: 'ml-pipeline',
-    projectColor: '#F59E0B',
-    instances: 1,
-    actualCost: 48.50, 
-    hourlyRate: 12.24, // p3.8xlarge (expensive!)
-    lastChecked: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-    limit: 100.00, 
-    action: 'teardown' 
-  },
-];
+
 
 export function CostManagement() {
   const { neonIntensity } = useNeon();
-  const [projectCosts, setProjectCosts] = useState<ProjectCostData[]>(initialProjectCosts);
+  const [projectCosts, setProjectCosts] = useState<ProjectCostData[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
   const [globalLimitDialogOpen, setGlobalLimitDialogOpen] = useState(false);

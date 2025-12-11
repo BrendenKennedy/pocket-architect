@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FolderOpen, Eye, Trash2, Edit2, Copy, Plus } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -16,6 +16,7 @@ import { useDataFilters } from '../hooks/useDataFilters';
 import { useWizard } from '../hooks/useWizard';
 import { useDialog } from '../hooks/useDialog';
 import { Card } from './ui/card';
+import { bridgeApi } from '../bridge/api';
 
 // AWS Regions - Keep this data as-is (omitted for brevity)
 const awsRegions = [
@@ -24,112 +25,47 @@ const awsRegions = [
   // ... rest of regions
 ];
 
-const mockProjects = [
-  { 
-    id: 1, 
-    name: 'production-web-app', 
-    description: 'Production web application infrastructure',
-    status: 'healthy', 
-    instanceCount: 5,
-    color: '#A855F7',
-    instances: [
-      { id: 'i-1a2b3c4d', name: 'prod-web-01', type: 't3.large', status: 'running', ip: '10.0.1.15', blueprint: 'web-server-v2' },
-      { id: 'i-2b3c4d5e', name: 'prod-web-02', type: 't3.large', status: 'running', ip: '10.0.1.22', blueprint: 'web-server-v2' },
-      { id: 'i-3c4d5e6f', name: 'prod-db-01', type: 'r5.xlarge', status: 'running', ip: '10.0.2.10', blueprint: 'postgresql-v1' },
-      { id: 'i-4d5e6f7g', name: 'prod-cache-01', type: 't3.medium', status: 'running', ip: '10.0.3.5', blueprint: 'redis-v1' },
-      { id: 'i-5e6f7g8h', name: 'prod-worker-01', type: 't3.large', status: 'stopped', ip: '10.0.1.30', blueprint: 'worker-v1' },
-    ],
-    created: '2024-11-20',
-    monthlyCost: 245.50,
-    vpc: 'vpc-prod-main',
-    platform: 'aws',
-    region: 'us-east-1',
-    lastModified: '2024-11-24 14:32',
-    tags: ['production', 'web', 'critical'],
-    costMonthToDate: 187.23,
-    costLifetime: 1842.50,
-    costLimit: 500.00,
-    uptimeDays: 15,
-  },
-  { 
-    id: 2, 
-    name: 'ml-pipeline', 
-    description: 'ML training cluster with annotation compute',
-    status: 'healthy', 
-    instanceCount: 3,
-    color: '#F59E0B',
-    instances: [
-      { id: 'i-6f7g8h9i', name: 'ml-train-gpu-01', type: 'p3.2xlarge', status: 'running', ip: '10.1.1.10', blueprint: 'ml-training-v3' },
-      { id: 'i-7g8h9i0j', name: 'ml-preprocess-01', type: 't3.xlarge', status: 'running', ip: '10.1.1.15', blueprint: 'data-prep-v1' },
-      { id: 'i-8h9i0j1k', name: 'ml-jupyter-01', type: 't3.large', status: 'stopped', ip: '10.1.2.5', blueprint: 'jupyter-v2' },
-    ],
-    created: '2024-11-19',
-    monthlyCost: 1250.00,
-    vpc: 'vpc-ml-isolated',
-    platform: 'aws',
-    region: 'us-west-2',
-    lastModified: '2024-11-23 09:15',
-    tags: ['ml', 'gpu', 'training'],
-    costMonthToDate: 892.15,
-    costLifetime: 7850.00,
-    costLimit: 2000.00,
-    uptimeDays: 6,
-  },
-  { 
-    id: 3, 
-    name: 'dev-environment', 
-    description: 'Development and testing environment',
-    status: 'degraded', 
-    instanceCount: 2,
-    color: '#3B82F6',
-    instances: [
-      { id: 'i-9i0j1k2l', name: 'dev-app-01', type: 't3.small', status: 'running', ip: '10.2.1.8', blueprint: 'dev-stack-v1' },
-      { id: 'i-0j1k2l3m', name: 'dev-db-01', type: 't3.small', status: 'stopped', ip: '10.2.2.5', blueprint: 'postgres-dev-v1' },
-    ],
-    created: '2024-11-22',
-    monthlyCost: 35.20,
-    vpc: 'vpc-dev-shared',
-    platform: 'aws',
-    region: 'us-east-1',
-    lastModified: '2024-11-25 11:45',
-    tags: ['development', 'testing'],
-    costMonthToDate: 12.45,
-    costLifetime: 124.80,
-    costLimit: 100.00,
-    uptimeDays: 3,
-  },
-  { 
-    id: 4, 
-    name: 'staging-cluster', 
-    description: 'Staging environment for pre-production testing',
-    status: 'healthy', 
-    instanceCount: 4,
-    color: '#10B981',
-    instances: [
-      { id: 'i-1k2l3m4n', name: 'stage-web-01', type: 't3.medium', status: 'running', ip: '10.3.1.12', blueprint: 'web-server-v2' },
-      { id: 'i-2l3m4n5o', name: 'stage-web-02', type: 't3.medium', status: 'running', ip: '10.3.1.18', blueprint: 'web-server-v2' },
-      { id: 'i-3m4n5o6p', name: 'stage-db-01', type: 't3.large', status: 'running', ip: '10.3.2.8', blueprint: 'postgresql-v1' },
-      { id: 'i-4n5o6p7q', name: 'stage-worker-01', type: 't3.small', status: 'stopped', ip: '10.3.1.25', blueprint: 'worker-v1' },
-    ],
-    created: '2024-11-18',
-    monthlyCost: 156.80,
-    vpc: 'vpc-staging',
-    platform: 'aws',
-    region: 'us-west-2',
-    lastModified: '2024-11-24 16:20',
-    tags: ['staging', 'testing'],
-    costMonthToDate: 89.24,
-    costLifetime: 892.40,
-    costLimit: 200.00,
-    uptimeDays: 7,
-  },
-];
-
-type Project = typeof mockProjects[0];
+interface Project {
+  id: number;
+  name: string;
+  description: string;
+  status: string;
+  instanceCount: number;
+  color: string;
+  instances: number[]; // Array of instance IDs
+  created: string;
+  monthlyCost: number;
+  vpc: string;
+  platform: string;
+  region: string;
+  lastModified: string;
+  tags: string[];
+  costMonthToDate: number;
+  costLifetime: number;
+  costLimit: number;
+  uptimeDays: number;
+}
 
 export function Projects() {
-  const [projects] = useState(mockProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [copiedField, setCopiedField] = useState('');
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const data = await bridgeApi.listProjects();
+        setProjects(data);
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+        toast.error('Failed to load projects');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
   
   // Use custom hooks
   const { searchQuery, setSearchQuery, filterValue, setFilterValue, filteredData } = useDataFilters({

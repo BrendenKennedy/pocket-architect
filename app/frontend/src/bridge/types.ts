@@ -39,6 +39,9 @@ export interface BackendBridge {
   // Cost management operations
   get_cost_summary: () => Promise<string>;
 
+  // Quota operations
+  get_quotas: () => Promise<string>;
+
   // Utility operations
   ping: () => Promise<string>;
 }

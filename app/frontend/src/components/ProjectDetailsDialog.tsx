@@ -30,12 +30,9 @@ type Instance = {
   blueprint: string;
 };
 
-const mockBlueprints = [
-  { value: 'web-server-v2', label: 'Web Server v2 - Ubuntu 22.04 + Nginx' },
-  { value: 'ml-training-v3', label: 'ML Training v3 - GPU Optimized' },
-  { value: 'postgresql-v1', label: 'PostgreSQL v1 - Database Server' },
-  { value: 'redis-v1', label: 'Redis v1 - Cache Server' },
-  { value: 'jupyter-v2', label: 'Jupyter v2 - Data Science Notebook' },
+// TODO: Fetch real blueprints from backend when available
+const availableBlueprints = [
+  // Empty for now - would be populated with real blueprint data
 ];
 
 const instanceTypes = [
@@ -240,7 +237,7 @@ export function ProjectDetailsDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockBlueprints.map((bp) => (
+                  {availableBlueprints.map((bp) => (
                     <SelectItem key={bp.value} value={bp.value}>
                       {bp.label}
                     </SelectItem>
@@ -293,7 +290,7 @@ export function ProjectDetailsDialog({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Blueprint:</span>
-                  <span>{mockBlueprints.find(b => b.value === instanceBlueprint)?.label}</span>
+                  <span>{availableBlueprints.find(b => b.value === instanceBlueprint)?.label}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Instance Type:</span>

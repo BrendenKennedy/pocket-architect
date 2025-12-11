@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trash2, Server, Eye, Edit2, Copy as CopyIcon, Rocket } from 'lucide-react';
 import { Card } from './ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog';
@@ -20,19 +20,48 @@ import { useDataFilters } from '../hooks/useDataFilters';
 import { useWizard } from '../hooks/useWizard';
 import { useDialog } from '../hooks/useDialog';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
+import { bridgeApi } from '../bridge/api';
 
-const mockInstances = [
-  { id: 1, name: 'prod-web-01', project: 'production-web-app', projectColor: '#A855F7', blueprint: 'Web Application Stack', status: 'running', created: '2024-11-20', instanceType: 't3.medium', ip: '10.0.1.15', publicIp: '54.123.45.67', sshEnabled: true, sshUser: 'ubuntu', sshPort: 22 },
-  { id: 2, name: 'prod-web-02', project: 'production-web-app', projectColor: '#A855F7', blueprint: 'Web Application Stack', status: 'running', created: '2024-11-20', instanceType: 't3.medium', ip: '10.0.1.16', publicIp: '54.123.45.68', sshEnabled: true, sshUser: 'ubuntu', sshPort: 22 },
-  { id: 3, name: 'dev-main-01', project: 'dev-environment', projectColor: '#3B82F6', blueprint: 'Development Environment', status: 'stopped', created: '2024-11-22', instanceType: 't3.small', ip: '10.1.2.10', publicIp: '54.123.45.69', sshEnabled: true, sshUser: 'ec2-user', sshPort: 22 },
-  { id: 4, name: 'staging-node-01', project: 'staging-cluster', projectColor: '#10B981', blueprint: 'Kubernetes Cluster', status: 'running', created: '2024-11-21', instanceType: 't3.large', ip: '10.2.3.20', publicIp: '54.123.45.70', sshEnabled: true, sshUser: 'ubuntu', sshPort: 22 },
-  { id: 5, name: 'ml-training-01', project: 'ml-pipeline', projectColor: '#F59E0B', blueprint: 'ML Compute Cluster', status: 'running', created: '2024-11-19', instanceType: 'p3.8xlarge', ip: '10.3.4.50', publicIp: '54.123.45.71', sshEnabled: true, sshUser: 'ubuntu', sshPort: 22 },
-];
-
-type Instance = typeof mockInstances[0];
+interface Instance {
+  id: number;
+  name: string;
+  projectId: number;
+  projectName: string;
+  projectColor: string;
+  status: string;
+  instanceType: string;
+  platform: string;
+  region: string;
+  publicIp?: string;
+  privateIp: string;
+  created: string;
+  uptime: string;
+  monthlyCost: number;
+  storage: number;
+  securityConfig: string;
+  sshKey: string;
+  tags: string[];
+}
 
 export function Instances() {
-  const [instances] = useState(mockInstances);
+  const [instances, setInstances] = useState<Instance[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInstances = async () => {
+      try {
+        const data = await bridgeApi.listInstances();
+        setInstances(data);
+      } catch (error) {
+        console.error('Failed to fetch instances:', error);
+        toast.error('Failed to load instances');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInstances();
+  }, []);
   
   // Use custom hooks for common functionality
   const { searchQuery, setSearchQuery, filterValue, setFilterValue, filteredData } = useDataFilters({
@@ -72,8 +101,18 @@ export function Instances() {
     setIsEditMode(false);
   };
 
-  const handleRefresh = () => {
-    toast.success('Instances refreshed');
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      const data = await bridgeApi.listInstances();
+      setInstances(data);
+      toast.success('Instances refreshed');
+    } catch (error) {
+      console.error('Failed to refresh instances:', error);
+      toast.error('Failed to refresh instances');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCopyField = (value: string, label: string) => {
@@ -88,23 +127,24 @@ apiVersion: v1
 kind: Instance
 metadata:
   name: ${instance.name}
-  project: ${instance.project}
-  blueprint: ${instance.blueprint}
+  project: ${instance.projectName}
+  platform: ${instance.platform}
+  region: ${instance.region}
   created: ${instance.created}
 spec:
   compute:
     instanceType: ${instance.instanceType}
     status: ${instance.status}
+    uptime: ${instance.uptime}
   networking:
-    privateIP: ${instance.ip}
-    publicIP: ${instance.publicIp}
-    sshEnabled: ${instance.sshEnabled}
-    sshUser: ${instance.sshUser}
-    sshPort: ${instance.sshPort}
+    privateIP: ${instance.privateIp}
+    publicIP: ${instance.publicIp || 'N/A'}
   resources:
-    vCPUs: 2
-    memory: 4Gi
-    storage: 30Gi`;
+    storage: ${instance.storage}GB
+    monthlyCost: $${instance.monthlyCost}
+  security:
+    sshKey: ${instance.sshKey || 'N/A'}
+    securityConfig: ${instance.securityConfig || 'N/A'}`;
   };
 
   // Define table columns
@@ -120,17 +160,17 @@ spec:
       ),
     },
     {
-      key: 'project',
+      key: 'projectName',
       header: 'Project',
       width: 'w-[15%]',
       align: 'center' as const,
       render: (instance) => (
         <div className="flex gap-2">
-          {TableRenderers.muted(instance.project)}
+          {TableRenderers.muted(instance.projectName)}
           {instance.projectColor && (
             <ProjectColorDot
               color={instance.projectColor}
-              projectName={instance.project}
+              projectName={instance.projectName}
               size="sm"
             />
           )}
@@ -138,11 +178,11 @@ spec:
       ),
     },
     {
-      key: 'blueprint',
-      header: 'Blueprint',
-      width: 'w-[15%]',
+      key: 'platform',
+      header: 'Platform',
+      width: 'w-[12%]',
       align: 'center' as const,
-      render: (instance) => TableRenderers.muted(instance.blueprint),
+      render: (instance) => TableRenderers.muted(`${instance.platform.toUpperCase()} (${instance.region})`),
     },
     {
       key: 'instanceType',
@@ -152,11 +192,22 @@ spec:
       render: (instance) => TableRenderers.badge(instance.instanceType),
     },
     {
-      key: 'ip',
+      key: 'publicIp',
       header: 'IP Address',
       width: 'w-[15%]',
       align: 'center' as const,
-      render: (instance) => TableRenderers.code(instance.ip),
+      render: (instance) => (
+        <div className="text-xs">
+          {instance.publicIp ? (
+            <div>
+              <div className="font-mono">{instance.publicIp}</div>
+              <div className="text-muted-foreground">({instance.privateIp})</div>
+            </div>
+          ) : (
+            <div className="font-mono">{instance.privateIp}</div>
+          )}
+        </div>
+      ),
     },
     {
       key: 'status',
@@ -166,11 +217,11 @@ spec:
       render: (instance) => TableRenderers.statusBadge(instance.status, 'sm'),
     },
     {
-      key: 'created',
-      header: 'Created',
+      key: 'uptime',
+      header: 'Uptime',
       width: 'w-[12%]',
       align: 'center' as const,
-      render: (instance) => <span className="text-text-secondary">{instance.created}</span>,
+      render: (instance) => <span className="text-text-secondary">{instance.uptime}</span>,
     },
   ];
 
@@ -210,8 +261,10 @@ spec:
 
   const filterOptions = [
     { value: 'all', label: 'All Status' },
-    { value: 'running', label: 'Running' },
+    { value: 'healthy', label: 'Running' },
     { value: 'stopped', label: 'Stopped' },
+    { value: 'degraded', label: 'Degraded' },
+    { value: 'error', label: 'Error' },
   ];
 
   const renderWizardStep = () => {

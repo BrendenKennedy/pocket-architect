@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Eye, Trash2, Edit2, Copy } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -15,78 +15,45 @@ import { useDataFilters } from '../hooks/useDataFilters';
 import { useWizard } from '../hooks/useWizard';
 import { useDialog } from '../hooks/useDialog';
 import { Card } from './ui/card';
+import { bridgeApi } from '../bridge/api';
 
-const mockBlueprints = [
-  {
-    id: 1,
-    name: 'Web Application Stack',
-    description: 'Full-stack web application with load balancer, web servers, and database',
-    useCase: 'Web Application',
-    category: 'web',
-    platform: 'aws',
-    region: 'us-east-1',
-    instanceType: 't3.medium',
-    storage: 30,
-    workloadType: 'general',
-    created: '2024-11-15',
-    lastModified: '2024-11-20',
-    usageCount: 12,
-    tags: ['web', 'production', 'scalable'],
-  },
-  {
-    id: 2,
-    name: 'ML Training Cluster',
-    description: 'GPU-accelerated machine learning training environment',
-    useCase: 'Machine Learning',
-    category: 'compute',
-    platform: 'aws',
-    region: 'us-west-2',
-    instanceType: 'p3.8xlarge',
-    storage: 500,
-    workloadType: 'compute',
-    created: '2024-11-10',
-    lastModified: '2024-11-18',
-    usageCount: 8,
-    tags: ['ml', 'gpu', 'training'],
-  },
-  {
-    id: 3,
-    name: 'Development Environment',
-    description: 'Lightweight development and testing environment',
-    useCase: 'Development',
-    category: 'development',
-    platform: 'aws',
-    region: 'us-east-1',
-    instanceType: 't3.small',
-    storage: 20,
-    workloadType: 'general',
-    created: '2024-11-12',
-    lastModified: '2024-11-22',
-    usageCount: 25,
-    tags: ['dev', 'testing'],
-  },
-  {
-    id: 4,
-    name: 'Database Server',
-    description: 'High-performance database server configuration',
-    useCase: 'Database',
-    category: 'database',
-    platform: 'aws',
-    region: 'us-east-1',
-    instanceType: 'db.r5.xlarge',
-    storage: 100,
-    workloadType: 'memory',
-    created: '2024-11-08',
-    lastModified: '2024-11-19',
-    usageCount: 6,
-    tags: ['database', 'production'],
-  },
-];
-
-type Blueprint = typeof mockBlueprints[0];
+interface Blueprint {
+  id: number;
+  name: string;
+  description: string;
+  useCase: string;
+  category: string;
+  platform: string;
+  region: string;
+  instanceType: string;
+  storage: number;
+  workloadType: string;
+  created: string;
+  lastModified: string;
+  usageCount: number;
+  tags: string[];
+  securityConfigId?: number;
+}
 
 export function Blueprints() {
-  const [blueprints] = useState(mockBlueprints);
+  const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBlueprints = async () => {
+      try {
+        const data = await bridgeApi.listBlueprints();
+        setBlueprints(data);
+      } catch (error) {
+        console.error('Failed to fetch blueprints:', error);
+        toast.error('Failed to load blueprints');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlueprints();
+  }, []);
 
   // Use custom hooks
   const { searchQuery, setSearchQuery, filterValue, setFilterValue, filteredData } = useDataFilters({

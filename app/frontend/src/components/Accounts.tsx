@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, AlertCircle, Cloud, Key, Terminal, RefreshCw, ChevronRight, Copy, Server } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -11,6 +11,7 @@ import { Progress } from './ui/progress';
 import { CreationWizard } from './ui/creation-wizard';
 import { toast } from 'sonner@2.0.3';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { bridgeApi } from '../bridge/api';
 
 type AuthStatus = 'connected' | 'disconnected' | 'expired' | 'partial' | 'pending';
 
@@ -30,44 +31,57 @@ interface CloudProvider {
   };
 }
 
-const mockProviders: CloudProvider[] = [
-  {
-    id: 'aws',
-    name: 'Amazon Web Services',
-    status: 'connected',
-    icon: '☁️',
-    details: {
-      account: '123456789012',
-      profile: 'default',
-      region: 'us-east-1',
-      user: 'arn:aws:iam::123456789012:user/architect',
-      lastChecked: '2024-11-24 10:30:00',
-    },
-  },
-  {
-    id: 'gcp',
-    name: 'Google Cloud Platform',
-    status: 'disconnected',
-    icon: '🌐',
-    details: {
-      lastChecked: '2024-11-24 10:30:00',
-    },
-  },
-  {
-    id: 'azure',
-    name: 'Microsoft Azure',
-    status: 'expired',
-    icon: '⛅',
-    details: {
-      subscription: 'abc-123-def-456',
-      user: 'architect@company.com',
-      lastChecked: '2024-11-23 15:45:00',
-    },
-  },
-];
+// Define interface matching backend Account model
+interface Account {
+  id: number;
+  name: string;
+  platform: string;
+  accountId: string;
+  status: string;
+  region: string;
+  accessKey?: string;
+  isDefault: boolean;
+  created: string;
+  lastSynced: string;
+  resourceCount: {
+    instances: number;
+    projects: number;
+    blueprints: number;
+  };
+}
 
 export function Accounts() {
-  const [providers, setProviders] = useState(mockProviders);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const data = await bridgeApi.listAccounts();
+        setAccounts(data);
+      } catch (error) {
+        console.error('Failed to fetch accounts:', error);
+        toast.error('Failed to load accounts');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccounts();
+  }, []);
+
+  // Convert accounts to the old provider format for compatibility
+  const providers: CloudProvider[] = accounts.map(account => ({
+    id: account.platform,
+    name: account.name,
+    status: account.status as AuthStatus,
+    icon: account.platform === 'aws' ? '☁️' : account.platform === 'gcp' ? '🌥️' : '⛅',
+    details: {
+      account: account.accountId,
+      region: account.region,
+      lastChecked: account.lastSynced,
+    },
+  }));
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [wizardStep, setWizardStep] = useState(1);

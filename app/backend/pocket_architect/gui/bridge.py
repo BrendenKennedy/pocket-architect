@@ -9,8 +9,9 @@ import json
 
 from pocket_architect.core.manager import ResourceManager
 from pocket_architect.core.models import (
-    CreateProjectRequest, UpdateProjectRequest,
-    CreateInstanceRequest
+    CreateProjectRequest,
+    UpdateProjectRequest,
+    CreateInstanceRequest,
 )
 from pocket_architect.utils.logger import setup_logger
 
@@ -29,7 +30,7 @@ class BackendBridge(QObject):
         self._manager: Optional[ResourceManager] = None
         logger.info("BackendBridge initialized")
 
-    def _get_manager(self, region: str = 'us-east-1') -> ResourceManager:
+    def _get_manager(self, region: str = "us-east-1") -> ResourceManager:
         """
         Get or create ResourceManager instance.
 
@@ -81,7 +82,7 @@ class BackendBridge(QObject):
             logger.info(f"create_project called with data={data}")
 
             # Get region from data or use default
-            region = data.get('region', 'us-east-1')
+            region = data.get("region", "us-east-1")
             manager = self._get_manager(region=region)
 
             # Create request object
@@ -127,7 +128,9 @@ class BackendBridge(QObject):
             # Emit signal to update frontend
             self.data_updated.emit("projects", "deleted")
 
-            return json.dumps({"success": True, "message": "Project deleted successfully"})
+            return json.dumps(
+                {"success": True, "message": "Project deleted successfully"}
+            )
         except Exception as e:
             logger.error(f"Failed to delete project: {e}")
             return json.dumps({"success": False, "error": str(e)})
@@ -168,7 +171,7 @@ class BackendBridge(QObject):
             logger.info(f"create_instance called with data={data}")
 
             # Get region from data or use default
-            region = data.get('region', 'us-east-1')
+            region = data.get("region", "us-east-1")
             manager = self._get_manager(region=region)
 
             # Create request object
@@ -291,7 +294,9 @@ class BackendBridge(QObject):
         try:
             logger.info(f"test_account_connection called with id={account_id}")
             # TODO: Implement actual connection test logic
-            return json.dumps({"success": True, "message": "Connection successful (mock)"})
+            return json.dumps(
+                {"success": True, "message": "Connection successful (mock)"}
+            )
         except Exception as e:
             logger.error(f"Failed to test connection: {e}")
             return json.dumps({"success": False, "error": str(e)})
@@ -311,12 +316,29 @@ class BackendBridge(QObject):
                 "lastMonth": 0.0,
                 "projectedMonth": 0.0,
                 "byService": [],
-                "dailyData": []
+                "dailyData": [],
             }
             return json.dumps(summary)
         except Exception as e:
             logger.error(f"Failed to get cost summary: {e}")
             return json.dumps({})
+
+    # ========================================================================
+    # QUOTA OPERATIONS
+    # ========================================================================
+
+    @Slot(result=str)
+    def get_quotas(self) -> str:
+        """Get AWS service quotas."""
+        try:
+            logger.info("get_quotas called")
+            # TODO: Implement real AWS quota fetching
+            # For now, return empty structure
+            quotas = {"categories": []}
+            return json.dumps(quotas)
+        except Exception as e:
+            logger.error(f"Failed to get quotas: {e}")
+            return json.dumps({"categories": []})
 
     # ========================================================================
     # UTILITY OPERATIONS

@@ -14,122 +14,17 @@ import { BudgetBar } from './BudgetBar';
 import { CircularProgress } from './ui/circular-progress';
 import { NeonDot, StatusNeonDot } from './ui/neon-dot';
 import { StatusBadge } from './ui/status-badge';
-import { generateQuotaData, type QuotaCategory } from '../lib/quotas';
+import { type QuotaCategory } from '../lib/quotas';
 import { Checkbox } from './ui/checkbox';
+import { bridgeApi } from '../bridge/api';
 
-// Recent activity/events
-const recentActivity = [
-  { 
-    message: 'Instance i-0a1b2c3d4e5f6g7h8 launched successfully',
-    project: 'production-web-app',
-    region: 'us-east-1',
-    time: '12 seconds ago',
-    status: 'success'
-  },
-  { 
-    message: 'SSH connection established to i-5f6g7h8i9j0k1l2m',
-    project: 'staging-cluster',
-    region: 'us-west-2',
-    time: '1 minute ago',
-    status: 'info'
-  },
-  { 
-    message: 'Health check passed for 4 instances in production-api',
-    project: 'production-api',
-    region: 'eu-west-1',
-    time: '2 minutes ago',
-    status: 'success'
-  },
-  { 
-    message: 'Instance i-9x8y7z6w5v4u3t2s stopped',
-    project: 'dev-testing-env',
-    region: 'us-west-2',
-    time: '5 minutes ago',
-    status: 'warning'
-  },
-  { 
-    message: 'Network throughput threshold reached (85%)',
-    project: 'production-web-app',
-    region: 'us-east-1',
-    time: '8 minutes ago',
-    status: 'warning'
-  },
-  { 
-    message: 'Blueprint ubuntu-22-web-server created',
-    project: null,
-    region: null,
-    time: '12 minutes ago',
-    status: 'success'
-  },
-  { 
-    message: 'SSH connection terminated from i-2m3n4o5p6q7r8s9t',
-    project: 'staging-cluster',
-    region: 'us-west-2',
-    time: '15 minutes ago',
-    status: 'info'
-  },
-  { 
-    message: 'Project backup-services created in ap-southeast-1',
-    project: 'backup-services',
-    region: 'ap-southeast-1',
-    time: '23 minutes ago',
-    status: 'success'
-  },
-  { 
-    message: 'Instance i-7k8l9m0n1o2p3q4r health check failed',
-    project: 'production-web-app',
-    region: 'us-east-1',
-    time: '28 minutes ago',
-    status: 'error'
-  },
-  { 
-    message: 'Progressive teardown started for old-test-project',
-    project: 'old-test-project',
-    region: 'us-east-1',
-    time: '35 minutes ago',
-    status: 'info'
-  },
-  { 
-    message: 'Instance i-4r5t6y7u8i9o0p1q launched successfully',
-    project: 'production-api',
-    region: 'eu-west-1',
-    time: '42 minutes ago',
-    status: 'success'
-  },
-  { 
-    message: 'SSH key pair dev-team-key added',
-    project: null,
-    region: null,
-    time: '1 hour ago',
-    status: 'success'
-  },
-];
 
-// Active SSH connections
-const activeConnections = [
-  { instanceId: 'i-0a1b2c3d4e5f6g7h', ip: '54.237.128.45', project: 'production-web-app', user: 'admin', duration: '2h 34m', region: 'us-east-1' },
-  { instanceId: 'i-5f6g7h8i9j0k1l2m', ip: '52.89.241.156', project: 'staging-cluster', user: 'developer', duration: '45m', region: 'us-west-2' },
-  { instanceId: 'i-9x8y7z6w5v4u3t2s', ip: '18.200.45.231', project: 'production-api', user: 'admin', duration: '12m', region: 'eu-west-1' },
-];
 
-// Health check statuses by project
-const healthChecks = [
-  { project: 'production-web-app', instances: 6, healthy: 5, degraded: 1, failing: 0, lastCheck: '30s ago' },
-  { project: 'production-api', instances: 4, healthy: 4, degraded: 0, failing: 0, lastCheck: '45s ago' },
-  { project: 'staging-cluster', instances: 4, healthy: 4, degraded: 0, failing: 0, lastCheck: '1m ago' },
-  { project: 'dev-testing-env', instances: 3, healthy: 3, degraded: 0, failing: 0, lastCheck: '1m ago' },
-  { project: 'backup-services', instances: 2, healthy: 2, degraded: 0, failing: 0, lastCheck: '2m ago' },
-];
 
-// Network status by region
-const networkStatus = [
-  { region: 'us-east-1', status: 'operational', latency: 12, instances: 8 },
-  { region: 'us-west-2', status: 'operational', latency: 45, instances: 5 },
-  { region: 'eu-west-1', status: 'operational', latency: 89, instances: 4 },
-  { region: 'ap-southeast-1', status: 'degraded', latency: 234, instances: 3 },
-];
 
-// Project budgets
+
+
+// Project budgets interface
 interface ProjectBudget {
   id: number;
   project: string;
@@ -139,13 +34,6 @@ interface ProjectBudget {
   hourlyRate: number;
   action: string;
 }
-
-const projectBudgets: ProjectBudget[] = [
-  { id: 1, project: 'production-web-app', currentCost: 118.76, limit: 150.00, instances: 2, hourlyRate: 0.156, action: 'warn_only' },
-  { id: 2, project: 'dev-environment', currentCost: 41.37, limit: 50.00, instances: 1, hourlyRate: 0.042, action: 'stop' },
-  { id: 3, project: 'staging-cluster', currentCost: 85.51, limit: 200.00, instances: 3, hourlyRate: 0.208, action: 'warn_only' },
-  { id: 4, project: 'ml-pipeline', currentCost: 54.62, limit: 100.00, instances: 1, hourlyRate: 12.24, action: 'teardown' },
-];
 
 // Helper function to get color based on resource usage
 const getResourceColor = (usage: number, threshold: number = 100) => {
@@ -191,6 +79,15 @@ interface DashboardProps {
 }
 
 export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
+  // Dashboard state - will be populated with real data from APIs
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [activeConnections, setActiveConnections] = useState([]);
+  const [healthChecks, setHealthChecks] = useState([]);
+  const [networkStatus, setNetworkStatus] = useState([]);
+  const [projectBudgets, setProjectBudgets] = useState([]);
+  const [instances, setInstances] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [detailWizardOpen, setDetailWizardOpen] = useState(false);
   const [detailProject, setDetailProject] = useState<ProjectBudget | null>(null);
   const [editLimitAmount, setEditLimitAmount] = useState('');
@@ -201,8 +98,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
   const [quotaSelectorOpen, setQuotaSelectorOpen] = useState(false);
   const [selectedQuotaCategories, setSelectedQuotaCategories] = useState<Record<string, string[]>>({});
   
-  // Generate all available quotas
-  const allAvailableQuotas = useMemo(() => generateQuotaData(selectedPlatform), [selectedPlatform]);
+  // Quota data state
+  const [allAvailableQuotas, setAllAvailableQuotas] = useState<QuotaCategory[]>([]);
+  const [quotasLoading, setQuotasLoading] = useState(true);
   
   // Initialize with all quotas selected on first render (using useEffect to avoid setState during render)
   useEffect(() => {
@@ -216,16 +114,16 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
         console.error('Failed to parse saved quota selections:', e);
       }
     }
-    
+
     // If no saved selections or parse failed, initialize with all quotas selected
-    if (allAvailableQuotas.length > 0) {
+    if (allAvailableQuotas.length > 0 && !quotasLoading) {
       const initialSelections: Record<string, string[]> = {};
       allAvailableQuotas.forEach(category => {
         initialSelections[category.category] = category.quotas.map(q => q.name);
       });
       setSelectedQuotaCategories(initialSelections);
     }
-  }, []); // Only run once on mount
+  }, [allAvailableQuotas, quotasLoading]); // Run when quotas are loaded
   
   // Update localStorage when selections change
   useEffect(() => {
@@ -233,6 +131,41 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
       localStorage.setItem('pocketarchitect_quota_selections', JSON.stringify(selectedQuotaCategories));
     }
   }, [selectedQuotaCategories]);
+
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch real quota data
+        const quotaData = await bridgeApi.getQuotas();
+        setAllAvailableQuotas(quotaData.categories || []);
+
+        // Fetch real instance data to calculate dashboard metrics
+        const instanceData = await bridgeApi.listInstances();
+        setInstances(instanceData);
+
+        // TODO: Add API calls for other dashboard data when backend supports it
+        // For now, show empty states to indicate real data will be displayed
+
+        // Set empty arrays for now - these would be populated with real data
+        setRecentActivity([]);
+        setActiveConnections([]);
+        setHealthChecks([]);
+        setNetworkStatus([]);
+        setProjectBudgets([]);
+
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+        // Set empty quotas on error
+        setAllAvailableQuotas([]);
+      } finally {
+        setLoading(false);
+        setQuotasLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   // Filter quotas based on selection
   const filteredQuotas = useMemo(() => {
@@ -322,10 +255,19 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
     },
   ];
 
+  // Calculate dashboard metrics from real instance data
+  const runningInstances = instances.filter(inst => inst.status === 'healthy').length;
+  const stoppedInstances = instances.filter(inst => inst.status === 'stopped').length;
+  const launchingInstances = instances.filter(inst => inst.status === 'degraded').length;
+  const errorInstances = instances.filter(inst => inst.status === 'error').length;
+  const totalInstances = instances.length;
+  const healthyInstances = runningInstances;
+  const degradedInstances = launchingInstances;
+
   // Calculate overall quota status from all categories
   const allQuotas = filteredQuotas.flatMap(category => category.quotas);
-  const quotaWarnings = allQuotas.filter(q => (q.used / q.limit) >= 0.7 && (q.used / q.limit) < 0.9).length;
-  const quotaCritical = allQuotas.filter(q => (q.used / q.limit) >= 0.9).length;
+  const quotaWarnings = quotasLoading ? 0 : allQuotas.filter(q => (q.used / q.limit) >= 0.7 && (q.used / q.limit) < 0.9).length;
+  const quotaCritical = quotasLoading ? 0 : allQuotas.filter(q => (q.used / q.limit) >= 0.9).length;
 
   return (
     <div className="p-8">
@@ -357,19 +299,28 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
               Select Quotas
             </Button>
           </div>
-          <Badge variant={quotaCritical > 0 ? "destructive" : quotaWarnings > 0 ? "outline" : "secondary"} className={`text-xs ${quotaCritical > 0 ? '' : quotaWarnings > 0 ? 'border-yellow-500/50 text-yellow-500' : ''}`}>
-            <StatusNeonDot 
-              status={quotaCritical > 0 ? 'error' : quotaWarnings > 0 ? 'warning' : 'success'} 
-              size="sm" 
+          <Badge variant={quotasLoading ? "secondary" : quotaCritical > 0 ? "destructive" : quotaWarnings > 0 ? "outline" : "secondary"} className={`text-xs ${quotasLoading ? '' : quotaCritical > 0 ? '' : quotaWarnings > 0 ? 'border-yellow-500/50 text-yellow-500' : ''}`}>
+            <StatusNeonDot
+              status={quotasLoading ? 'unknown' : quotaCritical > 0 ? 'error' : quotaWarnings > 0 ? 'warning' : 'success'}
+              size="sm"
               className="mr-1"
             />
-            {quotaCritical > 0 ? `${quotaCritical} Critical` : quotaWarnings > 0 ? `${quotaWarnings} Warning` : 'All Normal'}
+            {quotasLoading ? 'Loading...' : quotaCritical > 0 ? `${quotaCritical} Critical` : quotaWarnings > 0 ? `${quotaWarnings} Warning` : 'All Normal'}
           </Badge>
         </div>
         
         {/* Peg Board Rows */}
         <div className="space-y-3">
-          {filteredQuotas.map((category) => (
+          {quotasLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">Loading quotas...</div>
+            </div>
+          ) : filteredQuotas.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">No quota data available</div>
+            </div>
+          ) : (
+            filteredQuotas.map((category) => (
             <div key={category.category} className="space-y-3">
               <h4 className="text-sm font-medium text-muted-foreground mb-2">{category.category}</h4>
               {category.quotas.map((quota, index) => {
@@ -430,7 +381,8 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                 );
               })}
             </div>
-          ))}
+          ))
+          )}
         </div>
       </Card>
 
@@ -443,9 +395,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             </div>
             <StatusBadge status="operational" label="Live" size="sm" />
           </div>
-          <div className="text-muted-foreground mb-1">Running Instances</div>
-          <div className="text-4xl mb-2">22</div>
-          <div className="text-xs text-muted-foreground">3 stopped • 2 launching</div>
+           <div className="text-muted-foreground mb-1">Running Instances</div>
+           <div className="text-4xl mb-2">{loading ? '...' : runningInstances}</div>
+           <div className="text-xs text-muted-foreground">{loading ? 'Loading...' : `${stoppedInstances} stopped • ${launchingInstances} launching`}</div>
         </Card>
 
         <Card className="bg-card border-border p-6">
@@ -455,9 +407,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             </div>
             <StatusBadge status="active" label="Active" size="sm" />
           </div>
-          <div className="text-muted-foreground mb-1">SSH Sessions</div>
-          <div className="text-4xl mb-2">3</div>
-          <div className="text-xs text-muted-foreground">Longest: 2h 34m</div>
+           <div className="text-muted-foreground mb-1">SSH Sessions</div>
+           <div className="text-4xl mb-2">0</div>
+           <div className="text-xs text-muted-foreground">No active sessions</div>
         </Card>
 
         <Card className="bg-card border-border p-6">
@@ -467,9 +419,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             </div>
             <StatusBadge status="success" label="OK" size="sm" />
           </div>
-          <div className="text-muted-foreground mb-1">Health Checks</div>
-          <div className="text-4xl mb-2">18/19</div>
-          <div className="text-xs text-muted-foreground">1 degraded • 0 failing</div>
+           <div className="text-muted-foreground mb-1">Health Checks</div>
+           <div className="text-4xl mb-2">{loading ? '...' : `${healthyInstances}/${totalInstances}`}</div>
+           <div className="text-xs text-muted-foreground">{loading ? 'Loading...' : `${degradedInstances} degraded • ${errorInstances} failing`}</div>
         </Card>
 
         <Card className="bg-card border-border p-6">
