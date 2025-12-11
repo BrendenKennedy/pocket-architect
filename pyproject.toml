@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pocket-architect"
+version = "0.1.0"
+description = "Multi-cloud infrastructure management CLI and GUI"
+authors = [{name = "Brenden", email = "brenden@example.com"}]
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["aws", "gcp", "azure", "cloud", "infrastructure", "cli", "gui"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "click>=8.1.0",              # CLI framework
+    "rich>=13.0.0",              # Rich terminal output
+    "pydantic>=2.0.0",           # Data validation
+    "PySide6>=6.5.0",            # Qt for GUI
+    # "PySide6-WebEngine>=6.5.0",  # Web engine for embedding React - commented out for testing
+    "boto3>=1.28.0",             # AWS SDK
+    # "google-cloud-compute>=1.14.0",  # GCP Compute - not needed for AWS-only testing
+    # "google-cloud-billing>=1.11.0",  # GCP Billing - not needed for AWS-only testing
+    # "azure-mgmt-compute>=30.0.0",    # Azure Compute - not needed for AWS-only testing
+    # "azure-mgmt-resource>=23.0.0",   # Azure Resource Management - not needed for AWS-only testing
+    # "azure-mgmt-costmanagement>=4.0.0", # Azure Cost Management - not needed for AWS-only testing
+    # "azure-identity>=1.14.0",    # Azure authentication - not needed for AWS-only testing
+    "sqlalchemy>=2.0.0",         # ORM
+    "alembic>=1.12.0",           # Database migrations
+    "pyyaml>=6.0",               # YAML support
+    "python-dotenv>=1.0.0",      # Environment variables
+    "httpx>=0.24.0",             # HTTP client
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.5.0",
+    "ruff>=0.0.290",
+]
+
+[project.scripts]
+pocket-architect = "pocket_architect.cli.main:cli"
+pocket-architect-gui = "pocket_architect.gui.main:main"
+
+[project.urls]
+Homepage = "https://github.com/brenden/pocket-architect"
+Documentation = "https://github.com/brenden/pocket-architect/docs"
+Repository = "https://github.com/brenden/pocket-architect"
+
+[tool.setuptools]
+packages = ["pocket_architect"]
+package-dir = {"" = "app/backend"}
+
+[tool.setuptools.package-data]
+pocket_architect = [
+    "gui/styles/*.qss",
+    "resources/**/*",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=pocket_architect --cov-report=term-missing"

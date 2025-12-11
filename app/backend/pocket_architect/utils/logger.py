@@ -1,0 +1,41 @@
+"""
+Logging configuration for Pocket Architect.
+"""
+
+import logging
+import sys
+from pathlib import Path
+
+
+def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
+    """
+    Setup and return a logger with the given name.
+
+    Args:
+        name: Logger name (usually __name__)
+        level: Logging level (default: INFO)
+
+    Returns:
+        Configured logger instance
+    """
+    logger = logging.getLogger(name)
+
+    # Only add handler if logger doesn't have one
+    if not logger.handlers:
+        logger.setLevel(level)
+
+        # Create console handler
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(level)
+
+        # Create formatter
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        handler.setFormatter(formatter)
+
+        # Add handler to logger
+        logger.addHandler(handler)
+
+    return logger
