@@ -376,21 +376,15 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             <StatusBadge status="operational" label="Operational" size="sm" />
           </div>
           <div className="space-y-3">
-            {/* Health Checks */}
-            <div className="p-3 bg-background/50 rounded-lg border border-border">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-success" />
-                  <span className="text-sm font-medium">Instance Health</span>
-                </div>
-                <Badge variant="outline" className="text-xs border-success/50 text-success">18/19</Badge>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Last check: 30s ago • 5 projects monitored
-              </div>
-            </div>
-
             {/* Network Status */}
+            {networkStatus.length === 0 && healthChecks.length === 0 && (
+              <div className="text-center py-8">
+                <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                <p className="text-sm text-muted-foreground">No health checks available</p>
+                <p className="text-xs text-muted-foreground mt-1">Deploy instances to monitor health</p>
+              </div>
+            )}
+
             {networkStatus.map((network, index) => (
               <div key={index} className="p-3 bg-background/50 rounded-lg border border-border">
                 <div className="flex items-center justify-between mb-1">
@@ -427,37 +421,45 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             <Badge variant="secondary" className="text-xs">By Project</Badge>
           </div>
           <div className="space-y-3">
-            {healthChecks.map((check, index) => (
-              <div key={index} className="p-3 bg-background/50 rounded-lg border border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium truncate">{check.project}</span>
-                  <Badge variant="outline" className="text-xs border-success/50 text-success">
-                    {check.healthy}/{check.instances}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 className="w-3 h-3 text-success" />
-                  <span>{check.healthy} healthy</span>
-                  {check.degraded > 0 && (
-                    <>
-                      <span>•</span>
-                      <AlertTriangle className="w-3 h-3 text-warning" />
-                      <span className="text-warning">{check.degraded} degraded</span>
-                    </>
-                  )}
-                  {check.failing > 0 && (
-                    <>
-                      <span>•</span>
-                      <XCircle className="w-3 h-3 text-error" />
-                      <span className="text-error">{check.failing} failing</span>
-                    </>
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Last: {check.lastCheck}
-                </div>
+            {healthChecks.length === 0 ? (
+              <div className="text-center py-8">
+                <CheckCircle2 className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                <p className="text-sm text-muted-foreground">No health checks configured</p>
+                <p className="text-xs text-muted-foreground mt-1">Health checks will appear here</p>
               </div>
-            ))}
+            ) : (
+              healthChecks.map((check, index) => (
+                <div key={index} className="p-3 bg-background/50 rounded-lg border border-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium truncate">{check.project}</span>
+                    <Badge variant="outline" className="text-xs border-success/50 text-success">
+                      {check.healthy}/{check.instances}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CheckCircle2 className="w-3 h-3 text-success" />
+                    <span>{check.healthy} healthy</span>
+                    {check.degraded > 0 && (
+                      <>
+                        <span>•</span>
+                        <AlertTriangle className="w-3 h-3 text-warning" />
+                        <span className="text-warning">{check.degraded} degraded</span>
+                      </>
+                    )}
+                    {check.failing > 0 && (
+                      <>
+                        <span>•</span>
+                        <XCircle className="w-3 h-3 text-error" />
+                        <span className="text-error">{check.failing} failing</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Last: {check.lastCheck}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
 
@@ -468,27 +470,35 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             <Badge variant="secondary" className="text-xs">{activeConnections.length}</Badge>
           </div>
           <div className="space-y-3">
-            {activeConnections.map((conn, index) => (
-              <div key={index} className="p-3 bg-background/50 rounded-lg border border-border">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-primary" />
-                    <div>
-                      <code className="text-sm font-mono">{conn.instanceId}</code>
-                      <div className="text-xs text-muted-foreground mt-0.5">{conn.ip}</div>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-xs border-success/50 text-success">
-                    <StatusNeonDot status="active" size="xs" className="mr-1" />
-                    {conn.duration}
-                  </Badge>
-                </div>
-                <div className="text-xs text-muted-foreground space-y-0.5">
-                  <div>Project: {conn.project}</div>
-                  <div>User: {conn.user} • {conn.region}</div>
-                </div>
+            {activeConnections.length === 0 ? (
+              <div className="text-center py-8">
+                <Terminal className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                <p className="text-sm text-muted-foreground">No active SSH sessions</p>
+                <p className="text-xs text-muted-foreground mt-1">SSH connections will appear here</p>
               </div>
-            ))}
+            ) : (
+              activeConnections.map((conn, index) => (
+                <div key={index} className="p-3 bg-background/50 rounded-lg border border-border">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Terminal className="w-4 h-4 text-primary" />
+                      <div>
+                        <code className="text-sm font-mono">{conn.instanceId}</code>
+                        <div className="text-xs text-muted-foreground mt-0.5">{conn.ip}</div>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-xs border-success/50 text-success">
+                      <StatusNeonDot status="active" size="xs" className="mr-1" />
+                      {conn.duration}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-0.5">
+                    <div>Project: {conn.project}</div>
+                    <div>User: {conn.user} • {conn.region}</div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
       </div>
@@ -500,7 +510,14 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
           <Badge variant="secondary" className="text-xs">Live Feed</Badge>
         </div>
         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-          {recentActivity.map((activity, index) => (
+          {recentActivity.length === 0 ? (
+            <div className="text-center py-12">
+              <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+              <p className="text-sm text-muted-foreground">No recent activity</p>
+              <p className="text-xs text-muted-foreground mt-1">Activity will be tracked here</p>
+            </div>
+          ) : (
+            recentActivity.map((activity, index) => (
             <div key={index} className="flex items-start gap-3 p-3 bg-background/50 rounded-lg hover:bg-accent/50 transition-colors border border-transparent hover:border-border">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
                 activity.status === 'success' ? 'bg-green-500/10' :
@@ -526,14 +543,15 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                   )}
                   {activity.region && (
                     <>
-                      <span></span>
+                      <span>•</span>
                       <span>{activity.region}</span>
                     </>
                   )}
                 </div>
               </div>
             </div>
-          ))}
+          ))
+          )}
         </div>
       </Card>
 
