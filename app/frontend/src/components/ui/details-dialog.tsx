@@ -211,7 +211,7 @@ export const DetailsDialogComponents = {
   KeyValueGrid: ({ items }: { items: Record<string, string> }) => (
     <div className="grid grid-cols-2 gap-3 text-sm">
       {Object.entries(items).map(([key, value]) => (
-        <div key={key} className="bg-card p-3 rounded border border-border">
+        <div key={key} className="bg-muted p-3 rounded border border-border">
           <div className="text-muted-foreground text-xs mb-1">{key}</div>
           <div className="font-medium">{value}</div>
         </div>

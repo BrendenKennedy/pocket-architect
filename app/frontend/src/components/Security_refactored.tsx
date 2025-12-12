@@ -568,6 +568,13 @@ export function Security() {
             columns={configColumns}
             actions={createActions<SecurityConfig>()}
             getRowId={(config) => config.id}
+            emptyState={{
+              icon: Shield,
+              title: 'No Security Configurations',
+              description: 'Create security configurations to manage access control and encryption settings for your infrastructure.',
+              actionLabel: 'Create Configuration',
+              onAction: configWizard.open,
+            }}
           />
         </TabsContent>
 
@@ -577,6 +584,13 @@ export function Security() {
             columns={keyPairColumns}
             actions={createActions<KeyPair>()}
             getRowId={(kp) => kp.id}
+            emptyState={{
+              icon: Key,
+              title: 'No SSH Key Pairs',
+              description: 'Generate SSH key pairs to securely connect to your instances.',
+              actionLabel: 'Add Key Pair',
+              onAction: keyPairWizard.open,
+            }}
           />
         </TabsContent>
 
@@ -586,6 +600,11 @@ export function Security() {
             columns={securityGroupColumns}
             actions={createActions<SecurityGroup>()}
             getRowId={(sg) => sg.id}
+            emptyState={{
+              icon: Lock,
+              title: 'No Security Groups',
+              description: 'Define security groups to control inbound and outbound traffic to your instances.',
+            }}
           />
         </TabsContent>
 
@@ -595,6 +614,11 @@ export function Security() {
             columns={iamRoleColumns}
             actions={createActions<IAMRole>()}
             getRowId={(role) => role.id}
+            emptyState={{
+              icon: Users,
+              title: 'No IAM Roles',
+              description: 'Create IAM roles to grant specific permissions and access controls to your resources.',
+            }}
           />
         </TabsContent>
 
@@ -604,6 +628,11 @@ export function Security() {
             columns={certificateColumns}
             actions={createActions<Certificate>()}
             getRowId={(cert) => cert.id}
+            emptyState={{
+              icon: Award,
+              title: 'No SSL/TLS Certificates',
+              description: 'Manage SSL/TLS certificates to enable secure HTTPS connections for your applications.',
+            }}
           />
         </TabsContent>
       </Tabs>

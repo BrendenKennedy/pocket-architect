@@ -386,6 +386,13 @@ export function Projects() {
         columns={columns}
         actions={actions}
         getRowId={(project) => project.id}
+        emptyState={{
+          icon: FolderOpen,
+          title: 'No Projects Yet',
+          description: 'Get started by creating your first project to organize and manage your infrastructure.',
+          actionLabel: 'Create Project',
+          onAction: createWizard.open,
+        }}
       />
 
       {/* Create Project Wizard */}

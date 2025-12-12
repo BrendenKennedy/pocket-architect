@@ -351,6 +351,13 @@ export function Blueprints() {
         columns={columns}
         actions={actions}
         getRowId={(blueprint) => blueprint.id}
+        emptyState={{
+          icon: FileText,
+          title: 'No Blueprints Created',
+          description: 'Create reusable blueprints to streamline instance deployment with predefined configurations.',
+          actionLabel: 'Create Blueprint',
+          onAction: createWizard.open,
+        }}
       />
 
       {/* Create Blueprint Wizard */}

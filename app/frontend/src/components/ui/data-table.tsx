@@ -2,11 +2,12 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Card } from './card';
 import { Badge } from './badge';
 import { Button } from './button';
-import { Eye } from 'lucide-react';
+import { Eye, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 import { theme, cn } from '@/lib/theme-factory';
 import { ProjectColorDot } from './neon-dot';
 import { StatusBadge } from './status-badge';
+import type { LucideIcon } from 'lucide-react';
 
 export interface TableColumn<T> {
   key: string;
@@ -36,6 +37,13 @@ export interface DataTableProps<T> {
   onRowClick?: (item: T) => void;
   getRowId: (item: T) => any;
   className?: string;
+  emptyState?: {
+    icon: LucideIcon;
+    title: string;
+    description?: string;
+    actionLabel?: string;
+    onAction?: () => void;
+  };
 }
 
 export function DataTable<T>({
@@ -48,6 +56,7 @@ export function DataTable<T>({
   onRowClick,
   getRowId,
   className = '',
+  emptyState,
 }: DataTableProps<T>) {
   const handleSelectAll = (checked: boolean) => {
     if (onSelectionChange) {
@@ -68,6 +77,32 @@ export function DataTable<T>({
 
   const isSelected = (item: T) => selectedItems.includes(getRowId(item));
   const allSelected = data.length > 0 && selectedItems.length === data.length;
+
+  // Show empty state if no data and emptyState is provided
+  if (data.length === 0 && emptyState) {
+    const EmptyIcon = emptyState.icon;
+    return (
+      <Card className={cn(theme.table.wrapper(), className)}>
+        <div className={cn(theme.empty.wrapper(), "py-24")}>
+          <EmptyIcon className={cn(theme.empty.icon(), "size-16 mb-4")} />
+          <h3 className="text-xl font-semibold mb-2">{emptyState.title}</h3>
+          {emptyState.description && (
+            <p className={cn(theme.empty.text(), "mb-6 max-w-md mx-auto")}>{emptyState.description}</p>
+          )}
+          {emptyState.onAction && (
+            <Button
+              onClick={emptyState.onAction}
+              size="lg"
+              className="gap-2"
+            >
+              <Plus className="size-5" />
+              {emptyState.actionLabel || 'Create New'}
+            </Button>
+          )}
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn(theme.table.wrapper(), className)}>

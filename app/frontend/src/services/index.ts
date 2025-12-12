@@ -14,7 +14,11 @@ export {
   accountApi,
   costApi,
   learningApi,
-  
+
   // Combined API object
   api as default,
 } from './api';
+
+// Export config service
+export * from './configService';
+export { applyTheme, getActiveThemeName, setActiveThemeName, resolveColor } from './themeService';

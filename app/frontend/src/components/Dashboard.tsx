@@ -20,6 +20,7 @@ import { Checkbox } from './ui/checkbox';
 import { bridgeApi } from '../bridge/api';
 import { getResourceColor, getQuotaStatus, getProjectColor } from '../lib/colors';
 import { resolveColor } from '../services/themeService';
+import { loadConfig, configSetters } from '../services';
 
 
 
@@ -67,75 +68,39 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
   // Quota selector state
   const [quotaSelectorOpen, setQuotaSelectorOpen] = useState(false);
   const [selectedQuotaCategories, setSelectedQuotaCategories] = useState<Record<string, string[]>>({});
-  
+  const [initialQuotaSelections, setInitialQuotaSelections] = useState<Record<string, string[]>>({});
+
   // Quota data state
   const [allAvailableQuotas, setAllAvailableQuotas] = useState<QuotaCategory[]>([]);
   const [quotasLoading, setQuotasLoading] = useState(true);
-  
-  // Initialize with all quotas selected on first render (using useEffect to avoid setState during render)
-  useEffect(() => {
-    // Try to load from localStorage first
-    const savedSelections = localStorage.getItem('pocketarchitect_quota_selections');
-    if (savedSelections) {
-      try {
-        setSelectedQuotaCategories(JSON.parse(savedSelections));
-        return;
-      } catch (e) {
-        console.error('Failed to parse saved quota selections:', e);
-      }
-    }
 
-    // If no saved selections or parse failed, initialize with all quotas selected
-    if (allAvailableQuotas.length > 0 && !quotasLoading) {
+  // Load config on mount
+  useEffect(() => {
+    const loadDashboardConfig = async () => {
+      try {
+        const config = await loadConfig();
+        const quotaSelections = config.dashboard.quotaSelections || {};
+        setInitialQuotaSelections(quotaSelections);
+        setSelectedQuotaCategories(quotaSelections);
+      } catch (error) {
+        console.error('Failed to load dashboard config:', error);
+        setInitialQuotaSelections({});
+        setSelectedQuotaCategories({});
+      }
+    };
+    loadDashboardConfig();
+  }, []);
+
+  // Initialize with all quotas selected if no saved selections exist
+  useEffect(() => {
+    if (allAvailableQuotas.length > 0 && !quotasLoading && Object.keys(selectedQuotaCategories).length === 0) {
       const initialSelections: Record<string, string[]> = {};
       allAvailableQuotas.forEach(category => {
         initialSelections[category.category] = category.quotas.map(q => q.name);
       });
       setSelectedQuotaCategories(initialSelections);
     }
-  }, [allAvailableQuotas, quotasLoading]); // Run when quotas are loaded
-  
-  // Update localStorage when selections change
-  useEffect(() => {
-    if (Object.keys(selectedQuotaCategories).length > 0) {
-      localStorage.setItem('pocketarchitect_quota_selections', JSON.stringify(selectedQuotaCategories));
-    }
-  }, [selectedQuotaCategories]);
-
-  // Fetch dashboard data
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        // Fetch real quota data
-        const quotaData = await bridgeApi.getQuotas();
-        setAllAvailableQuotas(quotaData.categories || []);
-
-        // Fetch real instance data to calculate dashboard metrics
-        const instanceData = await bridgeApi.listInstances();
-        setInstances(instanceData);
-
-        // TODO: Add API calls for other dashboard data when backend supports it
-        // For now, show empty states to indicate real data will be displayed
-
-        // Set empty arrays for now - these would be populated with real data
-        setRecentActivity([]);
-        setActiveConnections([]);
-        setHealthChecks([]);
-        setNetworkStatus([]);
-        setProjectBudgets([]);
-
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-        // Set empty quotas on error
-        setAllAvailableQuotas([]);
-      } finally {
-        setLoading(false);
-        setQuotasLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
+  }, [allAvailableQuotas, quotasLoading, selectedQuotaCategories]);
 
   // Filter quotas based on selection
   const filteredQuotas = useMemo(() => {

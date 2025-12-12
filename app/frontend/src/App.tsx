@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { Projects } from './components/Projects_refactored';
@@ -17,24 +17,70 @@ import { NeonProvider, useNeon } from './contexts/NeonContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { getRegionsForPlatform, getDefaultRegion } from './data/regions';
 import type { Platform } from './types/models';
+import { loadConfig, configSetters } from './services';
 
 export type Page = 'dashboard' | 'projects' | 'blueprints' | 'security' | 'images' | 'instances' | 'accounts' | 'cost' | 'settings' | 'learning';
 
 function AppContent() {
   const [activePage, setActivePage] = useState<Page>('dashboard');
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>('aws');
-  const [selectedRegion, setSelectedRegion] = useState(getDefaultRegion(selectedPlatform));
+  const [selectedRegion, setSelectedRegion] = useState(getDefaultRegion('aws'));
+  const [configLoaded, setConfigLoaded] = useState(false);
   const { getNeonGlow } = useNeon();
+
+  // Load config on mount
+  useEffect(() => {
+    const loadAppConfig = async () => {
+      try {
+        const config = await loadConfig();
+        setActivePage(config.ui.lastActivePage as Page || 'dashboard');
+        setSelectedPlatform(config.platform.selected as Platform || 'aws');
+        setSelectedRegion(
+          config.platform.defaultRegion[config.platform.selected as Platform] ||
+          getDefaultRegion(config.platform.selected as Platform)
+        );
+        setConfigLoaded(true);
+      } catch (error) {
+        console.error('Failed to load app config:', error);
+        setConfigLoaded(true); // Continue with defaults
+      }
+    };
+    loadAppConfig();
+  }, []);
 
   // Connection status for each provider
   const [awsConnected, setAwsConnected] = useState(true);
   const [gcpConnected, setGcpConnected] = useState(true);
   const [azureConnected, setAzureConnected] = useState(true);
 
+  // Save active page to config when it changes
+  useEffect(() => {
+    configSetters.setLastActivePage(activePage);
+  }, [activePage]);
+
+  // Save platform to config when it changes
+  useEffect(() => {
+    configSetters.setSelectedPlatform(selectedPlatform);
+  }, [selectedPlatform]);
+
+  // Save region to config when it changes
+  useEffect(() => {
+    if (configLoaded) {
+      configSetters.setDefaultRegion(selectedPlatform, selectedRegion);
+    }
+  }, [selectedPlatform, selectedRegion, configLoaded]);
+
   // Handle platform change and reset region to first available
-  const handlePlatformChange = (platform: Platform) => {
+  const handlePlatformChange = async (platform: Platform) => {
     setSelectedPlatform(platform);
-    setSelectedRegion(getDefaultRegion(platform));
+    try {
+      const config = await loadConfig();
+      const newRegion = config.platform.defaultRegion[platform] || getDefaultRegion(platform);
+      setSelectedRegion(newRegion);
+    } catch (error) {
+      console.error('Failed to load config for platform change:', error);
+      setSelectedRegion(getDefaultRegion(platform));
+    }
   };
 
   const renderPage = () => {
@@ -63,6 +109,18 @@ function AppContent() {
         return <Dashboard />;
     }
   };
+
+  // Show loading state while config is being loaded
+  if (!configLoaded) {
+    return (
+      <div className="flex h-screen bg-background text-foreground items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-text-muted">Loading Pocket Architect...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden flex-col">

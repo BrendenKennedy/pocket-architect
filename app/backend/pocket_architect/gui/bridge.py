@@ -6,6 +6,8 @@ Exposes Python methods to JavaScript via Qt's bridge mechanism.
 from PySide6.QtCore import QObject, Slot, Signal
 from typing import Dict, List, Any, Optional
 import json
+import os
+from pathlib import Path
 
 from pocket_architect.core.manager import ResourceManager
 from pocket_architect.core.models import (
@@ -349,3 +351,50 @@ class BackendBridge(QObject):
         """Ping to test bridge connection."""
         logger.info("ping called")
         return json.dumps({"status": "ok", "message": "Bridge is working!"})
+
+    # ========================================================================
+    # CONFIG FILE OPERATIONS
+    # ========================================================================
+
+    def _get_config_path(self) -> Path:
+        """Get the path to the config file."""
+        # Use user's home directory for config storage
+        home_dir = Path.home()
+        config_dir = home_dir / ".pocket-architect"
+        config_dir.mkdir(exist_ok=True)
+        return config_dir / "config.json"
+
+    @Slot(result=str)
+    def load_config(self) -> str:
+        """Load config from file."""
+        try:
+            config_path = self._get_config_path()
+            if config_path.exists():
+                with open(config_path, "r") as f:
+                    content = f.read()
+                    # Validate it's valid JSON
+                    json.loads(content)
+                    return content
+            else:
+                # Return empty object if no config exists
+                return json.dumps({})
+        except Exception as e:
+            logger.error(f"Failed to load config: {e}")
+            return json.dumps({})
+
+    @Slot(str, result=str)
+    def save_config(self, config_json: str) -> str:
+        """Save config to file."""
+        try:
+            # Validate JSON
+            config_data = json.loads(config_json)
+
+            config_path = self._get_config_path()
+            with open(config_path, "w") as f:
+                json.dump(config_data, f, indent=2)
+
+            logger.info(f"Config saved to {config_path}")
+            return json.dumps({"success": True})
+        except Exception as e:
+            logger.error(f"Failed to save config: {e}")
+            return json.dumps({"success": False, "error": str(e)})

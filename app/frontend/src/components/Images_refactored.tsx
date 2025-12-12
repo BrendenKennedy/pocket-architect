@@ -337,6 +337,13 @@ export function Images() {
         columns={columns}
         actions={actions}
         getRowId={(image) => image.id}
+        emptyState={{
+          icon: HardDrive,
+          title: 'No Images Available',
+          description: 'Create custom machine images to quickly deploy preconfigured instances.',
+          actionLabel: 'Create Image',
+          onAction: createWizard.open,
+        }}
       />
 
       {/* Create Image Wizard */}

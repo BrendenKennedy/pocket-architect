@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, X, RefreshCw, Palette, Settings as SettingsIcon } from 'lucide-react';
+import { Check, X, RefreshCw, Palette, Settings as SettingsIcon, Download, Upload } from 'lucide-react';
 import { Card } from './ui/card';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -11,10 +11,14 @@ import { useNeon } from '../contexts/NeonContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeCreatorWizard } from './ThemeCreatorWizard';
 import { getAllThemes } from '../config/themes';
+import { loadConfig, configSetters, exportConfig, importConfig } from '../services';
 
 export function Settings() {
   const { currentTheme, setTheme, refreshThemes } = useTheme();
   const [selectedTheme, setSelectedTheme] = useState(currentTheme.name);
+
+  // Config state
+  const [config, setConfig] = useState<any>(null);
   const [fontFamily, setFontFamily] = useState('system');
   const [textSize, setTextSize] = useState([100]);
   const [region, setRegion] = useState('us-east-1');
@@ -23,6 +27,23 @@ export function Settings() {
   const { neonIntensity, setNeonIntensity } = useNeon();
   const [themeCreatorOpen, setThemeCreatorOpen] = useState(false);
   const [themes, setThemes] = useState(getAllThemes());
+
+  // Load settings from config on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const loadedConfig = await loadConfig();
+        setConfig(loadedConfig);
+        setFontFamily(loadedConfig.appearance.fontFamily);
+        setTextSize([loadedConfig.appearance.textSize]);
+        setRegion(loadedConfig.aws.defaultRegion);
+        setAutoRefresh(loadedConfig.dashboard.autoRefreshInterval.toString());
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    };
+    loadSettings();
+  }, []);
 
   // Sync selected theme with current theme from context
   useEffect(() => {
@@ -54,19 +75,60 @@ export function Settings() {
     toast.success(`Theme changed to ${value}`);
   };
 
-  const handleRegionChange = (value: string) => {
+  const handleRegionChange = async (value: string) => {
     setRegion(value);
+    await configSetters.setDefaultRegion('aws', value);
     toast.success(`Region changed to ${value}`);
   };
 
-  const handleAutoRefreshChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAutoRefreshChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setAutoRefresh(value);
+    await configSetters.setAutoRefreshInterval(parseInt(value) || 0);
     if (value === '0') {
       toast.info('Auto-refresh disabled');
     } else {
       toast.success(`Auto-refresh set to ${value} seconds`);
     }
+  };
+
+  const handleExportConfig = async () => {
+    try {
+      const configJson = await exportConfig();
+      const blob = new Blob([configJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pocket-architect-config-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Configuration exported successfully!');
+    } catch (error) {
+      toast.error('Failed to export configuration');
+    }
+  };
+
+  const handleImportConfig = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const imported = await importConfig(text);
+        // Reload the page to apply all settings
+        toast.success('Configuration imported! Reloading...');
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (error) {
+        toast.error('Failed to import configuration. Invalid file format.');
+      }
+    };
+    input.click();
   };
 
   return (
@@ -157,12 +219,13 @@ export function Settings() {
                   <Label>Font Family</Label>
                   <div className="text-sm text-text-muted mt-1">Choose your preferred font</div>
                 </div>
-                <Select 
-                  value={fontFamily} 
-                  onValueChange={(value) => {
-                    setFontFamily(value);
-                    toast.success(`Font changed to ${fonts.find(f => f.value === value)?.label}`);
-                  }}
+                 <Select
+                   value={fontFamily}
+                   onValueChange={async (value) => {
+                     setFontFamily(value);
+                     await configSetters.setFontFamily(value);
+                     toast.success(`Font changed to ${fonts.find(f => f.value === value)?.label}`);
+                   }}
                 >
                   <SelectTrigger className="w-64 bg-background border-border-muted">
                     <SelectValue />
@@ -206,9 +269,10 @@ export function Settings() {
                   onValueChange={(value) => {
                     setTextSize(value);
                   }}
-                  onValueCommit={(value) => {
-                    toast.success(`Text size set to ${value[0]}%`);
-                  }}
+                   onValueCommit={async (value) => {
+                     await configSetters.setTextSize(value[0]);
+                     toast.success(`Text size set to ${value[0]}%`);
+                   }}
                   min={75}
                   max={150}
                   step={5}
@@ -399,6 +463,37 @@ export function Settings() {
                 Dashboard and project data will refresh every {autoRefresh} seconds
               </div>
             )}
+          </div>
+        </Card>
+
+        {/* Configuration Management */}
+        <Card className="bg-background-elevated border-border p-6">
+          <h3 className="text-lg mb-4 text-text-primary">Configuration Management</h3>
+          <div className="space-y-4">
+            <div>
+              <Label className="mb-2 block">Backup & Restore</Label>
+              <p className="text-sm text-text-muted mb-3">
+                Export your settings to a file or import a previously saved configuration.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleExportConfig}
+                  className="border-border-muted hover:bg-background-elevated"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Config
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleImportConfig}
+                  className="border-border-muted hover:bg-background-elevated"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import Config
+                </Button>
+              </div>
+            </div>
           </div>
         </Card>
 

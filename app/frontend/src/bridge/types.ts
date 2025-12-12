@@ -44,6 +44,10 @@ export interface BackendBridge {
 
   // Utility operations
   ping: () => Promise<string>;
+
+  // Config file operations
+  load_config: () => Promise<string>;
+  save_config: (config_json: string) => Promise<string>;
 }
 
 declare global {

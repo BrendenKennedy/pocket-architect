@@ -379,6 +379,13 @@ spec:
         columns={columns}
         actions={actions}
         getRowId={(instance) => instance.id}
+        emptyState={{
+          icon: Server,
+          title: 'No Instances Deployed',
+          description: 'Start deploying compute instances to build and scale your infrastructure.',
+          actionLabel: 'Deploy Instance',
+          onAction: deployWizard.open,
+        }}
       />
 
       {/* Deploy Instance Wizard */}
@@ -402,7 +409,7 @@ spec:
 
       {/* Status Dialog */}
       <Dialog open={statusDialog.isOpen} onValueChange={statusDialog.setIsOpen}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-popover border-border">
           <DialogHeader>
             <DialogTitle>Instance Status</DialogTitle>
             <DialogDescription>

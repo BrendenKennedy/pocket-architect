@@ -161,6 +161,22 @@ class BridgeAPI {
     const result = await bridge.ping();
     return JSON.parse(result);
   }
+
+  // ========================================================================
+  // CONFIG FILE OPERATIONS
+  // ========================================================================
+
+  async loadConfig(): Promise<string> {
+    const bridge = getBridge();
+    const result = await bridge.load_config();
+    return result;
+  }
+
+  async saveConfig(configJson: string): Promise<{ success: boolean; error?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.save_config(configJson);
+    return JSON.parse(result);
+  }
 }
 
 // Export singleton instance

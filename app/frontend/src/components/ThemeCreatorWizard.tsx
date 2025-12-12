@@ -216,9 +216,9 @@ export function ThemeCreatorWizard({ open, onOpenChange, onThemeCreated }: Theme
           </div>
 
           {creationMode && (
-            <Card className="bg-card border-border p-4 mt-4">
+            <Card className="bg-muted border-border p-4 mt-4">
               <p className="text-sm text-muted-foreground">
-                {creationMode === 'wizard' 
+                {creationMode === 'wizard'
                   ? 'You\'ll be guided through 4 steps to configure all theme colors with live previews.'
                   : 'You\'ll have access to a JSON editor with the complete theme structure and all available color variables.'}
               </p>
@@ -247,7 +247,7 @@ export function ThemeCreatorWizard({ open, onOpenChange, onThemeCreated }: Theme
             />
           </div>
 
-          <Card className="bg-card border-border p-4">
+          <Card className="bg-muted border-border p-4">
             <h4 className="text-sm mb-2">Required Fields</h4>
             <ul className="text-xs text-muted-foreground space-y-1">
               <li>• <span className="text-foreground">name</span>: Unique theme identifier (lowercase, no spaces)</li>
@@ -535,7 +535,7 @@ export function ThemeCreatorWizard({ open, onOpenChange, onThemeCreated }: Theme
                 </div>
               </div>
 
-              <Card className="bg-card border-border p-4 mt-4">
+              <Card className="bg-muted border-border p-4 mt-4">
                 <h4 className="text-sm mb-3">Theme Summary</h4>
                 <div className="space-y-2 text-sm">
                   <p><span className="text-muted-foreground">Name:</span> {themeName || 'Not set'}</p>
