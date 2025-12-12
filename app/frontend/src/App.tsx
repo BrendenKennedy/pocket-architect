@@ -14,6 +14,7 @@ import { Toaster } from './components/ui/sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Box } from 'lucide-react';
 import { NeonProvider, useNeon } from './contexts/NeonContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { getRegionsForPlatform, getDefaultRegion } from './data/regions';
 import type { Platform } from './types/models';
 
@@ -64,7 +65,7 @@ function AppContent() {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground dark overflow-hidden flex-col">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden flex-col">
       {/* Top Menu Bar - Full Width */}
       <div className="h-[52px] bg-card border-b border-border flex items-center px-4 gap-6 flex-shrink-0 justify-between relative z-10">
         <div className="flex items-center gap-3">
@@ -142,8 +143,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <NeonProvider>
-      <AppContent />
-    </NeonProvider>
+    <ThemeProvider>
+      <NeonProvider>
+        <AppContent />
+      </NeonProvider>
+    </ThemeProvider>
   );
 }

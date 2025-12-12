@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Check, X, RefreshCw, Palette } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Check, X, RefreshCw, Palette, Settings as SettingsIcon } from 'lucide-react';
 import { Card } from './ui/card';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -8,11 +8,13 @@ import { Button } from './ui/button';
 import { Slider } from './ui/slider';
 import { toast } from 'sonner@2.0.3';
 import { useNeon } from '../contexts/NeonContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { ThemeCreatorWizard } from './ThemeCreatorWizard';
 import { getAllThemes } from '../config/themes';
 
 export function Settings() {
-  const [selectedTheme, setSelectedTheme] = useState('pocket-dark');
+  const { currentTheme, setTheme, refreshThemes } = useTheme();
+  const [selectedTheme, setSelectedTheme] = useState(currentTheme.name);
   const [fontFamily, setFontFamily] = useState('system');
   const [textSize, setTextSize] = useState([100]);
   const [region, setRegion] = useState('us-east-1');
@@ -22,8 +24,14 @@ export function Settings() {
   const [themeCreatorOpen, setThemeCreatorOpen] = useState(false);
   const [themes, setThemes] = useState(getAllThemes());
 
+  // Sync selected theme with current theme from context
+  useEffect(() => {
+    setSelectedTheme(currentTheme.name);
+  }, [currentTheme]);
+
   // Reload themes when theme creator closes
   const handleThemeCreated = () => {
+    refreshThemes();
     setThemes(getAllThemes());
   };
 
@@ -64,7 +72,10 @@ export function Settings() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="flex items-center justify-between mb-4">
-        <h2>Settings</h2>
+        <div className="flex items-center gap-3">
+          <SettingsIcon className="size-8 text-primary" />
+          <h2 className="text-primary">Settings</h2>
+        </div>
         <Button variant="ghost" size="icon">
           <RefreshCw className="w-4 h-4" />
         </Button>
@@ -75,7 +86,7 @@ export function Settings() {
         <Card className="bg-background-elevated border-border p-6">
           <div className="flex items-center gap-2 mb-6">
             <Palette className="w-5 h-5 text-primary" />
-            <h3 className="text-lg">Appearance & Customization</h3>
+            <h3 className="text-lg text-text-primary">Appearance & Customization</h3>
           </div>
           
           <div className="space-y-6">
@@ -87,6 +98,7 @@ export function Settings() {
                   <button
                     key={theme.name}
                     onClick={() => {
+                      setTheme(theme.name);
                       setSelectedTheme(theme.name);
                       toast.success(`Theme changed to ${theme.label}`);
                     }}
@@ -295,7 +307,7 @@ export function Settings() {
 
         {/* AWS Configuration */}
         <Card className="bg-background-elevated border-border p-6">
-          <h3 className="text-lg mb-4">AWS Configuration</h3>
+          <h3 className="text-lg mb-4 text-text-primary">AWS Configuration</h3>
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
@@ -359,7 +371,7 @@ export function Settings() {
 
         {/* Auto-Refresh */}
         <Card className="bg-background-elevated border-border p-6">
-          <h3 className="text-lg mb-4">Auto-Refresh</h3>
+          <h3 className="text-lg mb-4 text-text-primary">Auto-Refresh</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -392,7 +404,7 @@ export function Settings() {
 
         {/* About */}
         <Card className="bg-background-elevated border-border p-6">
-          <h3 className="text-lg mb-4">About</h3>
+          <h3 className="text-lg mb-4 text-text-primary">About</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Version</Label>

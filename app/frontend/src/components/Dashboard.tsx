@@ -1,5 +1,6 @@
 import { RefreshCw, Server, Box, Key, Activity, FolderOpen, Play, AlertCircle, CheckCircle2, XCircle, Clock, Terminal, Cpu, HardDrive, Network, Wifi, WifiOff, Zap, Database, Globe, AlertTriangle, Info, DollarSign, Eye, Settings } from 'lucide-react';
 import { Button } from './ui/button';
+import { LayoutDashboard } from 'lucide-react';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
@@ -17,6 +18,8 @@ import { StatusBadge } from './ui/status-badge';
 import { type QuotaCategory } from '../lib/quotas';
 import { Checkbox } from './ui/checkbox';
 import { bridgeApi } from '../bridge/api';
+import { getResourceColor, getQuotaStatus, getProjectColor } from '../lib/colors';
+import { resolveColor } from '../services/themeService';
 
 
 
@@ -35,43 +38,10 @@ interface ProjectBudget {
   action: string;
 }
 
-// Helper function to get color based on resource usage
-const getResourceColor = (usage: number, threshold: number = 100) => {
-  const ratio = usage / threshold;
-  if (ratio >= 1.0) return '#EF4444'; // Red - over threshold
-  if (ratio >= 0.85) return '#F59E0B'; // Orange - very close
-  if (ratio >= 0.7) return '#EAB308'; // Yellow - approaching
-  return '#22C55E'; // Green - safe
-};
-
 const getProgressColor = (usage: number) => {
   if (usage >= 1.0) return 'bg-red-500';
   if (usage >= 0.75) return 'bg-yellow-500';
   return 'bg-green-500';
-};
-
-// Helper to get status color and glow for quota usage
-const getQuotaStatus = (used: number, limit: number) => {
-  const percentage = (used / limit) * 100;
-  if (percentage >= 90) {
-    return {
-      color: '#EF4444', // Red
-      glow: 'drop-shadow(0 0 3px #EF4444) drop-shadow(0 0 6px #EF444480)',
-      className: 'fill-red-500',
-    };
-  } else if (percentage >= 70) {
-    return {
-      color: '#EAB308', // Yellow
-      glow: 'drop-shadow(0 0 3px #EAB308) drop-shadow(0 0 6px #EAB30880)',
-      className: 'fill-yellow-500',
-    };
-  } else {
-    return {
-      color: '#22C55E', // Green
-      glow: 'drop-shadow(0 0 3px #22C55E) drop-shadow(0 0 6px #22C55E80)',
-      className: 'fill-green-500',
-    };
-  }
 };
 
 interface DashboardProps {
@@ -230,20 +200,12 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
   const totalCost = projectBudgets.reduce((sum, p) => sum + p.currentCost, 0);
   const remaining = totalBudget - totalCost;
 
-  // Define unique colors for each project
-  const projectColors: Record<string, string> = {
-    'production-web-app': '#A855F7', // Purple
-    'dev-environment': '#3B82F6', // Blue
-    'staging-cluster': '#10B981', // Green
-    'ml-pipeline': '#F59E0B', // Amber
-  };
-
   const budgetSegments = [
-    ...projectBudgets.map((budget) => ({
+    ...projectBudgets.map((budget, index) => ({
       id: budget.id,
       name: budget.project,
       value: budget.currentCost,
-      color: projectColors[budget.project] || '#8B5CF6',
+      color: resolveColor(getProjectColor(index)),
       onClick: () => handleOpenDetailWizard(budget),
     })),
     {
@@ -273,7 +235,10 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
     <div className="p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2>Dashboard</h2>
+        <div className="flex items-center gap-3">
+          <LayoutDashboard className="size-8 text-primary" />
+          <h2 className="text-primary">Dashboard</h2>
+        </div>
         <Button variant="ghost" size="icon">
           <RefreshCw className="w-4 h-4" />
         </Button>
@@ -283,7 +248,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
       <Card className="bg-card border-border p-6 mb-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <h3 className="text-lg">
+            <h3 className="text-lg text-text-primary">
               Service Quotas & Limits 
               <span className="text-sm text-muted-foreground ml-2">
                 ({selectedPlatform.toUpperCase()})
@@ -442,7 +407,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
         {/* Service Health */}
         <Card className="bg-card border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg">Service Health</h3>
+            <h3 className="text-lg text-text-primary">Service Health</h3>
             <StatusBadge status="operational" label="Operational" size="sm" />
           </div>
           <div className="space-y-3">
@@ -450,10 +415,10 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             <div className="p-3 bg-background/50 rounded-lg border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <CheckCircle2 className="w-4 h-4 text-success" />
                   <span className="text-sm font-medium">Instance Health</span>
                 </div>
-                <Badge variant="outline" className="text-xs border-green-500/50 text-green-500">18/19</Badge>
+                <Badge variant="outline" className="text-xs border-success/50 text-success">18/19</Badge>
               </div>
               <div className="text-xs text-muted-foreground">
                 Last check: 30s ago • 5 projects monitored
@@ -465,18 +430,18 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
               <div key={index} className="p-3 bg-background/50 rounded-lg border border-border">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
-                    {network.status === 'operational' ? 
-                      <Wifi className="w-4 h-4 text-green-500" /> : 
-                      <WifiOff className="w-4 h-4 text-yellow-500" />
+                    {network.status === 'operational' ?
+                      <Wifi className="w-4 h-4 text-success" /> :
+                      <WifiOff className="w-4 h-4 text-warning" />
                     }
                     <span className="text-sm font-medium">{network.region}</span>
                   </div>
                   <Badge 
                     variant="outline" 
                     className={`text-xs ${
-                      network.status === 'operational' 
-                        ? 'border-green-500/50 text-green-500' 
-                        : 'border-yellow-500/50 text-yellow-500'
+                      network.status === 'operational'
+                        ? 'border-success/50 text-success'
+                        : 'border-warning/50 text-warning'
                     }`}
                   >
                     {network.latency}ms
@@ -493,7 +458,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
         {/* Health Check Details */}
         <Card className="bg-card border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg">Health Check Status</h3>
+            <h3 className="text-lg text-text-primary">Health Check Status</h3>
             <Badge variant="secondary" className="text-xs">By Project</Badge>
           </div>
           <div className="space-y-3">
@@ -501,25 +466,25 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
               <div key={index} className="p-3 bg-background/50 rounded-lg border border-border">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium truncate">{check.project}</span>
-                  <Badge variant="outline" className="text-xs border-green-500/50 text-green-500">
+                  <Badge variant="outline" className="text-xs border-success/50 text-success">
                     {check.healthy}/{check.instances}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 className="w-3 h-3 text-green-500" />
+                  <CheckCircle2 className="w-3 h-3 text-success" />
                   <span>{check.healthy} healthy</span>
                   {check.degraded > 0 && (
                     <>
                       <span>•</span>
-                      <AlertTriangle className="w-3 h-3 text-yellow-500" />
-                      <span className="text-yellow-500">{check.degraded} degraded</span>
+                      <AlertTriangle className="w-3 h-3 text-warning" />
+                      <span className="text-warning">{check.degraded} degraded</span>
                     </>
                   )}
                   {check.failing > 0 && (
                     <>
                       <span>•</span>
-                      <XCircle className="w-3 h-3 text-red-500" />
-                      <span className="text-red-500">{check.failing} failing</span>
+                      <XCircle className="w-3 h-3 text-error" />
+                      <span className="text-error">{check.failing} failing</span>
                     </>
                   )}
                 </div>
@@ -534,7 +499,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
         {/* Active SSH Connections */}
         <Card className="bg-card border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg">Active SSH Sessions</h3>
+            <h3 className="text-lg text-text-primary">Active SSH Sessions</h3>
             <Badge variant="secondary" className="text-xs">{activeConnections.length}</Badge>
           </div>
           <div className="space-y-3">
@@ -548,7 +513,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                       <div className="text-xs text-muted-foreground mt-0.5">{conn.ip}</div>
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-xs border-green-500/50 text-green-500">
+                  <Badge variant="outline" className="text-xs border-success/50 text-success">
                     <StatusNeonDot status="active" size="xs" className="mr-1" />
                     {conn.duration}
                   </Badge>
@@ -566,7 +531,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
       {/* Recent Activity - Bottom */}
       <Card className="bg-card border-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg">Recent Activity</h3>
+          <h3 className="text-lg text-text-primary">Recent Activity</h3>
           <Badge variant="secondary" className="text-xs">Live Feed</Badge>
         </div>
         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
@@ -578,10 +543,10 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                 activity.status === 'error' ? 'bg-red-500/10' :
                 'bg-blue-500/10'
               }`}>
-                {activity.status === 'success' ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> :
-                 activity.status === 'warning' ? <AlertCircle className="w-3.5 h-3.5 text-yellow-500" /> :
-                 activity.status === 'error' ? <XCircle className="w-3.5 h-3.5 text-red-500" /> :
-                 <Info className="w-3.5 h-3.5 text-blue-500" />}
+                {activity.status === 'success' ? <CheckCircle2 className="w-3.5 h-3.5 text-success" /> :
+                 activity.status === 'warning' ? <AlertCircle className="w-3.5 h-3.5 text-warning" /> :
+                 activity.status === 'error' ? <XCircle className="w-3.5 h-3.5 text-error" /> :
+                 <Info className="w-3.5 h-3.5 text-info" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm">{activity.message}</p>
@@ -801,8 +766,8 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
 
               <Card className="bg-yellow-500/10 border-yellow-500/30 p-4">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-yellow-400">
+                  <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-warning">
                     <div className="font-semibold mb-1">Important</div>
                     <div>
                       Automated actions like "Stop Resources" and "Teardown Project" will execute immediately when the limit is reached. 

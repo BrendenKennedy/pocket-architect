@@ -25,7 +25,7 @@ export function PageHeader({
           </div>
         )}
         <div>
-          <h2>{title}</h2>
+          <h2 className="text-primary">{title}</h2>
           {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
         </div>
       </div>

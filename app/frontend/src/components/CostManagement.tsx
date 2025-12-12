@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, AlertTriangle, Plus, RefreshCw, Trash2, DollarSign as DollarIcon, Clock, Eye, Server, TrendingDown, Zap, Edit2, Copy } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertTriangle, Plus, RefreshCw, Trash2, Clock, Eye, Server, TrendingDown, Zap, Edit2, Copy } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -18,6 +18,8 @@ import { ProjectColorDot, StatusNeonDot } from './ui/neon-dot';
 import { DataTable, TableColumn, TableAction } from './ui/data-table';
 import { useNeon } from '../contexts/NeonContext';
 import { bridgeApi } from '../bridge/api';
+import { getResourceColor } from '../lib/colors';
+import { resolveColor } from '../services/themeService';
 
 // Project cost tracking with actual costs and rates
 interface ProjectCostData {
@@ -53,15 +55,6 @@ export function CostManagement() {
   const [editLimitAmount, setEditLimitAmount] = useState('');
   const [editLimitAction, setEditLimitAction] = useState('warn_only');
   const [editWarningThreshold, setEditWarningThreshold] = useState('0.75');
-
-  // Helper function to get color based on resource usage
-  const getResourceColor = (usage: number, threshold: number = 100) => {
-    const ratio = usage / threshold;
-    if (ratio >= 1.0) return '#EF4444'; // Red - over threshold
-    if (ratio >= 0.85) return '#F59E0B'; // Orange - very close
-    if (ratio >= 0.7) return '#EAB308'; // Yellow - approaching
-    return '#22C55E'; // Green - safe
-  };
 
   // Update current time every minute to reflect cost increases
   useEffect(() => {
@@ -264,13 +257,13 @@ export function CostManagement() {
               )}
             </div>
             {usage >= 0.75 && usage < 1.0 && (
-              <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-500 shrink-0 w-fit">
+              <Badge variant="outline" className="text-xs border-warning/50 text-warning shrink-0 w-fit">
                 <StatusNeonDot status="warning" size="xs" className="mr-1" />
                 Warning
               </Badge>
             )}
             {usage >= 1.0 && (
-              <Badge variant="outline" className="text-xs border-red-500/50 text-red-500 shrink-0 w-fit">
+              <Badge variant="outline" className="text-xs border-error/50 text-error shrink-0 w-fit">
                 <StatusNeonDot status="error" size="xs" className="mr-1" />
                 Over Limit
               </Badge>
@@ -364,7 +357,10 @@ export function CostManagement() {
     <div className="p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2>Cost Management</h2>
+        <div className="flex items-center gap-3">
+          <DollarSign className="size-8 text-primary" />
+          <h2 className="text-primary">Cost Management</h2>
+        </div>
         <Button variant="ghost" size="icon" onClick={handleCheckCosts}>
           <RefreshCw className="w-4 h-4" />
         </Button>
@@ -381,7 +377,7 @@ export function CostManagement() {
 
       {/* Budget Consumption Rate Chart - Full Width */}
       <Card className="bg-card border-border p-6 mb-6">
-        <h3 className="text-lg mb-4">Budget Consumption Rate</h3>
+        <h3 className="text-lg mb-4 text-text-primary">Budget Consumption Rate</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={getTimeSeriesData()}>
             <defs>
@@ -491,8 +487,8 @@ export function CostManagement() {
       {/* Global Cost Limit Management */}
       <Card className="bg-card border-border p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg">Global Cost Limit Management</h3>
-          <Badge variant="outline" className={`text-xs ${globalUsage >= 0.85 ? 'border-red-500/50 text-red-500' : globalUsage >= 0.7 ? 'border-yellow-500/50 text-yellow-500' : 'border-green-500/50 text-green-500'}`}>
+          <h3 className="text-lg text-text-primary">Global Cost Limit Management</h3>
+          <Badge variant="outline" className={`text-xs ${globalUsage >= 0.85 ? 'border-error/50 text-error' : globalUsage >= 0.7 ? 'border-warning/50 text-warning' : 'border-success/50 text-success'}`}>
             <StatusNeonDot 
               status={globalUsage >= 0.85 ? 'error' : globalUsage >= 0.7 ? 'warning' : 'success'} 
               size="sm" 
@@ -583,7 +579,7 @@ export function CostManagement() {
               {hasGlobalLimit ? 'Update Limit' : 'Set Global Limit'}
             </Button>
             {hasGlobalLimit && (
-              <Button onClick={handleRemoveGlobalLimit} variant="destructive" className="flex-1 bg-red-500/20 text-red-500 hover:bg-red-500/30 border-red-500/50">
+              <Button onClick={handleRemoveGlobalLimit} variant="destructive" className="flex-1">
                 <Trash2 className="w-4 h-4 mr-2" />
                 Remove
               </Button>
@@ -598,7 +594,7 @@ export function CostManagement() {
         onOpenChange={setLimitDialogOpen}
         title="Set Project Cost Limit"
         description="Configure cost limits and actions for a specific project"
-        icon={DollarIcon}
+        icon={DollarSign}
         onNext={handleSetLimit}
         onCancel={() => setLimitDialogOpen(false)}
         nextLabel="Set Limit"
@@ -668,7 +664,7 @@ export function CostManagement() {
         onOpenChange={setGlobalLimitDialogOpen}
         title={`${hasGlobalLimit ? 'Update' : 'Set'} Global Cost Limit`}
         description="Set a maximum spending limit across all projects"
-        icon={DollarIcon}
+        icon={DollarSign}
         onNext={handleSetGlobalLimit}
         onCancel={() => setGlobalLimitDialogOpen(false)}
         nextLabel={`${hasGlobalLimit ? 'Update' : 'Set'} Global Limit`}
@@ -703,7 +699,7 @@ export function CostManagement() {
           onOpenChange={setDetailWizardOpen}
           title={`${detailProject.project}`}
           description="View project cost details and update settings"
-          icon={DollarIcon}
+          icon={DollarSign}
           onNext={handleSaveDetails}
           onCancel={() => {
             setDetailWizardOpen(false);
@@ -836,8 +832,8 @@ export function CostManagement() {
               {/* Last Sync Info */}
               <Card className="bg-blue-500/10 border-blue-500/30 p-4">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-blue-400" />
-                  <div className="text-sm text-blue-400">
+                  <Clock className="w-4 h-4 text-info" />
+                  <div className="text-sm text-info">
                     Last synced with cloud provider: <span className="font-semibold">{getTimeSinceCheck(detailProject.lastChecked)}</span>
                   </div>
                 </div>
@@ -902,8 +898,8 @@ export function CostManagement() {
 
               <Card className="bg-yellow-500/10 border-yellow-500/30 p-4">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-yellow-400">
+                  <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-warning">
                     <div className="font-semibold mb-1">Important</div>
                     <div>
                       Automated actions like "Stop Resources" and "Teardown Project" will execute immediately when the limit is reached. 

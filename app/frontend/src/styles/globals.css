@@ -96,6 +96,11 @@
   --yellow-400: #FACC15;
   --yellow-500: #EAB308;
   --yellow-600: #CA8A04;
+
+  /* Orange scale */
+  --orange-400: #FB923C;
+  --orange-500: #F97316;
+  --orange-600: #EA580C;
 }
 
 .dark {
@@ -128,10 +133,7 @@
   --input: #4A3D64;  /* Visible purple-tinted input border */
   --ring: #A78BFA;
   
-  /* Tables - Semi-transparent gray elevation */
-  --table-background: rgba(17, 24, 39, 0.5);  /* gray-900/50 */
-  --table-row-accent: rgba(31, 41, 55, 0.3);  /* gray-800/30 */
-  --table-header-accent: rgba(31, 41, 55, 0.5);  /* gray-800/50 */
+   /* Tables - Set dynamically by ThemeContext */
   
   /* NEW - Purple-tinted surfaces (instead of pure grays) */
   --surface-elevated: rgba(31, 24, 39, 0.5);      /* Purple-tinted instead of gray-900 */
@@ -247,6 +249,11 @@
   --yellow-400: #FACC15;
   --yellow-500: #EAB308;
   --yellow-600: #CA8A04;
+
+  /* Orange scale - Dark mode */
+  --orange-400: #FB923C;
+  --orange-500: #F97316;
+  --orange-600: #EA580C;
 }
 
 @theme inline {
@@ -289,10 +296,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   
-  /* Table colors */
-  --color-table-background: var(--table-background);
-  --color-table-row-accent: var(--table-row-accent);
-  --color-table-header-accent: var(--table-header-accent);
+   /* Table colors set dynamically by ThemeContext */
   
   /* Custom utility mappings */
   --color-background-elevated: var(--card);

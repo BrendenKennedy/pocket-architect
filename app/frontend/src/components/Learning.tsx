@@ -46,9 +46,9 @@ import { StatusBadge } from './ui/status-badge';
 
 // Helper function to get progress bar color based on percentage
 const getProgressColor = (progress: number): string => {
-  if (progress >= 75) return 'bg-green-500';
-  if (progress >= 40) return 'bg-yellow-500';
-  return 'bg-red-500';
+  if (progress >= 75) return 'bg-success';
+  if (progress >= 40) return 'bg-warning';
+  return 'bg-error';
 };
 
 const mockLearningModules = [
@@ -486,13 +486,13 @@ export function Learning() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case 'beginner':
-        return 'text-green-400';
+        return 'text-success';
       case 'intermediate':
-        return 'text-yellow-400';
+        return 'text-warning';
       case 'advanced':
-        return 'text-red-400';
+        return 'text-error';
       default:
-        return 'text-text-secondary';
+        return 'text-muted-foreground';
     }
   };
 
@@ -505,13 +505,13 @@ export function Learning() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <BookOpen className="size-8 text-purple-400" />
-          <h1 className="text-purple-400">Learning Hub</h1>
+          <BookOpen className="size-8 text-primary" />
+          <h1 className="text-primary">Learning Hub</h1>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="text-text-secondary hover:text-purple-400"
+            className="text-muted-foreground hover:text-primary"
         >
           <RefreshCw className="size-5" />
         </Button>
@@ -527,7 +527,7 @@ export function Learning() {
             </p>
           </div>
           <div className="text-right">
-            <div className="text-purple-400 mb-1">{totalProgress}%</div>
+            <div className="text-primary mb-1">{totalProgress}%</div>
             <p className="text-text-muted">Complete</p>
           </div>
         </div>
@@ -605,7 +605,7 @@ export function Learning() {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                  <IconComponent className="size-5 text-purple-400" />
+                  <IconComponent className="size-5 text-primary" />
                 </div>
                 <StatusBadge status={module.status} />
               </div>
@@ -639,7 +639,7 @@ export function Learning() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-text-muted">Progress</span>
-                    <span className="text-purple-400">{module.progress}%</span>
+                    <span className="text-primary">{module.progress}%</span>
                   </div>
                   <Progress value={module.progress} className="h-1.5" indicatorClassName={getProgressColor(module.progress)} />
                 </div>

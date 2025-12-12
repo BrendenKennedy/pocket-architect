@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, AlertCircle, Cloud, Key, Terminal, RefreshCw, ChevronRight, Copy, Server } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Cloud, Key, Terminal, RefreshCw, ChevronRight, Copy, Server, Shield } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog';
@@ -501,7 +501,10 @@ export function Accounts() {
     <div className="p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2>Accounts</h2>
+        <div className="flex items-center gap-3">
+          <Shield className="size-8 text-primary" />
+          <h2 className="text-primary">Accounts</h2>
+        </div>
         <Button variant="ghost" size="icon">
           <RefreshCw className="w-4 h-4" />
         </Button>

@@ -14,6 +14,8 @@
 
 import { Circle } from 'lucide-react';
 import { useNeon } from '../../contexts/NeonContext';
+import { getStatusColor, type StatusType } from '../../lib/colors';
+import { resolveColor } from '../../services/themeService';
 
 export interface NeonDotProps {
   /** Color of the dot (hex, rgb, or CSS color name) */
@@ -116,25 +118,17 @@ export function NeonDot({
  * Automatically applies the correct color based on status type
  */
 export interface StatusNeonDotProps {
-  status: 'success' | 'active' | 'operational' | 'connected' | 'warning' | 'error' | 'stopped' | 'info' | 'neutral';
+  status: StatusType;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
 }
 
-const statusColors = {
-  success: '#22C55E',
-  active: '#22C55E',
-  operational: '#22C55E',
-  connected: '#22C55E',
-  warning: '#EAB308',
-  error: '#EF4444',
-  stopped: '#EF4444',
-  info: '#3B82F6',
-  neutral: '#6B7280',
-};
-
 export function StatusNeonDot({ status, size = 'sm', className }: StatusNeonDotProps) {
-  return <NeonDot color={statusColors[status]} size={size} className={className} />;
+  // Get CSS variable for status color and resolve to actual color value
+  const cssVarColor = getStatusColor(status);
+  const color = resolveColor(cssVarColor);
+
+  return <NeonDot color={color} size={size} className={className} />;
 }
 
 /**

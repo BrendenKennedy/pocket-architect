@@ -1,4 +1,6 @@
 import { useNeon } from '../../contexts/NeonContext';
+import { getResourceColor } from '../../lib/colors';
+import { resolveColor } from '../../services/themeService';
 
 interface CircularProgressProps {
   value: number;
@@ -34,17 +36,9 @@ export function CircularProgress({
   const { neonIntensity } = useNeon();
 
   // Calculate color based on proximity to threshold (if customColor not provided)
-  const getColor = () => {
-    if (customColor) return customColor;
-    
-    const ratio = value / threshold;
-    if (ratio >= 1.0) return '#EF4444'; // Red - over threshold
-    if (ratio >= 0.85) return '#F59E0B'; // Orange - very close
-    if (ratio >= 0.7) return '#EAB308'; // Yellow - approaching
-    return '#22C55E'; // Green - safe
-  };
-
-  const color = getColor();
+  const color = customColor
+    ? customColor
+    : resolveColor(getResourceColor(value, threshold));
   
   // Circle parameters
   const radius = (size - strokeWidth) / 2;
