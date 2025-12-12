@@ -32,7 +32,7 @@ interface KeyPair {
   usedIn: Array<{ name: string; color: string }>;
 }
 
-interface SecurityGroup {
+interface FirewallRule {
   id: number;
   name: string;
   description: string;
@@ -66,7 +66,7 @@ export function Security() {
 
   // Security data state - will be populated with real AWS security resources
   const [keyPairs, setKeyPairs] = useState([]);
-  const [securityGroups, setSecurityGroups] = useState([]);
+  const [firewallRules, setFirewallRules] = useState([]);
   const [iamRoles, setIamRoles] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +82,7 @@ export function Security() {
         // For now, show empty states - these would be populated with real AWS security resources
 
         setKeyPairs([]);
-        setSecurityGroups([]);
+        setFirewallRules([]);
         setIamRoles([]);
         setCertificates([]);
 
@@ -110,8 +110,8 @@ export function Security() {
     filterFn: (item, filter) => item.type === filter,
   });
 
-  const securityGroupsFilters = useDataFilters({
-    data: securityGroups,
+  const firewallRulesFilters = useDataFilters({
+    data: firewallRules,
     searchFields: ['name', 'description', 'vpcId'],
     filterFn: (item, filter) => item.vpcId === filter,
   });
@@ -165,7 +165,7 @@ export function Security() {
     switch (activeTab) {
       case 'configs': return configsFilters;
       case 'keypairs': return keyPairsFilters;
-      case 'security-groups': return securityGroupsFilters;
+      case 'firewall-rules': return firewallRulesFilters;
       case 'iam': return iamRolesFilters;
       case 'certificates': return certificatesFilters;
       default: return configsFilters;
@@ -271,8 +271,8 @@ export function Security() {
     },
   ];
 
-  // Table columns for Security Groups
-  const securityGroupColumns: TableColumn<SecurityGroup>[] = [
+  // Table columns for Firewall Rules
+  const firewallRuleColumns: TableColumn<FirewallRule>[] = [
     {
       key: 'name',
       header: 'Name',
@@ -435,7 +435,7 @@ export function Security() {
     { value: 'Pending', label: 'Pending' },
   ];
 
-  const securityGroupFilterOptions = [
+  const firewallRuleFilterOptions = [
     { value: 'all', label: 'All VPCs' },
     { value: 'vpc-12345', label: 'vpc-12345' },
   ];
@@ -523,13 +523,13 @@ export function Security() {
       case 'configs': return configFilterOptions;
       case 'keypairs': return keyPairFilterOptions;
       case 'certificates': return certificateFilterOptions;
-      case 'security-groups': return securityGroupFilterOptions;
+      case 'firewall-rules': return firewallRuleFilterOptions;
       case 'iam': return iamRoleFilterOptions;
       default: return [];
     }
   };
 
-  const showFilter = ['configs', 'keypairs', 'certificates', 'security-groups', 'iam'].includes(activeTab);
+  const showFilter = ['configs', 'keypairs', 'certificates', 'firewall-rules', 'iam'].includes(activeTab);
 
   return (
     <PageLayout>
@@ -542,7 +542,7 @@ export function Security() {
       <div className="mb-6">
         <ActionBar
           onCreateClick={configWizard.open}
-          createLabel={`Create ${activeTab === 'configs' ? 'Configuration' : activeTab === 'keypairs' ? 'Key Pair' : activeTab === 'security-groups' ? 'Security Group' : activeTab === 'iam' ? 'IAM Role' : 'Certificate'}`}
+          createLabel={`Create ${activeTab === 'configs' ? 'Configuration' : activeTab === 'keypairs' ? 'Key Pair' : activeTab === 'firewall-rules' ? 'Firewall Rule' : activeTab === 'iam' ? 'IAM Role' : 'Certificate'}`}
           searchValue={currentFilters.searchQuery}
           onSearchChange={currentFilters.setSearchQuery}
           searchPlaceholder="Search..."
@@ -557,7 +557,7 @@ export function Security() {
         <TabsList>
           <TabsTrigger value="configs">Configurations</TabsTrigger>
           <TabsTrigger value="keypairs">Key Pairs</TabsTrigger>
-          <TabsTrigger value="security-groups">Security Groups</TabsTrigger>
+          <TabsTrigger value="firewall-rules">Firewall Rules</TabsTrigger>
           <TabsTrigger value="iam">IAM Roles</TabsTrigger>
           <TabsTrigger value="certificates">Certificates</TabsTrigger>
         </TabsList>
@@ -594,16 +594,16 @@ export function Security() {
           />
         </TabsContent>
 
-        <TabsContent value="security-groups" className="mt-0">
+        <TabsContent value="firewall-rules" className="mt-0">
           <DataTable
-            data={securityGroupsFilters.filteredData}
-            columns={securityGroupColumns}
-            actions={createActions<SecurityGroup>()}
+            data={firewallRulesFilters.filteredData}
+            columns={firewallRuleColumns}
+            actions={createActions<FirewallRule>()}
             getRowId={(sg) => sg.id}
             emptyState={{
               icon: Lock,
-              title: 'No Security Groups',
-              description: 'Define security groups to control inbound and outbound traffic to your instances.',
+              title: 'No Firewall Rules',
+              description: 'Define firewall rules to control inbound and outbound traffic to your instances.',
             }}
           />
         </TabsContent>

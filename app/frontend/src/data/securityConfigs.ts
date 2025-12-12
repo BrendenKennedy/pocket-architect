@@ -9,7 +9,7 @@ export interface SecurityConfig {
   type: 'built-in' | 'user';
   keyPair: string;
   certType: 'acm' | 'none' | 'custom';
-  securityGroups: string[];
+  firewallRules: string[];
   iamRole: string | null;
   // Extended fields for blueprint usage
   network?: {

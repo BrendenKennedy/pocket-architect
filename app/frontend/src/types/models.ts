@@ -185,7 +185,7 @@ export interface SecurityConfig {
   type: 'built-in' | 'user';
   keyPair: string;
   certType: 'acm' | 'none' | 'custom';
-  securityGroups: string[];
+  firewallRules: string[];
   iamRole: string | null;
   network?: NetworkConfig;
   loadBalancer?: boolean;
@@ -201,7 +201,7 @@ export interface CreateSecurityConfigRequest {
   description: string;
   keyPair: string;
   certType: 'acm' | 'none' | 'custom';
-  securityGroups: string[];
+  firewallRules: string[];
   iamRole?: string;
   network?: NetworkConfig;
   loadBalancer?: boolean;
