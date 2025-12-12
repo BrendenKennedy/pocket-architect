@@ -54,7 +54,7 @@ class InstanceService:
         # Merge AWS data with local data
         instances = []
         for aws_inst in aws_instances:
-            instance_id = aws_inst['instance_id']
+            instance_id = aws_inst["instance_id"]
             local_inst = local_instances.get(instance_id)
 
             if local_inst:
@@ -82,7 +82,9 @@ class InstanceService:
         Raises:
             ResourceNotFoundError: If instance not found
         """
-        instance_db = self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        instance_db = (
+            self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        )
 
         if not instance_db:
             raise ResourceNotFoundError("Instance", str(instance_id))
@@ -109,7 +111,9 @@ class InstanceService:
         logger.info(f"Creating instance: {request.name}")
 
         # Validate project exists
-        project = self.db.query(ProjectDB).filter(ProjectDB.id == request.projectId).first()
+        project = (
+            self.db.query(ProjectDB).filter(ProjectDB.id == request.projectId).first()
+        )
         if not project:
             raise ResourceNotFoundError("Project", str(request.projectId))
 
@@ -122,10 +126,10 @@ class InstanceService:
         # For AWS, we need an AMI ID - use a default Amazon Linux 2 AMI for testing
         # In production, this should be configurable or selected by user
         default_amis = {
-            'us-east-1': 'ami-0230bd60aa48260c6',  # Amazon Linux 2023
-            'us-west-2': 'ami-0efcece6bed30fd98',
+            "us-east-1": "ami-0230bd60aa48260c6",  # Amazon Linux 2023
+            "us-west-2": "ami-0efcece6bed30fd98",
         }
-        ami_id = default_amis.get(request.region, default_amis['us-east-1'])
+        ami_id = default_amis.get(request.region, default_amis["us-east-1"])
 
         # Create instance in AWS EC2
         aws_instance = self.aws.ec2.create_instance(
@@ -133,10 +137,10 @@ class InstanceService:
             instance_type=request.instanceType,
             key_name=request.sshKey if request.sshKey else None,
             tags={
-                'Name': request.name,
-                'Project': project.name,
-                'ManagedBy': 'PocketArchitect'
-            }
+                "Name": request.name,
+                "Project": project.name,
+                "ManagedBy": "PocketArchitect",
+            },
         )
 
         # Save to local database
@@ -147,20 +151,24 @@ class InstanceService:
             region=request.region,
             instance_type=request.instanceType,
             storage=request.storage,
-            ssh_key=request.sshKey or '',
-            security_config=str(request.securityConfigId) if request.securityConfigId else '',
+            ssh_key=request.sshKey or "",
+            security_config=str(request.securityConfigId)
+            if request.securityConfigId
+            else "",
             tags=request.tags or [],
-            aws_instance_id=aws_instance['instance_id'],
+            aws_instance_id=aws_instance["instance_id"],
             aws_ami_id=ami_id,
-            status='degraded',  # Starting
-            created=datetime.utcnow()
+            status="degraded",  # Starting
+            created=datetime.utcnow(),
         )
 
         self.db.add(instance_db)
         self.db.commit()
         self.db.refresh(instance_db)
 
-        logger.info(f"Instance created with ID: {instance_db.id}, AWS ID: {aws_instance['instance_id']}")
+        logger.info(
+            f"Instance created with ID: {instance_db.id}, AWS ID: {aws_instance['instance_id']}"
+        )
 
         return self._merge_aws_and_local(aws_instance, instance_db)
 
@@ -174,7 +182,9 @@ class InstanceService:
         Returns:
             Updated Instance model
         """
-        instance_db = self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        instance_db = (
+            self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        )
 
         if not instance_db:
             raise ResourceNotFoundError("Instance", str(instance_id))
@@ -182,11 +192,13 @@ class InstanceService:
         if not instance_db.aws_instance_id:
             raise ValidationError("Instance has no AWS instance ID")
 
-        logger.info(f"Starting instance {instance_id} (AWS: {instance_db.aws_instance_id})")
+        logger.info(
+            f"Starting instance {instance_id} (AWS: {instance_db.aws_instance_id})"
+        )
         self.aws.ec2.start_instance(instance_db.aws_instance_id)
 
         # Update status
-        instance_db.status = 'degraded'  # Starting
+        instance_db.status = "degraded"  # Starting
         self.db.commit()
 
         return self.get_instance(instance_id)
@@ -201,7 +213,9 @@ class InstanceService:
         Returns:
             Updated Instance model
         """
-        instance_db = self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        instance_db = (
+            self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        )
 
         if not instance_db:
             raise ResourceNotFoundError("Instance", str(instance_id))
@@ -209,11 +223,13 @@ class InstanceService:
         if not instance_db.aws_instance_id:
             raise ValidationError("Instance has no AWS instance ID")
 
-        logger.info(f"Stopping instance {instance_id} (AWS: {instance_db.aws_instance_id})")
+        logger.info(
+            f"Stopping instance {instance_id} (AWS: {instance_db.aws_instance_id})"
+        )
         self.aws.ec2.stop_instance(instance_db.aws_instance_id)
 
         # Update status
-        instance_db.status = 'degraded'  # Stopping
+        instance_db.status = "degraded"  # Stopping
         self.db.commit()
 
         return self.get_instance(instance_id)
@@ -228,7 +244,9 @@ class InstanceService:
         Returns:
             Updated Instance model
         """
-        instance_db = self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        instance_db = (
+            self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        )
 
         if not instance_db:
             raise ResourceNotFoundError("Instance", str(instance_id))
@@ -236,7 +254,9 @@ class InstanceService:
         if not instance_db.aws_instance_id:
             raise ValidationError("Instance has no AWS instance ID")
 
-        logger.info(f"Restarting instance {instance_id} (AWS: {instance_db.aws_instance_id})")
+        logger.info(
+            f"Restarting instance {instance_id} (AWS: {instance_db.aws_instance_id})"
+        )
         self.aws.ec2.reboot_instance(instance_db.aws_instance_id)
 
         return self.get_instance(instance_id)
@@ -248,13 +268,17 @@ class InstanceService:
         Args:
             instance_id: Local database instance ID
         """
-        instance_db = self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        instance_db = (
+            self.db.query(InstanceDB).filter(InstanceDB.id == instance_id).first()
+        )
 
         if not instance_db:
             raise ResourceNotFoundError("Instance", str(instance_id))
 
         if instance_db.aws_instance_id:
-            logger.info(f"Terminating instance {instance_id} (AWS: {instance_db.aws_instance_id})")
+            logger.info(
+                f"Terminating instance {instance_id} (AWS: {instance_db.aws_instance_id})"
+            )
             self.aws.ec2.terminate_instance(instance_db.aws_instance_id)
 
         # Delete from database
@@ -279,35 +303,39 @@ class InstanceService:
         """
         # Calculate uptime
         uptime = "Unknown"
-        if aws_inst.get('launch_time'):
+        if aws_inst.get("launch_time"):
             try:
-                launch_time = datetime.fromisoformat(aws_inst['launch_time'].replace('Z', '+00:00'))
-                delta = datetime.utcnow().replace(tzinfo=launch_time.tzinfo) - launch_time
+                launch_time = datetime.fromisoformat(
+                    aws_inst["launch_time"].replace("Z", "+00:00")
+                )
+                delta = (
+                    datetime.utcnow().replace(tzinfo=launch_time.tzinfo) - launch_time
+                )
                 days = delta.days
                 hours = delta.seconds // 3600
                 uptime = f"{days}d {hours}h"
-            except:
+            except Exception:
                 pass
 
         return Instance(
             id=0,  # Not in our database
-            name=aws_inst.get('name', 'Unknown'),
+            name=aws_inst.get("name", "Unknown"),
             projectId=0,
-            projectName='Unknown',
-            projectColor='#gray',
-            status=aws_inst.get('status', 'error'),
-            instanceType=aws_inst.get('instance_type', 'unknown'),
-            platform='aws',
+            projectName="Unknown",
+            projectColor="#gray",
+            status=aws_inst.get("status", "error"),
+            instanceType=aws_inst.get("instance_type", "unknown"),
+            platform="aws",
             region=self.aws.region,
-            publicIp=aws_inst.get('public_ip'),
-            privateIp=aws_inst.get('private_ip', ''),
-            created=aws_inst.get('launch_time', datetime.utcnow().isoformat()),
+            publicIp=aws_inst.get("public_ip"),
+            privateIp=aws_inst.get("private_ip", ""),
+            created=aws_inst.get("launch_time", datetime.utcnow().isoformat()),
             uptime=uptime,
             monthlyCost=0.0,
             storage=0,
-            securityConfig='',
-            sshKey=aws_inst.get('key_name', ''),
-            tags=[]
+            securityConfig="",
+            sshKey=aws_inst.get("key_name", ""),
+            tags=[],
         )
 
     def _db_to_model(self, instance_db: InstanceDB) -> Instance:
@@ -320,7 +348,11 @@ class InstanceService:
         Returns:
             Instance model
         """
-        project = self.db.query(ProjectDB).filter(ProjectDB.id == instance_db.project_id).first()
+        project = (
+            self.db.query(ProjectDB)
+            .filter(ProjectDB.id == instance_db.project_id)
+            .first()
+        )
 
         uptime = "Unknown"
         if instance_db.created:
@@ -333,21 +365,21 @@ class InstanceService:
             id=instance_db.id,
             name=instance_db.name,
             projectId=instance_db.project_id,
-            projectName=project.name if project else 'Unknown',
-            projectColor=project.color if project else '#gray',
+            projectName=project.name if project else "Unknown",
+            projectColor=project.color if project else "#gray",
             status=instance_db.status,
             instanceType=instance_db.instance_type,
             platform=instance_db.platform,
             region=instance_db.region,
             publicIp=instance_db.public_ip,
-            privateIp=instance_db.private_ip or '',
+            privateIp=instance_db.private_ip or "",
             created=instance_db.created.isoformat(),
             uptime=uptime,
             monthlyCost=instance_db.monthly_cost,
             storage=instance_db.storage,
             securityConfig=instance_db.security_config,
             sshKey=instance_db.ssh_key,
-            tags=instance_db.tags or []
+            tags=instance_db.tags or [],
         )
 
     def _merge_aws_and_local(self, aws_inst: dict, instance_db: InstanceDB) -> Instance:
@@ -361,42 +393,50 @@ class InstanceService:
         Returns:
             Instance model with merged data
         """
-        project = self.db.query(ProjectDB).filter(ProjectDB.id == instance_db.project_id).first()
+        project = (
+            self.db.query(ProjectDB)
+            .filter(ProjectDB.id == instance_db.project_id)
+            .first()
+        )
 
         uptime = "Unknown"
-        if aws_inst.get('launch_time'):
+        if aws_inst.get("launch_time"):
             try:
-                launch_time = datetime.fromisoformat(aws_inst['launch_time'].replace('Z', '+00:00'))
-                delta = datetime.utcnow().replace(tzinfo=launch_time.tzinfo) - launch_time
+                launch_time = datetime.fromisoformat(
+                    aws_inst["launch_time"].replace("Z", "+00:00")
+                )
+                delta = (
+                    datetime.utcnow().replace(tzinfo=launch_time.tzinfo) - launch_time
+                )
                 days = delta.days
                 hours = delta.seconds // 3600
                 uptime = f"{days}d {hours}h"
-            except:
+            except Exception:
                 pass
 
         # Update instance_db with latest AWS data
-        instance_db.status = aws_inst.get('status', instance_db.status)
-        instance_db.public_ip = aws_inst.get('public_ip')
-        instance_db.private_ip = aws_inst.get('private_ip', instance_db.private_ip)
+        instance_db.status = aws_inst.get("status", instance_db.status)
+        instance_db.public_ip = aws_inst.get("public_ip")
+        instance_db.private_ip = aws_inst.get("private_ip", instance_db.private_ip)
         self.db.commit()
 
         return Instance(
             id=instance_db.id,
             name=instance_db.name,
             projectId=instance_db.project_id,
-            projectName=project.name if project else 'Unknown',
-            projectColor=project.color if project else '#gray',
-            status=aws_inst.get('status', instance_db.status),
+            projectName=project.name if project else "Unknown",
+            projectColor=project.color if project else "#gray",
+            status=aws_inst.get("status", instance_db.status),
             instanceType=instance_db.instance_type,
             platform=instance_db.platform,
             region=instance_db.region,
-            publicIp=aws_inst.get('public_ip'),
-            privateIp=aws_inst.get('private_ip', instance_db.private_ip or ''),
+            publicIp=aws_inst.get("public_ip"),
+            privateIp=aws_inst.get("private_ip", instance_db.private_ip or ""),
             created=instance_db.created.isoformat(),
             uptime=uptime,
             monthlyCost=instance_db.monthly_cost,
             storage=instance_db.storage,
             securityConfig=instance_db.security_config,
             sshKey=instance_db.ssh_key,
-            tags=instance_db.tags or []
+            tags=instance_db.tags or [],
         )

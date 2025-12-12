@@ -2,8 +2,7 @@
 AWS EC2 provider for managing EC2 instances.
 """
 
-from typing import List, Dict, Optional, Any
-from datetime import datetime
+from typing import List, Dict, Optional
 from botocore.exceptions import ClientError
 
 from pocket_architect.providers.aws.client import AWSClient, handle_aws_error
@@ -42,13 +41,13 @@ class EC2Provider:
         """
         kwargs = {}
         if filters:
-            kwargs['Filters'] = filters
+            kwargs["Filters"] = filters
 
         response = self.ec2.describe_instances(**kwargs)
 
         instances = []
-        for reservation in response.get('Reservations', []):
-            for instance in reservation.get('Instances', []):
+        for reservation in response.get("Reservations", []):
+            for instance in reservation.get("Instances", []):
                 instances.append(self._format_instance(instance))
 
         logger.info(f"Listed {len(instances)} instances")
@@ -68,8 +67,8 @@ class EC2Provider:
         try:
             response = self.ec2.describe_instances(InstanceIds=[instance_id])
 
-            if response['Reservations']:
-                instance = response['Reservations'][0]['Instances'][0]
+            if response["Reservations"]:
+                instance = response["Reservations"][0]["Instances"][0]
                 return self._format_instance(instance)
         except Exception as e:
             logger.warning(f"Instance {instance_id} not found: {e}")
@@ -86,7 +85,7 @@ class EC2Provider:
         subnet_id: Optional[str] = None,
         user_data: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict:
         """
         Create (launch) a new EC2 instance.
@@ -105,21 +104,21 @@ class EC2Provider:
             Created instance dictionary
         """
         run_params = {
-            'ImageId': ami_id,
-            'InstanceType': instance_type,
-            'MinCount': 1,
-            'MaxCount': 1,
+            "ImageId": ami_id,
+            "InstanceType": instance_type,
+            "MinCount": 1,
+            "MaxCount": 1,
         }
 
         # Add optional parameters
         if key_name:
-            run_params['KeyName'] = key_name
+            run_params["KeyName"] = key_name
         if security_group_ids:
-            run_params['SecurityGroupIds'] = security_group_ids
+            run_params["SecurityGroupIds"] = security_group_ids
         if subnet_id:
-            run_params['SubnetId'] = subnet_id
+            run_params["SubnetId"] = subnet_id
         if user_data:
-            run_params['UserData'] = user_data
+            run_params["UserData"] = user_data
 
         # Merge any additional parameters
         run_params.update(kwargs)
@@ -127,19 +126,21 @@ class EC2Provider:
         logger.info(f"Creating EC2 instance: {instance_type} from AMI {ami_id}")
         response = self.ec2.run_instances(**run_params)
 
-        instance = response['Instances'][0]
-        instance_id = instance['InstanceId']
+        instance = response["Instances"][0]
+        instance_id = instance["InstanceId"]
 
         # Apply tags if provided (handle errors gracefully)
         if tags:
             try:
                 self.ec2.create_tags(
                     Resources=[instance_id],
-                    Tags=[{'Key': k, 'Value': v} for k, v in tags.items()]
+                    Tags=[{"Key": k, "Value": v} for k, v in tags.items()],
                 )
                 logger.info(f"Applied tags to instance {instance_id}")
             except ClientError as e:
-                logger.warning(f"Failed to apply tags to instance {instance_id}: {e.response['Error']['Message']}")
+                logger.warning(
+                    f"Failed to apply tags to instance {instance_id}: {e.response['Error']['Message']}"
+                )
                 # Continue - instance was created successfully even if tagging failed
 
         logger.info(f"Created instance: {instance_id}")
@@ -211,8 +212,7 @@ class EC2Provider:
 
     @handle_aws_error
     def describe_instance_types(
-        self,
-        instance_types: Optional[List[str]] = None
+        self, instance_types: Optional[List[str]] = None
     ) -> List[Dict]:
         """
         Describe EC2 instance types.
@@ -225,10 +225,10 @@ class EC2Provider:
         """
         kwargs = {}
         if instance_types:
-            kwargs['InstanceTypes'] = instance_types
+            kwargs["InstanceTypes"] = instance_types
 
         response = self.ec2.describe_instance_types(**kwargs)
-        return response.get('InstanceTypes', [])
+        return response.get("InstanceTypes", [])
 
     # ========================================================================
     # AMI Operations
@@ -239,7 +239,7 @@ class EC2Provider:
         self,
         image_ids: Optional[List[str]] = None,
         owners: Optional[List[str]] = None,
-        filters: Optional[List[Dict]] = None
+        filters: Optional[List[Dict]] = None,
     ) -> List[Dict]:
         """
         Describe AMIs.
@@ -254,14 +254,14 @@ class EC2Provider:
         """
         kwargs = {}
         if image_ids:
-            kwargs['ImageIds'] = image_ids
+            kwargs["ImageIds"] = image_ids
         if owners:
-            kwargs['Owners'] = owners
+            kwargs["Owners"] = owners
         if filters:
-            kwargs['Filters'] = filters
+            kwargs["Filters"] = filters
 
         response = self.ec2.describe_images(**kwargs)
-        return response.get('Images', [])
+        return response.get("Images", [])
 
     # ========================================================================
     # Helper Methods
@@ -279,43 +279,249 @@ class EC2Provider:
         """
         # Get instance name from tags
         name = None
-        tags = instance.get('Tags', [])
+        tags = instance.get("Tags", [])
         for tag in tags:
-            if tag['Key'] == 'Name':
-                name = tag['Value']
+            if tag["Key"] == "Name":
+                name = tag["Value"]
                 break
 
         # Map state to our Status type
-        state = instance.get('State', {}).get('Name', 'unknown')
+        state = instance.get("State", {}).get("Name", "unknown")
         status_map = {
-            'running': 'healthy',
-            'stopped': 'stopped',
-            'stopping': 'degraded',
-            'pending': 'degraded',
-            'shutting-down': 'degraded',
-            'terminated': 'error',
+            "running": "healthy",
+            "stopped": "stopped",
+            "stopping": "degraded",
+            "pending": "degraded",
+            "shutting-down": "degraded",
+            "terminated": "error",
         }
-        status = status_map.get(state, 'error')
+        status = status_map.get(state, "error")
 
         return {
-            'instance_id': instance.get('InstanceId'),
-            'name': name or instance.get('InstanceId', 'Unnamed'),
-            'instance_type': instance.get('InstanceType'),
-            'state': state,
-            'status': status,
-            'public_ip': instance.get('PublicIpAddress'),
-            'private_ip': instance.get('PrivateIpAddress'),
-            'launch_time': instance.get('LaunchTime').isoformat() if instance.get('LaunchTime') else None,
-            'availability_zone': instance.get('Placement', {}).get('AvailabilityZone'),
-            'subnet_id': instance.get('SubnetId'),
-            'vpc_id': instance.get('VpcId'),
-            'ami_id': instance.get('ImageId'),
-            'key_name': instance.get('KeyName'),
-            'security_groups': [sg['GroupId'] for sg in instance.get('SecurityGroups', [])],
-            'tags': {tag['Key']: tag['Value'] for tag in instance.get('Tags', [])},
+            "instance_id": instance.get("InstanceId"),
+            "name": name or instance.get("InstanceId", "Unnamed"),
+            "instance_type": instance.get("InstanceType"),
+            "state": state,
+            "status": status,
+            "public_ip": instance.get("PublicIpAddress"),
+            "private_ip": instance.get("PrivateIpAddress"),
+            "launch_time": instance.get("LaunchTime").isoformat()
+            if instance.get("LaunchTime")
+            else None,
+            "availability_zone": instance.get("Placement", {}).get("AvailabilityZone"),
+            "subnet_id": instance.get("SubnetId"),
+            "vpc_id": instance.get("VpcId"),
+            "ami_id": instance.get("ImageId"),
+            "key_name": instance.get("KeyName"),
+            "security_groups": [
+                sg["GroupId"] for sg in instance.get("SecurityGroups", [])
+            ],
+            "tags": {tag["Key"]: tag["Value"] for tag in instance.get("Tags", [])},
         }
 
-    def _get_tag_value(self, tags: List[Dict], key: str, default: str = '') -> str:
+    # ========================================================================
+    # Security Operations
+    # ========================================================================
+
+    @handle_aws_error
+    def create_key_pair(self, key_name: str, key_type: str = "ed25519") -> Dict:
+        """
+        Create a new SSH key pair.
+
+        Args:
+            key_name: Name for the key pair
+            key_type: Key type ('rsa', 'ed25519')
+
+        Returns:
+            Key pair information including private key material
+        """
+        logger.info(f"Creating SSH key pair: {key_name} ({key_type})")
+
+        params = {
+            "KeyName": key_name,
+            "KeyType": key_type.upper() if key_type.lower() == "rsa" else "ed25519",
+        }
+
+        # RSA keys can specify key length
+        if key_type.lower() == "rsa":
+            params["KeyFormat"] = "pem"
+
+        response = self.ec2.create_key_pair(**params)
+
+        logger.info(f"Created key pair: {key_name}")
+        return {
+            "key_name": response["KeyName"],
+            "key_fingerprint": response["KeyFingerprint"],
+            "key_material": response.get("KeyMaterial", ""),
+            "key_type": key_type,
+        }
+
+    @handle_aws_error
+    def describe_key_pairs(self, key_names: Optional[List[str]] = None) -> List[Dict]:
+        """
+        Describe SSH key pairs.
+
+        Args:
+            key_names: Optional list of key pair names
+
+        Returns:
+            List of key pair information
+        """
+        kwargs = {}
+        if key_names:
+            kwargs["KeyNames"] = key_names
+
+        response = self.ec2.describe_key_pairs(**kwargs)
+
+        key_pairs = []
+        for kp in response.get("KeyPairs", []):
+            key_pairs.append(
+                {
+                    "key_name": kp["KeyName"],
+                    "key_fingerprint": kp["KeyFingerprint"],
+                    "key_type": kp.get("KeyType", "unknown"),
+                    "tags": kp.get("Tags", []),
+                }
+            )
+
+        logger.info(f"Described {len(key_pairs)} key pairs")
+        return key_pairs
+
+    @handle_aws_error
+    def delete_key_pair(self, key_name: str) -> None:
+        """
+        Delete an SSH key pair.
+
+        Args:
+            key_name: Name of the key pair to delete
+        """
+        logger.info(f"Deleting key pair: {key_name}")
+        self.ec2.delete_key_pair(KeyName=key_name)
+        logger.info(f"Deleted key pair: {key_name}")
+
+    @handle_aws_error
+    def create_security_group(
+        self, group_name: str, description: str, vpc_id: Optional[str] = None
+    ) -> Dict:
+        """
+        Create a security group.
+
+        Args:
+            group_name: Name for the security group
+            description: Description of the security group
+            vpc_id: VPC ID (optional, uses default VPC if not specified)
+
+        Returns:
+            Security group information
+        """
+        logger.info(f"Creating security group: {group_name}")
+
+        params = {
+            "GroupName": group_name,
+            "Description": description,
+        }
+
+        if vpc_id:
+            params["VpcId"] = vpc_id
+
+        response = self.ec2.create_security_group(**params)
+
+        logger.info(f"Created security group: {response['GroupId']}")
+        return {
+            "group_id": response["GroupId"],
+            "group_name": response["GroupName"],
+            "description": response["Description"],
+            "vpc_id": response.get("VpcId"),
+        }
+
+    @handle_aws_error
+    def describe_security_groups(
+        self,
+        group_ids: Optional[List[str]] = None,
+        group_names: Optional[List[str]] = None,
+    ) -> List[Dict]:
+        """
+        Describe security groups.
+
+        Args:
+            group_ids: Optional list of security group IDs
+            group_names: Optional list of security group names
+
+        Returns:
+            List of security group information
+        """
+        kwargs = {}
+        if group_ids:
+            kwargs["GroupIds"] = group_ids
+        if group_names:
+            kwargs["GroupNames"] = group_names
+
+        response = self.ec2.describe_security_groups(**kwargs)
+
+        security_groups = []
+        for sg in response.get("SecurityGroups", []):
+            security_groups.append(
+                {
+                    "group_id": sg["GroupId"],
+                    "group_name": sg["GroupName"],
+                    "description": sg["Description"],
+                    "vpc_id": sg.get("VpcId"),
+                    "ip_permissions": sg.get("IpPermissions", []),
+                    "ip_permissions_egress": sg.get("IpPermissionsEgress", []),
+                    "tags": sg.get("Tags", []),
+                }
+            )
+
+        logger.info(f"Described {len(security_groups)} security groups")
+        return security_groups
+
+    @handle_aws_error
+    def authorize_security_group_ingress(
+        self, group_id: str, ip_permissions: List[Dict]
+    ) -> None:
+        """
+        Add inbound rules to a security group.
+
+        Args:
+            group_id: Security group ID
+            ip_permissions: List of IP permission rules
+        """
+        logger.info(f"Authorizing ingress for security group: {group_id}")
+        self.ec2.authorize_security_group_ingress(
+            GroupId=group_id, IpPermissions=ip_permissions
+        )
+        logger.info(f"Authorized ingress rules for security group: {group_id}")
+
+    @handle_aws_error
+    def authorize_security_group_egress(
+        self, group_id: str, ip_permissions: List[Dict]
+    ) -> None:
+        """
+        Add outbound rules to a security group.
+
+        Args:
+            group_id: Security group ID
+            ip_permissions: List of IP permission rules
+        """
+        logger.info(f"Authorizing egress for security group: {group_id}")
+        self.ec2.authorize_security_group_egress(
+            GroupId=group_id, IpPermissions=ip_permissions
+        )
+        logger.info(f"Authorized egress rules for security group: {group_id}")
+
+    @handle_aws_error
+    def delete_security_group(self, group_id: str) -> None:
+        """
+        Delete a security group.
+
+        Args:
+            group_id: Security group ID to delete
+        """
+        logger.info(f"Deleting security group: {group_id}")
+        self.ec2.delete_security_group(GroupId=group_id)
+        logger.info(f"Deleted security group: {group_id}")
+
+    def _get_tag_value(self, tags: List[Dict], key: str, default: str = "") -> str:
         """
         Get tag value by key.
 
@@ -328,6 +534,6 @@ class EC2Provider:
             Tag value or default
         """
         for tag in tags:
-            if tag.get('Key') == key:
-                return tag.get('Value', default)
+            if tag.get("Key") == key:
+                return tag.get("Value", default)
         return default

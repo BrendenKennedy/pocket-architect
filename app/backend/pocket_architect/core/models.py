@@ -3,39 +3,40 @@ Pydantic data models mirroring TypeScript types from frontend.
 These models ensure type safety and validation across the Python-JavaScript boundary.
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional, List, Literal, Any
-from datetime import datetime
+from pydantic import BaseModel
+from typing import Optional, List, Literal, Any, Dict
 
 
 # ============================================================================
 # COMMON TYPES
 # ============================================================================
 
-Platform = Literal['aws', 'gcp', 'azure']
-Status = Literal['healthy', 'degraded', 'stopped', 'error']
-WorkloadType = Literal['general', 'compute', 'memory', 'storage', 'gpu']
-IsolationType = Literal['public', 'private', 'hybrid']
-BlueprintCategory = Literal['web', 'compute', 'database', 'storage', 'development']
-Architecture = Literal['x86_64', 'arm64']
-ImageStatus = Literal['available', 'pending', 'failed']
-AccountStatus = Literal['connected', 'disconnected', 'error']
-CertType = Literal['acm', 'none', 'custom']
-SecurityConfigType = Literal['built-in', 'user']
-BudgetPeriod = Literal['daily', 'weekly', 'monthly']
-Difficulty = Literal['Beginner', 'Intermediate', 'Advanced']
-LearningStatus = Literal['not-started', 'in-progress', 'completed']
-SortOrder = Literal['asc', 'desc']
+Platform = Literal["aws", "gcp", "azure"]
+Status = Literal["healthy", "degraded", "stopped", "error"]
+WorkloadType = Literal["general", "compute", "memory", "storage", "gpu"]
+IsolationType = Literal["public", "private", "hybrid"]
+BlueprintCategory = Literal["web", "compute", "database", "storage", "development"]
+Architecture = Literal["x86_64", "arm64"]
+ImageStatus = Literal["available", "pending", "failed"]
+AccountStatus = Literal["connected", "disconnected", "error"]
+CertType = Literal["acm", "none", "custom"]
+SecurityConfigType = Literal["built-in", "user"]
+BudgetPeriod = Literal["daily", "weekly", "monthly"]
+Difficulty = Literal["Beginner", "Intermediate", "Advanced"]
+LearningStatus = Literal["not-started", "in-progress", "completed"]
+SortOrder = Literal["asc", "desc"]
 
 
 class Region(BaseModel):
     """Region configuration."""
+
     value: str
     label: str
 
 
 class Tag(BaseModel):
     """Tag key-value pair."""
+
     key: str
     value: str
 
@@ -44,8 +45,10 @@ class Tag(BaseModel):
 # PROJECT
 # ============================================================================
 
+
 class Project(BaseModel):
     """Project model matching TypeScript interface."""
+
     id: int
     name: str
     description: str
@@ -68,6 +71,7 @@ class Project(BaseModel):
 
 class CreateProjectRequest(BaseModel):
     """Request to create a new project."""
+
     name: str
     description: str
     platform: Platform
@@ -80,6 +84,7 @@ class CreateProjectRequest(BaseModel):
 
 class UpdateProjectRequest(BaseModel):
     """Request to update an existing project."""
+
     name: Optional[str] = None
     description: Optional[str] = None
     tags: Optional[List[str]] = None
@@ -90,8 +95,10 @@ class UpdateProjectRequest(BaseModel):
 # INSTANCE
 # ============================================================================
 
+
 class Instance(BaseModel):
     """Instance model matching TypeScript interface."""
+
     id: int
     name: str
     projectId: int
@@ -114,6 +121,7 @@ class Instance(BaseModel):
 
 class CreateInstanceRequest(BaseModel):
     """Request to create a new instance."""
+
     name: str
     projectId: int
     instanceType: str
@@ -128,6 +136,7 @@ class CreateInstanceRequest(BaseModel):
 
 class UpdateInstanceRequest(BaseModel):
     """Request to update an existing instance."""
+
     name: Optional[str] = None
     instanceType: Optional[str] = None
     storage: Optional[int] = None
@@ -138,8 +147,10 @@ class UpdateInstanceRequest(BaseModel):
 # BLUEPRINT
 # ============================================================================
 
+
 class Blueprint(BaseModel):
     """Blueprint model matching TypeScript interface."""
+
     id: int
     name: str
     description: str
@@ -159,6 +170,7 @@ class Blueprint(BaseModel):
 
 class CreateBlueprintRequest(BaseModel):
     """Request to create a new blueprint."""
+
     name: str
     description: str
     useCase: str
@@ -174,6 +186,7 @@ class CreateBlueprintRequest(BaseModel):
 
 class UpdateBlueprintRequest(BaseModel):
     """Request to update an existing blueprint."""
+
     name: Optional[str] = None
     description: Optional[str] = None
     useCase: Optional[str] = None
@@ -186,8 +199,10 @@ class UpdateBlueprintRequest(BaseModel):
 # SECURITY CONFIGURATION
 # ============================================================================
 
+
 class InboundPort(BaseModel):
     """Inbound port configuration."""
+
     port: int | str
     protocol: str
     description: str
@@ -195,6 +210,7 @@ class InboundPort(BaseModel):
 
 class NetworkConfig(BaseModel):
     """Network configuration."""
+
     useDefaultVpc: bool
     customCidr: Optional[str] = None
     isolation: IsolationType
@@ -202,12 +218,14 @@ class NetworkConfig(BaseModel):
 
 class StorageAccess(BaseModel):
     """Storage access configuration."""
+
     s3: bool
     description: str
 
 
 class SecurityConfig(BaseModel):
     """Security configuration model matching TypeScript interface."""
+
     id: int
     name: str
     description: str
@@ -227,6 +245,7 @@ class SecurityConfig(BaseModel):
 
 class CreateSecurityConfigRequest(BaseModel):
     """Request to create a new security configuration."""
+
     name: str
     description: str
     keyPair: str
@@ -246,8 +265,10 @@ class CreateSecurityConfigRequest(BaseModel):
 # IMAGE (AMI/Custom Images)
 # ============================================================================
 
+
 class Image(BaseModel):
     """Image/AMI model matching TypeScript interface."""
+
     id: int
     name: str
     description: str
@@ -267,6 +288,7 @@ class Image(BaseModel):
 
 class CreateImageRequest(BaseModel):
     """Request to create a new image."""
+
     name: str
     description: str
     platform: Platform
@@ -279,8 +301,10 @@ class CreateImageRequest(BaseModel):
 # ACCOUNT
 # ============================================================================
 
+
 class ResourceCount(BaseModel):
     """Resource count for an account."""
+
     projects: int
     instances: int
     images: int
@@ -288,6 +312,7 @@ class ResourceCount(BaseModel):
 
 class Account(BaseModel):
     """Account model matching TypeScript interface."""
+
     id: int
     name: str
     platform: Platform
@@ -303,6 +328,7 @@ class Account(BaseModel):
 
 class CreateAccountRequest(BaseModel):
     """Request to create a new account."""
+
     name: str
     platform: Platform
     accountId: str
@@ -316,8 +342,10 @@ class CreateAccountRequest(BaseModel):
 # COST MANAGEMENT
 # ============================================================================
 
+
 class CostData(BaseModel):
     """Cost data for a specific date."""
+
     date: str
     compute: float
     storage: float
@@ -327,6 +355,7 @@ class CostData(BaseModel):
 
 class BudgetAlert(BaseModel):
     """Budget alert configuration."""
+
     id: int
     name: str
     threshold: float
@@ -337,6 +366,7 @@ class BudgetAlert(BaseModel):
 
 class CostByService(BaseModel):
     """Cost breakdown by service."""
+
     service: str
     cost: float
     percentage: float
@@ -344,6 +374,7 @@ class CostByService(BaseModel):
 
 class CostSummary(BaseModel):
     """Cost summary data."""
+
     currentMonth: float
     lastMonth: float
     projectedMonth: float
@@ -355,8 +386,10 @@ class CostSummary(BaseModel):
 # LEARNING
 # ============================================================================
 
+
 class LearningModule(BaseModel):
     """Learning module model."""
+
     id: int
     title: str
     description: str
@@ -373,8 +406,10 @@ class LearningModule(BaseModel):
 # API RESPONSE WRAPPERS
 # ============================================================================
 
+
 class ApiResponse(BaseModel):
     """Generic API response wrapper."""
+
     success: bool
     data: Optional[Any] = None
     error: Optional[str] = None
@@ -383,6 +418,7 @@ class ApiResponse(BaseModel):
 
 class Pagination(BaseModel):
     """Pagination metadata."""
+
     page: int
     pageSize: int
     totalPages: int
@@ -391,6 +427,7 @@ class Pagination(BaseModel):
 
 class PaginatedResponse(BaseModel):
     """Paginated response wrapper."""
+
     success: bool
     data: List[Any]
     pagination: Pagination
@@ -398,9 +435,51 @@ class PaginatedResponse(BaseModel):
 
 class ListOptions(BaseModel):
     """Options for listing entities."""
+
     page: Optional[int] = 1
     pageSize: Optional[int] = 50
     sortBy: Optional[str] = None
-    sortOrder: Optional[SortOrder] = 'asc'
+    sortOrder: Optional[SortOrder] = "asc"
     search: Optional[str] = None
     filters: Optional[dict[str, Any]] = None
+
+
+# ============================================================================
+# SECURITY
+# ============================================================================
+
+
+class CreateKeyPairRequest(BaseModel):
+    """SSH key pair creation request."""
+
+    name: str
+    description: Optional[str] = None
+    keyType: str = "ed25519"
+
+
+class CreateSecurityGroupRequest(BaseModel):
+    """Security group creation request."""
+
+    name: str
+    description: str
+    vpcId: Optional[str] = None
+    inboundRules: Optional[List[Dict[str, Any]]] = None
+    outboundRules: Optional[List[Dict[str, Any]]] = None
+
+
+class CreateIAMRoleRequest(BaseModel):
+    """IAM role creation request."""
+
+    name: str
+    description: Optional[str] = None
+    trustPolicy: str
+    managedPolicies: Optional[List[str]] = None
+    inlinePolicy: Optional[str] = None
+
+
+class CreateCertificateRequest(BaseModel):
+    """SSL certificate creation request."""
+
+    domain: str
+    additionalDomains: Optional[List[str]] = None
+    validationMethod: str = "DNS"

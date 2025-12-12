@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Eye, Trash2, Edit2, Copy } from 'lucide-react';
+import { Box, Eye, Trash2, Edit2, Copy } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -110,7 +110,7 @@ export function Blueprints() {
       width: 'w-[20%]',
       align: 'left' as const,
       render: (blueprint) => TableRenderers.withIcon(
-        <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />,
+        <Box className="w-4 h-4 text-muted-foreground flex-shrink-0" />,
         blueprint.name
       ),
     },
@@ -331,7 +331,7 @@ export function Blueprints() {
     <PageLayout>
       <PageHeader
         title="Blueprints"
-        icon={FileText}
+        icon={Box}
         onRefresh={handleRefresh}
       />
 
@@ -352,9 +352,9 @@ export function Blueprints() {
         actions={actions}
         getRowId={(blueprint) => blueprint.id}
         emptyState={{
-          icon: FileText,
-          title: 'No Blueprints Created',
-          description: 'Create reusable blueprints to streamline instance deployment with predefined configurations.',
+          icon: Box,
+          title: 'No Blueprints Yet',
+          description: 'Create reusable infrastructure templates to speed up your deployments.',
           actionLabel: 'Create Blueprint',
           onAction: createWizard.open,
         }}
@@ -366,7 +366,7 @@ export function Blueprints() {
         onOpenChange={createWizard.setIsOpen}
         title={isEditMode ? "Edit Blueprint" : "Create New Blueprint"}
         description="Configure your blueprint settings"
-        icon={FileText}
+        icon={Box}
         currentStep={createWizard.currentStep}
         totalSteps={3}
         onNext={createWizard.nextStep}

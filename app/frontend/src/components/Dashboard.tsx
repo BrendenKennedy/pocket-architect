@@ -1,4 +1,4 @@
-import { RefreshCw, Server, Box, Key, Activity, FolderOpen, Play, AlertCircle, CheckCircle2, XCircle, Clock, Terminal, Cpu, HardDrive, Network, Wifi, WifiOff, Zap, Database, Globe, AlertTriangle, Info, DollarSign, Eye, Settings } from 'lucide-react';
+import { RefreshCw, Server, Box, Key, Activity, Play, AlertCircle, CheckCircle2, XCircle, Clock, Terminal, Cpu, HardDrive, Network, Wifi, WifiOff, Zap, Database, Globe, AlertTriangle, Info, DollarSign, Eye, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { LayoutDashboard } from 'lucide-react';
 import { Card } from './ui/card';
@@ -201,7 +201,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <LayoutDashboard className="size-8 text-primary" />
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+            <LayoutDashboard className="w-5 h-5 text-primary" />
+          </div>
           <h2 className="text-primary">Dashboard</h2>
         </div>
         <Button variant="ghost" size="icon">

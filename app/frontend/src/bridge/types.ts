@@ -39,6 +39,23 @@ export interface BackendBridge {
   // Cost management operations
   get_cost_summary: () => Promise<string>;
 
+  // Security operations
+  list_key_pairs: () => Promise<string>;
+  create_key_pair: (key_pair_data: string) => Promise<string>;
+  delete_key_pair: (key_name: string) => Promise<string>;
+
+  list_security_groups: () => Promise<string>;
+  create_security_group: (security_group_data: string) => Promise<string>;
+  delete_security_group: (group_id: string) => Promise<string>;
+
+  list_iam_roles: () => Promise<string>;
+  create_iam_role: (iam_role_data: string) => Promise<string>;
+  delete_iam_role: (role_name: string) => Promise<string>;
+
+  list_certificates: () => Promise<string>;
+  create_certificate: (certificate_data: string) => Promise<string>;
+  delete_certificate: (certificate_arn: string) => Promise<string>;
+
   // Quota operations
   get_quotas: () => Promise<string>;
 

@@ -4,7 +4,17 @@ Stores project and instance metadata locally in SQLite.
 """
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text, JSON
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Text,
+    JSON,
+)
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -12,13 +22,14 @@ Base = declarative_base()
 
 class ProjectDB(Base):
     """Project database model."""
-    __tablename__ = 'projects'
+
+    __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)
-    status = Column(String(50), default='healthy')  # healthy, degraded, stopped, error
-    color = Column(String(50), default='#3b82f6')
+    status = Column(String(50), default="healthy")  # healthy, degraded, stopped, error
+    color = Column(String(50), default="#3b82f6")
     vpc = Column(String(255))
     platform = Column(String(50), nullable=False)  # aws, gcp, azure
     region = Column(String(100), nullable=False)
@@ -32,20 +43,25 @@ class ProjectDB(Base):
     last_modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    instances = relationship("InstanceDB", back_populates="project", cascade="all, delete-orphan")
+    instances = relationship(
+        "InstanceDB", back_populates="project", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
-        return f"<Project(id={self.id}, name='{self.name}', platform='{self.platform}')>"
+        return (
+            f"<Project(id={self.id}, name='{self.name}', platform='{self.platform}')>"
+        )
 
 
 class InstanceDB(Base):
     """Instance database model."""
-    __tablename__ = 'instances'
+
+    __tablename__ = "instances"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
-    project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
-    status = Column(String(50), default='stopped')  # healthy, degraded, stopped, error
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    status = Column(String(50), default="stopped")  # healthy, degraded, stopped, error
     instance_type = Column(String(100), nullable=False)
     platform = Column(String(50), nullable=False)  # aws, gcp, azure
     region = Column(String(100), nullable=False)
@@ -74,18 +90,23 @@ class InstanceDB(Base):
     project = relationship("ProjectDB", back_populates="instances")
 
     def __repr__(self):
-        return f"<Instance(id={self.id}, name='{self.name}', type='{self.instance_type}')>"
+        return (
+            f"<Instance(id={self.id}, name='{self.name}', type='{self.instance_type}')>"
+        )
 
 
 class AccountDB(Base):
     """Cloud account/credential database model."""
-    __tablename__ = 'accounts'
+
+    __tablename__ = "accounts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
     platform = Column(String(50), nullable=False)  # aws, gcp, azure
     account_id = Column(String(255), nullable=False)
-    status = Column(String(50), default='disconnected')  # connected, disconnected, error
+    status = Column(
+        String(50), default="disconnected"
+    )  # connected, disconnected, error
     region = Column(String(100), nullable=False)
     is_default = Column(Boolean, default=False)
     created = Column(DateTime, default=datetime.utcnow)
@@ -103,12 +124,15 @@ class AccountDB(Base):
     azure_tenant_id = Column(String(255))
 
     def __repr__(self):
-        return f"<Account(id={self.id}, name='{self.name}', platform='{self.platform}')>"
+        return (
+            f"<Account(id={self.id}, name='{self.name}', platform='{self.platform}')>"
+        )
 
 
 class BlueprintDB(Base):
     """Blueprint/template database model."""
-    __tablename__ = 'blueprints'
+
+    __tablename__ = "blueprints"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
@@ -127,17 +151,20 @@ class BlueprintDB(Base):
     last_modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
-        return f"<Blueprint(id={self.id}, name='{self.name}', category='{self.category}')>"
+        return (
+            f"<Blueprint(id={self.id}, name='{self.name}', category='{self.category}')>"
+        )
 
 
 class SecurityConfigDB(Base):
     """Security configuration database model."""
-    __tablename__ = 'security_configs'
+
+    __tablename__ = "security_configs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)
-    type = Column(String(50), default='user')  # built-in, user
+    type = Column(String(50), default="user")  # built-in, user
     key_pair = Column(String(255))
     cert_type = Column(String(50))  # acm, none, custom
     security_groups = Column(JSON, default=list)  # Array of security group IDs
@@ -156,7 +183,8 @@ class SecurityConfigDB(Base):
 
 class ImageDB(Base):
     """Custom image/AMI database model."""
-    __tablename__ = 'images'
+
+    __tablename__ = "images"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
@@ -167,12 +195,82 @@ class ImageDB(Base):
     os = Column(String(100))
     architecture = Column(String(50))  # x86_64, arm64
     size = Column(Integer)  # GB
-    status = Column(String(50), default='pending')  # available, pending, failed
+    status = Column(String(50), default="pending")  # available, pending, failed
     public = Column(Boolean, default=False)
-    source_instance_id = Column(Integer, ForeignKey('instances.id'))
+    source_instance_id = Column(Integer, ForeignKey("instances.id"))
     tags = Column(JSON, default=list)
     created = Column(DateTime, default=datetime.utcnow)
     last_modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
         return f"<Image(id={self.id}, name='{self.name}', image_id='{self.image_id}')>"
+
+
+class KeyPairDB(Base):
+    """SSH key pair database model."""
+
+    __tablename__ = "key_pairs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False, unique=True)
+    description = Column(Text)
+    key_type = Column(String(50), default="ed25519")  # rsa, ed25519
+    fingerprint = Column(String(255))
+    private_key_path = Column(String(500))  # Local path to private key file
+    created = Column(DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<KeyPair(id={self.id}, name='{self.name}')>"
+
+
+class SecurityGroupDB(Base):
+    """Security group database model."""
+
+    __tablename__ = "security_groups"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    group_id = Column(String(255), nullable=False, unique=True)  # AWS security group ID
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    vpc_id = Column(String(255))
+    inbound_rules = Column(JSON, default=list)  # Array of rule configurations
+    outbound_rules = Column(JSON, default=list)  # Array of rule configurations
+    created = Column(DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<SecurityGroup(id={self.id}, name='{self.name}', group_id='{self.group_id}')>"
+
+
+class IAMRoleDB(Base):
+    """IAM role database model."""
+
+    __tablename__ = "iam_roles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False, unique=True)
+    description = Column(Text)
+    trust_policy = Column(Text, nullable=False)  # JSON trust policy
+    managed_policies = Column(JSON, default=list)  # Array of managed policy ARNs
+    inline_policy = Column(Text)  # JSON inline policy document
+    arn = Column(String(500), nullable=False)
+    created = Column(DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<IAMRole(id={self.id}, name='{self.name}')>"
+
+
+class CertificateDB(Base):
+    """SSL certificate database model."""
+
+    __tablename__ = "certificates"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    arn = Column(String(500), nullable=False, unique=True)
+    domain = Column(String(255), nullable=False)
+    additional_domains = Column(JSON, default=list)  # Array of additional domains
+    validation_method = Column(String(50), default="DNS")  # DNS, EMAIL
+    status = Column(String(50), default="PENDING_VALIDATION")
+    created = Column(DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Certificate(id={self.id}, domain='{self.domain}')>"

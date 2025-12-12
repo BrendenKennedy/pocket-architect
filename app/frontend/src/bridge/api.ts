@@ -16,6 +16,14 @@ import type {
   CreateInstanceRequest,
   CreateBlueprintRequest,
   CreateAccountRequest,
+  CreateKeyPairRequest,
+  CreateSecurityGroupRequest,
+  CreateIAMRoleRequest,
+  CreateCertificateRequest,
+  KeyPair,
+  FirewallRule,
+  IAMRole,
+  Certificate,
   ApiResponse,
 } from '../types/models';
 
@@ -139,6 +147,82 @@ class BridgeAPI {
   async getCostSummary(): Promise<CostSummary> {
     const bridge = getBridge();
     const result = await bridge.get_cost_summary();
+    return JSON.parse(result);
+  }
+
+  // ========================================================================
+  // SECURITY
+  // ========================================================================
+
+  async listKeyPairs(): Promise<KeyPair[]> {
+    const bridge = getBridge();
+    const result = await bridge.list_key_pairs();
+    return JSON.parse(result);
+  }
+
+  async createKeyPair(data: CreateKeyPairRequest): Promise<ApiResponse<KeyPair>> {
+    const bridge = getBridge();
+    const result = await bridge.create_key_pair(JSON.stringify(data));
+    return JSON.parse(result);
+  }
+
+  async deleteKeyPair(keyName: string): Promise<ApiResponse<void>> {
+    const bridge = getBridge();
+    const result = await bridge.delete_key_pair(keyName);
+    return JSON.parse(result);
+  }
+
+  async listSecurityGroups(): Promise<FirewallRule[]> {
+    const bridge = getBridge();
+    const result = await bridge.list_security_groups();
+    return JSON.parse(result);
+  }
+
+  async createSecurityGroup(data: CreateSecurityGroupRequest): Promise<ApiResponse<FirewallRule>> {
+    const bridge = getBridge();
+    const result = await bridge.create_security_group(JSON.stringify(data));
+    return JSON.parse(result);
+  }
+
+  async deleteSecurityGroup(groupId: string): Promise<ApiResponse<void>> {
+    const bridge = getBridge();
+    const result = await bridge.delete_security_group(groupId);
+    return JSON.parse(result);
+  }
+
+  async listIAMRoles(): Promise<IAMRole[]> {
+    const bridge = getBridge();
+    const result = await bridge.list_iam_roles();
+    return JSON.parse(result);
+  }
+
+  async createIAMRole(data: CreateIAMRoleRequest): Promise<ApiResponse<IAMRole>> {
+    const bridge = getBridge();
+    const result = await bridge.create_iam_role(JSON.stringify(data));
+    return JSON.parse(result);
+  }
+
+  async deleteIAMRole(roleName: string): Promise<ApiResponse<void>> {
+    const bridge = getBridge();
+    const result = await bridge.delete_iam_role(roleName);
+    return JSON.parse(result);
+  }
+
+  async listCertificates(): Promise<Certificate[]> {
+    const bridge = getBridge();
+    const result = await bridge.list_certificates();
+    return JSON.parse(result);
+  }
+
+  async createCertificate(data: CreateCertificateRequest): Promise<ApiResponse<Certificate>> {
+    const bridge = getBridge();
+    const result = await bridge.create_certificate(JSON.stringify(data));
+    return JSON.parse(result);
+  }
+
+  async deleteCertificate(certificateArn: string): Promise<ApiResponse<void>> {
+    const bridge = getBridge();
+    const result = await bridge.delete_certificate(certificateArn);
     return JSON.parse(result);
   }
 

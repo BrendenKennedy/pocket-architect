@@ -4,7 +4,6 @@ AWS client wrapper around boto3 with error handling.
 
 from typing import Optional, Callable, Any
 from functools import wraps
-import boto3
 from botocore.exceptions import ClientError, BotoCoreError
 
 from pocket_architect.core.exceptions import AWSException
@@ -23,13 +22,14 @@ def handle_aws_error(func: Callable) -> Callable:
         def my_aws_function(self):
             # boto3 code here
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> Any:
         try:
             return func(*args, **kwargs)
         except ClientError as e:
-            error_code = e.response['Error']['Code']
-            error_message = e.response['Error']['Message']
+            error_code = e.response["Error"]["Code"]
+            error_message = e.response["Error"]["Message"]
             logger.error(f"AWS ClientError [{error_code}]: {error_message}")
             raise AWSException(f"AWS Error [{error_code}]: {error_message}") from e
         except BotoCoreError as e:
@@ -68,6 +68,7 @@ class AWSClient:
         self._ce = None  # Cost Explorer
         self._sts = None
         self._iam = None
+        self._acm = None  # Certificate Manager
 
         logger.info(f"AWSClient initialized for region: {region}")
 
@@ -75,7 +76,7 @@ class AWSClient:
     def ec2(self):
         """Get EC2 client (lazy initialization)."""
         if self._ec2 is None:
-            self._ec2 = self.session.client('ec2')
+            self._ec2 = self.session.client("ec2")
             logger.debug("EC2 client initialized")
         return self._ec2
 
@@ -84,7 +85,7 @@ class AWSClient:
         """Get Cost Explorer client (lazy initialization)."""
         if self._ce is None:
             # Cost Explorer is only available in us-east-1
-            self._ce = self.session.client('ce', region_name='us-east-1')
+            self._ce = self.session.client("ce", region_name="us-east-1")
             logger.debug("Cost Explorer client initialized")
         return self._ce
 
@@ -92,7 +93,7 @@ class AWSClient:
     def sts(self):
         """Get STS (Security Token Service) client (lazy initialization)."""
         if self._sts is None:
-            self._sts = self.session.client('sts')
+            self._sts = self.session.client("sts")
             logger.debug("STS client initialized")
         return self._sts
 
@@ -101,9 +102,17 @@ class AWSClient:
         """Get IAM client (lazy initialization)."""
         if self._iam is None:
             # IAM is a global service, but we still need to create a client
-            self._iam = self.session.client('iam')
+            self._iam = self.session.client("iam")
             logger.debug("IAM client initialized")
         return self._iam
+
+    @property
+    def acm(self):
+        """Get ACM (Certificate Manager) client (lazy initialization)."""
+        if self._acm is None:
+            self._acm = self.session.client("acm")
+            logger.debug("ACM client initialized")
+        return self._acm
 
     def get_client(self, service_name: str, region: Optional[str] = None):
         """

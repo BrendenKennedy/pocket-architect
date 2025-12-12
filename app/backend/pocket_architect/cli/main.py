@@ -103,7 +103,7 @@ def create_project(ctx, name, description, platform, region, color):
             )
             project = manager.create_project(request)
 
-            console.print(f"[green]✓ Project created successfully![/green]")
+            console.print("[green]✓ Project created successfully![/green]")
             console.print(f"  ID: {project.id}")
             console.print(f"  Name: {project.name}")
             console.print(f"  Platform: {project.platform}")
@@ -196,7 +196,7 @@ def create_instance(ctx, name, project_id, instance_type, platform, region, stor
             )
             instance = manager.create_instance(request)
 
-            console.print(f"[green]✓ Instance created successfully![/green]")
+            console.print("[green]✓ Instance created successfully![/green]")
             console.print(f"  ID: {instance.id}")
             console.print(f"  Name: {instance.name}")
             console.print(f"  Type: {instance.instanceType}")
@@ -221,7 +221,7 @@ def start_instance(ctx, instance_id, region):
         with ResourceManager(region=region) as manager:
             instance = manager.start_instance(instance_id)
 
-            console.print(f"[green]✓ Instance started successfully![/green]")
+            console.print("[green]✓ Instance started successfully![/green]")
             console.print(f"  ID: {instance.id}")
             console.print(f"  Name: {instance.name}")
             console.print(f"  Status: {instance.status}")
@@ -244,7 +244,7 @@ def stop_instance(ctx, instance_id, region):
         with ResourceManager(region=region) as manager:
             instance = manager.stop_instance(instance_id)
 
-            console.print(f"[green]✓ Instance stopped successfully![/green]")
+            console.print("[green]✓ Instance stopped successfully![/green]")
             console.print(f"  ID: {instance.id}")
             console.print(f"  Name: {instance.name}")
             console.print(f"  Status: {instance.status}")
@@ -267,7 +267,7 @@ def restart_instance(ctx, instance_id, region):
         with ResourceManager(region=region) as manager:
             instance = manager.restart_instance(instance_id)
 
-            console.print(f"[green]✓ Instance restarted successfully![/green]")
+            console.print("[green]✓ Instance restarted successfully![/green]")
             console.print(f"  ID: {instance.id}")
             console.print(f"  Name: {instance.name}")
             console.print(f"  Status: {instance.status}")
@@ -298,7 +298,7 @@ def terminate_instance(ctx, instance_id, region, force):
         with ResourceManager(region=region) as manager:
             manager.terminate_instance(instance_id)
 
-            console.print(f"[green]✓ Instance terminated successfully![/green]")
+            console.print("[green]✓ Instance terminated successfully![/green]")
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         if ctx.obj.get('verbose'):

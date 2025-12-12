@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { 
-  Search, 
-  RefreshCw, 
+import {
+  Search,
+  RefreshCw,
   Filter,
   BookOpen,
   Brain,
@@ -27,7 +27,8 @@ import {
   Terminal,
   Box,
   FolderKanban,
-  Settings
+  Settings,
+  Award
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -51,7 +52,260 @@ const getProgressColor = (progress: number): string => {
   return 'bg-status-error';
 };
 
-const mockLearningModules: any[] = [];
+const mockLearningModules: any[] = [
+  {
+    id: 1,
+    title: "Getting Started with Pocket Architect",
+    description: "Learn the fundamentals of using Pocket Architect for ML infrastructure management",
+    category: "Getting Started",
+    difficulty: "Beginner",
+    duration: "15 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Projects", "Instances", "Dashboard", "Workflow"],
+    icon: BookOpen
+  },
+  {
+    id: 2,
+    title: "Projects & Instance Management",
+    description: "Master the unified architecture for organizing ML infrastructure",
+    category: "Core Concepts",
+    difficulty: "Beginner",
+    duration: "20 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Project Organization", "Instance Lifecycle", "SSH Connectivity"],
+    icon: FolderKanban
+  },
+  {
+    id: 3,
+    title: "Blueprints for Rapid Provisioning",
+    description: "Create and manage reusable infrastructure templates",
+    category: "Infrastructure",
+    difficulty: "Intermediate",
+    duration: "25 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Blueprint Creation", "Instance Types", "AMI Selection", "Storage Config"],
+    icon: Workflow
+  },
+  {
+    id: 4,
+    title: "Security Groups & Network Isolation",
+    description: "Configure network security for ML workloads",
+    category: "Security",
+    difficulty: "Intermediate",
+    duration: "20 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Security Groups", "Port Management", "Access Control", "Best Practices"],
+    icon: Shield
+  },
+  {
+    id: 5,
+    title: "Multi-Region Deployments",
+    description: "Deploy infrastructure across AWS regions for global ML workloads",
+    category: "Advanced",
+    difficulty: "Advanced",
+    duration: "30 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Region Selection", "Cross-Region Replication", "Geo-Routing", "Latency Optimization"],
+    icon: Cloud
+  },
+  {
+    id: 6,
+    title: "Distributed Model Training",
+    description: "Set up and manage distributed training across multiple instances",
+    category: "ML Workflows",
+    difficulty: "Advanced",
+    duration: "35 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Horovod", "PyTorch Distributed", "Multi-Instance Setup", "Network Optimization"],
+    icon: Zap
+  },
+  {
+    id: 7,
+    title: "GPU Instance Optimization",
+    description: "Maximize performance and cost-efficiency for GPU workloads",
+    category: "Performance",
+    difficulty: "Intermediate",
+    duration: "25 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["GPU Instance Types", "CUDA Setup", "Memory Management", "Cost Optimization"],
+    icon: Cpu
+  },
+  {
+    id: 8,
+    title: "Development Environment Setup",
+    description: "Create productive development environments for ML engineers",
+    category: "Development",
+    difficulty: "Beginner",
+    duration: "20 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Jupyter Setup", "SSH Config", "Tmux Sessions", "Development Tools"],
+    icon: Terminal
+  },
+  {
+    id: 9,
+    title: "Data Pipeline Management",
+    description: "Handle large-scale data movement and processing for ML",
+    category: "Data",
+    difficulty: "Intermediate",
+    duration: "30 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["S3 Integration", "Data Loading", "Preprocessing", "Storage Optimization"],
+    icon: Database
+  },
+  {
+    id: 10,
+    title: "Experiment Tracking & MLOps",
+    description: "Implement MLOps practices with experiment tracking and model management",
+    category: "MLOps",
+    difficulty: "Intermediate",
+    duration: "25 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["MLflow", "Weights & Biases", "Model Registry", "Experiment Management"],
+    icon: Activity
+  },
+  {
+    id: 11,
+    title: "Model Deployment & Serving",
+    description: "Deploy trained models for inference at scale",
+    category: "Deployment",
+    difficulty: "Advanced",
+    duration: "35 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Model Optimization", "ONNX Runtime", "TensorRT", "API Serving"],
+    icon: Box
+  },
+  {
+    id: 12,
+    title: "Security Best Practices for ML",
+    description: "Secure your ML infrastructure and protect sensitive data",
+    category: "Security",
+    difficulty: "Advanced",
+    duration: "30 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Data Protection", "Access Control", "Encryption", "Compliance"],
+    icon: Lock
+  },
+  {
+    id: 13,
+    title: "Cost Optimization Strategies",
+    description: "Minimize cloud costs while maintaining ML workload performance",
+    category: "Cost Management",
+    difficulty: "Intermediate",
+    duration: "25 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Spot Instances", "Auto-Stop", "Resource Sizing", "Budget Management"],
+    icon: DollarSign
+  },
+  {
+    id: 14,
+    title: "Advanced Networking & VPC Design",
+    description: "Design secure, scalable network architectures for ML workloads",
+    category: "Infrastructure",
+    difficulty: "Advanced",
+    duration: "40 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["VPC Design", "Network Security", "Multi-Region", "Performance"],
+    icon: Network
+  },
+  {
+    id: 15,
+    title: "Monitoring & Observability for ML Systems",
+    description: "Implement comprehensive monitoring for ML infrastructure and applications",
+    category: "Operations",
+    difficulty: "Intermediate",
+    duration: "35 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["CloudWatch", "Custom Metrics", "Alerting", "ML Monitoring"],
+    icon: Activity
+  },
+  {
+    id: 16,
+    title: "Auto Scaling & Resource Management",
+    description: "Automatically adjust compute resources based on demand and cost constraints",
+    category: "Infrastructure",
+    difficulty: "Advanced",
+    duration: "45 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Auto Scaling Groups", "Scaling Policies", "Cost Optimization", "Performance"],
+    icon: Zap
+  },
+  {
+    id: 17,
+    title: "Disaster Recovery & Backup Strategies",
+    description: "Protect ML systems with comprehensive backup and recovery solutions",
+    category: "Reliability",
+    difficulty: "Advanced",
+    duration: "40 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Backup Strategies", "DR Architectures", "Business Continuity", "Testing"],
+    icon: Shield
+  },
+  {
+    id: 18,
+    title: "Compliance & Governance for ML Systems",
+    description: "Ensure regulatory compliance and implement governance frameworks",
+    category: "Security",
+    difficulty: "Advanced",
+    duration: "50 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Compliance Frameworks", "Governance", "Audit", "Risk Management"],
+    icon: Lock
+  },
+  {
+    id: 19,
+    title: "Ethics & Responsible AI in ML Systems",
+    description: "Implement ethical AI practices and responsible ML development",
+    category: "Ethics",
+    difficulty: "Advanced",
+    duration: "45 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Bias Detection", "Fairness", "Explainability", "Privacy"],
+    icon: Brain
+  },
+  {
+    id: 20,
+    title: "Future Trends & Emerging Technologies",
+    description: "Explore quantum computing, neuromorphic chips, and sustainable AI",
+    category: "Innovation",
+    difficulty: "Advanced",
+    duration: "55 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Quantum ML", "Neuromorphic Computing", "Sustainable AI", "Edge Computing"],
+    icon: TrendingUp
+  },
+  {
+    id: 21,
+    title: "Pocket Architect Mastery & Certification",
+    description: "Validate your expertise and prepare for certification exams",
+    category: "Certification",
+    difficulty: "Expert",
+    duration: "30 min",
+    progress: 0,
+    status: "not-started",
+    topics: ["Certification Prep", "Career Development", "Professional Skills", "Community"],
+    icon: Award
+  }
+];
 
 export function Learning() {
   const [modules] = useState(mockLearningModules);
@@ -126,7 +380,9 @@ export function Learning() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <BookOpen className="size-8 text-primary" />
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-primary" />
+          </div>
           <h1 className="text-primary">Learning Hub</h1>
         </div>
         <Button

@@ -7,12 +7,20 @@ from sqlalchemy.orm import Session
 
 from pocket_architect.core.config import get_config
 from pocket_architect.core.models import (
-    Project, CreateProjectRequest, UpdateProjectRequest,
-    Instance, CreateInstanceRequest
+    Project,
+    CreateProjectRequest,
+    UpdateProjectRequest,
+    Instance,
+    CreateInstanceRequest,
+    CreateKeyPairRequest,
+    CreateSecurityGroupRequest,
+    CreateIAMRoleRequest,
+    CreateCertificateRequest,
 )
 from pocket_architect.providers.aws import AWSProvider
 from pocket_architect.services.project_service import ProjectService
 from pocket_architect.services.instance_service import InstanceService
+from pocket_architect.services.security_service import SecurityService
 from pocket_architect.db.session import get_db, init_db
 from pocket_architect.utils.logger import setup_logger
 
@@ -30,7 +38,7 @@ class ResourceManager:
         self,
         region: Optional[str] = None,
         profile: Optional[str] = None,
-        db_session: Optional[Session] = None
+        db_session: Optional[Session] = None,
     ):
         """
         Initialize Resource Manager.
@@ -60,8 +68,11 @@ class ResourceManager:
         # Initialize services
         self.projects = ProjectService(self.aws, self.db)
         self.instances = InstanceService(self.aws, self.db)
+        self.security = SecurityService(self.aws, self.db)
 
-        logger.info(f"ResourceManager initialized (region={self.region}, profile={self.profile})")
+        logger.info(
+            f"ResourceManager initialized (region={self.region}, profile={self.profile})"
+        )
 
     def __enter__(self):
         """Context manager entry."""
@@ -215,6 +226,130 @@ class ResourceManager:
             instance_id: Instance ID
         """
         self.instances.terminate_instance(instance_id)
+
+    # ========================================================================
+    # Security Operations
+    # ========================================================================
+
+    def list_key_pairs(self):
+        """
+        List SSH key pairs.
+
+        Returns:
+            List of key pair dictionaries
+        """
+        return self.security.list_key_pairs()
+
+    def create_key_pair(self, request: CreateKeyPairRequest):
+        """
+        Create a new SSH key pair.
+
+        Args:
+            request: Key pair creation request
+
+        Returns:
+            Created key pair dictionary
+        """
+        return self.security.create_key_pair(request)
+
+    def delete_key_pair(self, key_name: str) -> None:
+        """
+        Delete an SSH key pair.
+
+        Args:
+            key_name: Name of the key pair to delete
+        """
+        self.security.delete_key_pair(key_name)
+
+    def list_security_groups(self):
+        """
+        List security groups.
+
+        Returns:
+            List of security group dictionaries
+        """
+        return self.security.list_security_groups()
+
+    def create_security_group(self, request: CreateSecurityGroupRequest):
+        """
+        Create a new security group.
+
+        Args:
+            request: Security group creation request
+
+        Returns:
+            Created security group dictionary
+        """
+        return self.security.create_security_group(request)
+
+    def delete_security_group(self, group_id: str) -> None:
+        """
+        Delete a security group.
+
+        Args:
+            group_id: Security group ID to delete
+        """
+        self.security.delete_security_group(group_id)
+
+    def list_iam_roles(self):
+        """
+        List IAM roles.
+
+        Returns:
+            List of IAM role dictionaries
+        """
+        return self.security.list_iam_roles()
+
+    def create_iam_role(self, request: CreateIAMRoleRequest):
+        """
+        Create a new IAM role.
+
+        Args:
+            request: IAM role creation request
+
+        Returns:
+            Created IAM role dictionary
+        """
+        return self.security.create_iam_role(request)
+
+    def delete_iam_role(self, role_name: str) -> None:
+        """
+        Delete an IAM role.
+
+        Args:
+            role_name: Name of the role to delete
+        """
+        self.security.delete_iam_role(role_name)
+
+    def list_certificates(self):
+        """
+        List certificates.
+
+        Returns:
+            List of certificate dictionaries
+        """
+        return self.security.list_certificates()
+
+    def create_certificate(self, request: CreateCertificateRequest):
+        """
+        Request a new SSL certificate.
+
+        Args:
+            request: Certificate creation request
+
+        Returns:
+            Created certificate dictionary
+        """
+        return self.security.create_certificate(request)
+
+    def delete_certificate(self, certificate_arn: str) -> None:
+        """
+        Delete a certificate.
+
+        Args:
+            certificate_arn: ARN of the certificate to delete
+        """
+        self.security.delete_certificate(certificate_arn)
 
     # ========================================================================
     # Utility Methods

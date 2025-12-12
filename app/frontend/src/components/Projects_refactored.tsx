@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FolderOpen, Eye, Trash2, Edit2, Copy, Plus } from 'lucide-react';
+import { FolderKanban, Eye, Trash2, Edit2, Copy, Plus } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -145,7 +145,7 @@ export function Projects() {
       render: (project) => (
         <div className="flex items-center gap-2">
           {TableRenderers.withIcon(
-            <FolderOpen className="w-4 h-4 text-muted-foreground flex-shrink-0" />,
+            <FolderKanban className="w-4 h-4 text-muted-foreground flex-shrink-0" />,
             project.name
           )}
           {project.color && (
@@ -366,7 +366,7 @@ export function Projects() {
     <PageLayout>
       <PageHeader
         title="Projects"
-        icon={FolderOpen}
+        icon={FolderKanban}
         onRefresh={handleRefresh}
       />
 
@@ -387,7 +387,7 @@ export function Projects() {
         actions={actions}
         getRowId={(project) => project.id}
         emptyState={{
-          icon: FolderOpen,
+          icon: FolderKanban,
           title: 'No Projects Yet',
           description: 'Get started by creating your first project to organize and manage your infrastructure.',
           actionLabel: 'Create Project',
@@ -401,7 +401,7 @@ export function Projects() {
         onOpenChange={createWizard.setIsOpen}
         title={isEditMode ? "Edit Project" : "Create New Project"}
         description="Configure your project settings"
-        icon={FolderOpen}
+        icon={FolderKanban}
         currentStep={createWizard.currentStep}
         totalSteps={3}
         onNext={createWizard.nextStep}

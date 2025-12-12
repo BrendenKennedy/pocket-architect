@@ -4,9 +4,8 @@ Exposes Python methods to JavaScript via Qt's bridge mechanism.
 """
 
 from PySide6.QtCore import QObject, Slot, Signal
-from typing import Dict, List, Any, Optional
+from typing import Optional
 import json
-import os
 from pathlib import Path
 
 from pocket_architect.core.manager import ResourceManager
@@ -14,6 +13,10 @@ from pocket_architect.core.models import (
     CreateProjectRequest,
     UpdateProjectRequest,
     CreateInstanceRequest,
+    CreateKeyPairRequest,
+    CreateSecurityGroupRequest,
+    CreateIAMRoleRequest,
+    CreateCertificateRequest,
 )
 from pocket_architect.utils.logger import setup_logger
 
@@ -234,6 +237,190 @@ class BackendBridge(QObject):
             return json.dumps({"success": True, "data": instance.dict()})
         except Exception as e:
             logger.error(f"Failed to restart instance: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    # ========================================================================
+    # SECURITY OPERATIONS
+    # ========================================================================
+
+    @Slot(result=str)
+    def list_key_pairs(self) -> str:
+        """List SSH key pairs."""
+        try:
+            logger.info("list_key_pairs called")
+            manager = self._get_manager()
+            key_pairs = manager.list_key_pairs()
+
+            return json.dumps({"success": True, "data": key_pairs})
+        except Exception as e:
+            logger.error(f"Failed to list key pairs: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def create_key_pair(self, key_pair_data: str) -> str:
+        """Create SSH key pair."""
+        try:
+            logger.info(f"create_key_pair called with data={key_pair_data}")
+            data = json.loads(key_pair_data)
+            request = CreateKeyPairRequest(**data)
+
+            manager = self._get_manager()
+            key_pair = manager.create_key_pair(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("key_pairs", json.dumps([key_pair]))
+
+            return json.dumps({"success": True, "data": key_pair})
+        except Exception as e:
+            logger.error(f"Failed to create key pair: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def delete_key_pair(self, key_name: str) -> str:
+        """Delete SSH key pair."""
+        try:
+            logger.info(f"delete_key_pair called with name={key_name}")
+            manager = self._get_manager()
+            manager.delete_key_pair(key_name)
+
+            return json.dumps({"success": True})
+        except Exception as e:
+            logger.error(f"Failed to delete key pair: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(result=str)
+    def list_security_groups(self) -> str:
+        """List security groups."""
+        try:
+            logger.info("list_security_groups called")
+            manager = self._get_manager()
+            security_groups = manager.list_security_groups()
+
+            return json.dumps({"success": True, "data": security_groups})
+        except Exception as e:
+            logger.error(f"Failed to list security groups: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def create_security_group(self, security_group_data: str) -> str:
+        """Create security group."""
+        try:
+            logger.info(f"create_security_group called with data={security_group_data}")
+            data = json.loads(security_group_data)
+            request = CreateSecurityGroupRequest(**data)
+
+            manager = self._get_manager()
+            security_group = manager.create_security_group(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("security_groups", json.dumps([security_group]))
+
+            return json.dumps({"success": True, "data": security_group})
+        except Exception as e:
+            logger.error(f"Failed to create security group: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def delete_security_group(self, group_id: str) -> str:
+        """Delete security group."""
+        try:
+            logger.info(f"delete_security_group called with id={group_id}")
+            manager = self._get_manager()
+            manager.delete_security_group(group_id)
+
+            return json.dumps({"success": True})
+        except Exception as e:
+            logger.error(f"Failed to delete security group: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(result=str)
+    def list_iam_roles(self) -> str:
+        """List IAM roles."""
+        try:
+            logger.info("list_iam_roles called")
+            manager = self._get_manager()
+            iam_roles = manager.list_iam_roles()
+
+            return json.dumps({"success": True, "data": iam_roles})
+        except Exception as e:
+            logger.error(f"Failed to list IAM roles: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def create_iam_role(self, iam_role_data: str) -> str:
+        """Create IAM role."""
+        try:
+            logger.info(f"create_iam_role called with data={iam_role_data}")
+            data = json.loads(iam_role_data)
+            request = CreateIAMRoleRequest(**data)
+
+            manager = self._get_manager()
+            iam_role = manager.create_iam_role(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("iam_roles", json.dumps([iam_role]))
+
+            return json.dumps({"success": True, "data": iam_role})
+        except Exception as e:
+            logger.error(f"Failed to create IAM role: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def delete_iam_role(self, role_name: str) -> str:
+        """Delete IAM role."""
+        try:
+            logger.info(f"delete_iam_role called with name={role_name}")
+            manager = self._get_manager()
+            manager.delete_iam_role(role_name)
+
+            return json.dumps({"success": True})
+        except Exception as e:
+            logger.error(f"Failed to delete IAM role: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(result=str)
+    def list_certificates(self) -> str:
+        """List certificates."""
+        try:
+            logger.info("list_certificates called")
+            manager = self._get_manager()
+            certificates = manager.list_certificates()
+
+            return json.dumps({"success": True, "data": certificates})
+        except Exception as e:
+            logger.error(f"Failed to list certificates: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def create_certificate(self, certificate_data: str) -> str:
+        """Create certificate."""
+        try:
+            logger.info(f"create_certificate called with data={certificate_data}")
+            data = json.loads(certificate_data)
+            request = CreateCertificateRequest(**data)
+
+            manager = self._get_manager()
+            certificate = manager.create_certificate(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("certificates", json.dumps([certificate]))
+
+            return json.dumps({"success": True, "data": certificate})
+        except Exception as e:
+            logger.error(f"Failed to create certificate: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def delete_certificate(self, certificate_arn: str) -> str:
+        """Delete certificate."""
+        try:
+            logger.info(f"delete_certificate called with arn={certificate_arn}")
+            manager = self._get_manager()
+            manager.delete_certificate(certificate_arn)
+
+            return json.dumps({"success": True})
+        except Exception as e:
+            logger.error(f"Failed to delete certificate: {e}")
             return json.dumps({"success": False, "error": str(e)})
 
     # ========================================================================

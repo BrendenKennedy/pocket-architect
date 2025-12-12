@@ -111,6 +111,10 @@ function createMockBackend(): BackendBridge {
     instances: [],
     blueprints: [],
     accounts: [],
+    keyPairs: [],
+    securityGroups: [],
+    iamRoles: [],
+    certificates: [],
   };
 
   return {
@@ -158,6 +162,23 @@ function createMockBackend(): BackendBridge {
       byService: [],
       dailyData: [],
     }),
+
+    // Security operations
+    list_key_pairs: async () => JSON.stringify(mockData.keyPairs),
+    create_key_pair: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Key pair created' }),
+    delete_key_pair: async (keyName: string) => JSON.stringify({ success: true, message: 'Mock: Key pair deleted' }),
+
+    list_security_groups: async () => JSON.stringify(mockData.securityGroups),
+    create_security_group: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Security group created' }),
+    delete_security_group: async (groupId: string) => JSON.stringify({ success: true, message: 'Mock: Security group deleted' }),
+
+    list_iam_roles: async () => JSON.stringify(mockData.iamRoles),
+    create_iam_role: async (data: string) => JSON.stringify({ success: true, message: 'Mock: IAM role created' }),
+    delete_iam_role: async (roleName: string) => JSON.stringify({ success: true, message: 'Mock: IAM role deleted' }),
+
+    list_certificates: async () => JSON.stringify(mockData.certificates),
+    create_certificate: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Certificate created' }),
+    delete_certificate: async (certificateArn: string) => JSON.stringify({ success: true, message: 'Mock: Certificate deleted' }),
 
     // Utility
     ping: async () => JSON.stringify({ status: 'ok', message: 'Mock bridge working!' }),

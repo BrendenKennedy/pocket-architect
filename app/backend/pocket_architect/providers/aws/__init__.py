@@ -6,6 +6,8 @@ from typing import Optional
 
 from pocket_architect.providers.aws.client import AWSClient
 from pocket_architect.providers.aws.ec2 import EC2Provider
+from pocket_architect.providers.aws.iam import IAMProvider
+from pocket_architect.providers.aws.acm import ACMProvider
 from pocket_architect.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -34,6 +36,8 @@ class AWSProvider:
 
         # Initialize service providers
         self.ec2 = EC2Provider(self.client)
+        self.iam = IAMProvider(self.client)
+        self.acm = ACMProvider(self.client)
 
         logger.info(f"AWSProvider initialized for region {region}")
 
@@ -50,4 +54,4 @@ class AWSProvider:
         return self.client.test_connection()
 
 
-__all__ = ['AWSProvider', 'AWSClient', 'EC2Provider']
+__all__ = ["AWSProvider", "AWSClient", "EC2Provider", "IAMProvider", "ACMProvider"]

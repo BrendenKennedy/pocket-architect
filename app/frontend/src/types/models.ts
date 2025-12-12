@@ -357,3 +357,74 @@ export interface ListOptions {
   search?: string;
   filters?: Record<string, any>;
 }
+
+// -----------------------------------------------------------------------------
+// SECURITY
+// -----------------------------------------------------------------------------
+
+export interface KeyPair {
+  id: number;
+  name: string;
+  description?: string;
+  fingerprint: string;
+  type: string;
+  created: string;
+  usedIn: Array<{ name: string; color: string }>;
+}
+
+export interface FirewallRule {
+  id: number;
+  name: string;
+  description: string;
+  vpcId: string;
+  ingressRules: number;
+  egressRules: number;
+}
+
+export interface IAMRole {
+  id: number;
+  name: string;
+  description?: string;
+  trustPolicy: string;
+  policyCount: number;
+  arn: string;
+  created: string;
+}
+
+export interface Certificate {
+  id: number;
+  domain: string;
+  status: string;
+  type: string;
+  expiration?: string;
+  arn: string;
+  created: string;
+}
+
+export interface CreateKeyPairRequest {
+  name: string;
+  description?: string;
+  keyType: string;
+}
+
+export interface CreateSecurityGroupRequest {
+  name: string;
+  description: string;
+  vpcId?: string;
+  inboundRules?: any[];
+  outboundRules?: any[];
+}
+
+export interface CreateIAMRoleRequest {
+  name: string;
+  description?: string;
+  trustPolicy: string;
+  managedPolicies?: string[];
+  inlinePolicy?: string;
+}
+
+export interface CreateCertificateRequest {
+  domain: string;
+  additionalDomains?: string[];
+  validationMethod: string;
+}

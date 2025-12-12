@@ -3,7 +3,7 @@ Project service for managing cloud projects.
 Coordinates between AWS provider and local database.
 """
 
-from typing import List, Optional
+from typing import List
 from datetime import datetime
 from sqlalchemy.orm import Session
 
