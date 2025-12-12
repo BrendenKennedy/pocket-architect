@@ -262,15 +262,17 @@ const sizeConfig: Record<StatusBadgeSize, {
   },
 };
 
-export function StatusBadge({ 
-  status, 
-  label, 
-  size = 'md', 
-  className = '' 
+export function StatusBadge({
+  status,
+  label,
+  size = 'md',
+  className = ''
 }: StatusBadgeProps) {
-  const config = statusConfig[status];
+  // Handle undefined or invalid status gracefully
+  const validStatus = status && statusConfig[status] ? status : 'inactive';
+  const config = statusConfig[validStatus];
   const sizeStyles = sizeConfig[size];
-  
+
   if (!config) {
     console.warn(`Unknown status badge variant: ${status}`);
     return null;

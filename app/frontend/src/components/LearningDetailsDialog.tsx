@@ -2655,10 +2655,10 @@ export function LearningDetailsDialog({
       <DialogContent className="max-w-5xl max-h-[85vh] bg-background border-border overflow-hidden flex flex-col" aria-describedby="learning-module-description">
         <DialogHeader className="border-b border-border pb-4">
           <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                <IconComponent className="size-6 text-purple-400" />
-              </div>
+             <div className="flex items-start gap-4">
+               <div className="p-3 rounded-lg bg-primary/10 border border-primary/30">
+                 <IconComponent className="size-6 text-primary" />
+               </div>
               <div>
                 <DialogTitle className="text-text-primary mb-2">
                   {module.title}
@@ -2675,10 +2675,10 @@ export function LearningDetailsDialog({
                     <Clock className="size-4" />
                     {module.duration}
                   </div>
-                  <div className="flex items-center gap-1.5 text-sm">
-                    <Target className="size-4 text-purple-400" />
-                    <span className="text-purple-400">{module.difficulty}</span>
-                  </div>
+                   <div className="flex items-center gap-1.5 text-sm">
+                     <Target className="size-4 text-primary" />
+                     <span className="text-primary">{module.difficulty}</span>
+                   </div>
                 </div>
               </div>
             </div>
@@ -2688,38 +2688,38 @@ export function LearningDetailsDialog({
         <div className="flex-1 overflow-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full justify-start border-b border-border bg-transparent rounded-none h-auto p-0 pb-0.5">
-              <TabsTrigger
-                value="overview"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-purple-500 rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-purple-400 pb-3 mb-[-2px]"
-              >
+               <TabsTrigger
+                 value="overview"
+                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-primary pb-3 mb-[-2px]"
+               >
                 <BookOpen className="size-4 mr-2" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger
-                value="key-concepts"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-purple-500 rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-purple-400 pb-3 mb-[-2px]"
-              >
+               <TabsTrigger
+                 value="key-concepts"
+                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-primary pb-3 mb-[-2px]"
+               >
                 <Lightbulb className="size-4 mr-2" />
                 Key Concepts
               </TabsTrigger>
-              <TabsTrigger
-                value="best-practices"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-purple-500 rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-purple-400 pb-3 mb-[-2px]"
-              >
+               <TabsTrigger
+                 value="best-practices"
+                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-primary pb-3 mb-[-2px]"
+               >
                 <CheckCircle2 className="size-4 mr-2" />
                 Best Practices
               </TabsTrigger>
-              <TabsTrigger
-                value="code"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-purple-500 rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-purple-400 pb-3 mb-[-2px]"
-              >
+               <TabsTrigger
+                 value="code"
+                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-primary pb-3 mb-[-2px]"
+               >
                 <Code className="size-4 mr-2" />
                 Code Examples
               </TabsTrigger>
-              <TabsTrigger
-                value="resources"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-purple-500 rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-purple-400 pb-3 mb-[-2px]"
-              >
+               <TabsTrigger
+                 value="resources"
+                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t-md rounded-b-none bg-transparent text-text-secondary data-[state=active]:text-primary pb-3 mb-[-2px]"
+               >
                 <ExternalLink className="size-4 mr-2" />
                 Resources
               </TabsTrigger>
@@ -2732,24 +2732,24 @@ export function LearningDetailsDialog({
                   <div className="prose prose-invert max-w-none">
                     <ReactMarkdown
                       className="text-text-primary leading-relaxed space-y-4"
-                      components={{
-                        h1: ({node, ...props}) => <h1 className="text-2xl text-purple-400 mb-4 mt-6" {...props} />,
-                        h2: ({node, ...props}) => <h2 className="text-xl text-purple-300 mb-3 mt-5" {...props} />,
-                        h3: ({node, ...props}) => <h3 className="text-lg text-text-primary mb-2 mt-4" {...props} />,
-                        p: ({node, ...props}) => <p className="text-text-primary mb-4 leading-relaxed" {...props} />,
-                        ul: ({node, ...props}) => <ul className="list-disc list-inside space-y-2 mb-4 text-text-primary" {...props} />,
-                        ol: ({node, ...props}) => <ol className="list-decimal list-inside space-y-2 mb-4 text-text-primary" {...props} />,
-                        li: ({node, ...props}) => <li className="text-text-primary ml-4" {...props} />,
-                        code: ({node, inline, ...props}: any) => 
-                          inline ? (
-                            <code className="bg-background-elevated text-purple-300 px-1.5 py-0.5 rounded text-sm" {...props} />
-                          ) : (
-                            <code className="block bg-background-elevated text-text-primary p-4 rounded-lg overflow-x-auto text-sm mb-4" {...props} />
-                          ),
-                        pre: ({node, ...props}) => <pre className="bg-background-elevated rounded-lg overflow-x-auto mb-4" {...props} />,
-                        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-purple-500 pl-4 italic text-text-secondary my-4" {...props} />,
-                        strong: ({node, ...props}) => <strong className="text-purple-300 font-semibold" {...props} />,
-                        a: ({node, ...props}) => <a className="text-purple-400 hover:text-purple-300 underline" {...props} />,
+                       components={{
+                         h1: ({node, ...props}) => <h1 className="text-2xl text-primary mb-4 mt-6" {...props} />,
+                         h2: ({node, ...props}) => <h2 className="text-xl text-primary/80 mb-3 mt-5" {...props} />,
+                         h3: ({node, ...props}) => <h3 className="text-lg text-text-primary mb-2 mt-4" {...props} />,
+                         p: ({node, ...props}) => <p className="text-text-primary mb-4 leading-relaxed" {...props} />,
+                         ul: ({node, ...props}) => <ul className="list-disc list-inside space-y-2 mb-4 text-text-primary" {...props} />,
+                         ol: ({node, ...props}) => <ol className="list-decimal list-inside space-y-2 mb-4 text-text-primary" {...props} />,
+                         li: ({node, ...props}) => <li className="text-text-primary ml-4" {...props} />,
+                         code: ({node, inline, ...props}: any) =>
+                           inline ? (
+                             <code className="bg-background-elevated text-primary/80 px-1.5 py-0.5 rounded text-sm" {...props} />
+                           ) : (
+                             <code className="block bg-background-elevated text-text-primary p-4 rounded-lg overflow-x-auto text-sm mb-4" {...props} />
+                           ),
+                         pre: ({node, ...props}) => <pre className="bg-background-elevated rounded-lg overflow-x-auto mb-4" {...props} />,
+                         blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-primary pl-4 italic text-text-secondary my-4" {...props} />,
+                        strong: ({node, ...props}) => <strong className="text-primary/80 font-semibold" {...props} />,
+                        a: ({node, ...props}) => <a className="text-primary hover:text-primary/80 underline" {...props} />,
                       }}
                     >
                       {content.overview}
@@ -2760,7 +2760,7 @@ export function LearningDetailsDialog({
                     <Card className="bg-background-elevated border-border-muted p-4">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-text-primary">Your Progress</span>
-                        <span className="text-purple-400">{module.progress}%</span>
+                        <span className="text-primary">{module.progress}%</span>
                       </div>
                       <Progress value={module.progress} className="h-2" />
                     </Card>
@@ -2779,7 +2779,7 @@ export function LearningDetailsDialog({
                           key={index}
                           className="flex items-start gap-3 p-3 rounded-lg bg-background-elevated border border-border-muted"
                         >
-                          <CheckCircle2 className="size-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                          <CheckCircle2 className="size-5 text-primary flex-shrink-0 mt-0.5" />
                           <span className="text-text-primary">{topic}</span>
                         </div>
                       ))}
@@ -2796,20 +2796,20 @@ export function LearningDetailsDialog({
                             key={index}
                             className="flex items-start gap-3 p-4 rounded-lg bg-background-elevated border border-border-muted"
                           >
-                            <div className="flex-shrink-0 size-6 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
-                              <span className="text-purple-400 text-sm">{index + 1}</span>
+                            <div className="flex-shrink-0 size-6 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+                              <span className="text-primary text-sm">{index + 1}</span>
                             </div>
                             <div className="flex-1">
                               <ReactMarkdown
                                 components={{
                                   p: ({node, ...props}) => <p className="text-text-primary leading-relaxed" {...props} />,
-                                  code: ({node, inline, ...props}: any) => 
+                                  code: ({node, inline, ...props}: any) =>
                                     inline ? (
-                                      <code className="bg-background-elevated text-purple-300 px-1.5 py-0.5 rounded text-sm" {...props} />
+                                      <code className="bg-background-elevated text-primary/80 px-1.5 py-0.5 rounded text-sm" {...props} />
                                     ) : (
                                       <code className="block bg-background-elevated text-text-primary p-3 rounded-lg overflow-x-auto text-sm mt-2" {...props} />
                                     ),
-                                  strong: ({node, ...props}) => <strong className="text-purple-300 font-semibold" {...props} />,
+                                  strong: ({node, ...props}) => <strong className="text-primary/80 font-semibold" {...props} />,
                                 }}
                               >
                                 {point}
@@ -2832,20 +2832,20 @@ export function LearningDetailsDialog({
                     content.bestPractices.map((practice: string, index: number) => (
                       <div
                         key={index}
-                        className="flex items-start gap-3 p-4 rounded-lg bg-background-elevated border border-border-muted hover:border-purple-500/30 transition-colors"
+                        className="flex items-start gap-3 p-4 rounded-lg bg-background-elevated border border-border-muted hover:border-primary/30 transition-colors"
                       >
                         <CheckCircle2 className="size-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <ReactMarkdown
                             components={{
                               p: ({node, ...props}) => <p className="text-text-primary leading-relaxed" {...props} />,
-                              code: ({node, inline, ...props}: any) => 
+                              code: ({node, inline, ...props}: any) =>
                                 inline ? (
-                                  <code className="bg-background-elevated text-purple-300 px-1.5 py-0.5 rounded text-sm" {...props} />
+                                  <code className="bg-background-elevated text-primary/80 px-1.5 py-0.5 rounded text-sm" {...props} />
                                 ) : (
                                   <code className="block bg-background-elevated text-text-primary p-3 rounded-lg overflow-x-auto text-sm mt-2" {...props} />
                                 ),
-                              strong: ({node, ...props}) => <strong className="text-purple-300 font-semibold" {...props} />,
+                              strong: ({node, ...props}) => <strong className="text-primary/80 font-semibold" {...props} />,
                             }}
                           >
                             {practice}
@@ -2869,7 +2869,7 @@ export function LearningDetailsDialog({
                       onClick={() => {
                         navigator.clipboard.writeText(content.codeExample || '');
                       }}
-                      className="text-purple-400 border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
+                      className="text-primary border-primary/30 hover:bg-primary/10 hover:text-primary/80"
                     >
                       <Terminal className="size-4 mr-2" />
                       Copy Code
@@ -2878,13 +2878,13 @@ export function LearningDetailsDialog({
                   <div className="prose prose-invert max-w-none">
                     <ReactMarkdown
                       components={{
-                        h1: ({node, ...props}) => <h1 className="text-xl text-purple-400 mb-3 mt-4" {...props} />,
-                        h2: ({node, ...props}) => <h2 className="text-lg text-purple-300 mb-2 mt-3" {...props} />,
+                        h1: ({node, ...props}) => <h1 className="text-xl text-primary mb-3 mt-4" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-lg text-primary/80 mb-2 mt-3" {...props} />,
                         h3: ({node, ...props}) => <h3 className="text-md text-text-primary mb-2 mt-3" {...props} />,
                         p: ({node, ...props}) => <p className="text-text-primary mb-3 leading-relaxed" {...props} />,
                         code: ({node, inline, ...props}: any) => 
                           inline ? (
-                            <code className="bg-background-elevated text-purple-300 px-1.5 py-0.5 rounded text-sm" {...props} />
+                            <code className="bg-background-elevated text-primary/80 px-1.5 py-0.5 rounded text-sm" {...props} />
                           ) : (
                             <code className="block bg-background text-text-primary p-4 rounded-lg overflow-x-auto text-sm font-mono" {...props} />
                           ),
@@ -2904,21 +2904,21 @@ export function LearningDetailsDialog({
                     content.resources.map((resource: any, index: number) => (
                       <a
                         key={index}
-                        href={`https://${resource.url}`}
+                        href={resource.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between p-4 rounded-lg bg-background-elevated border border-border-muted hover:border-purple-500/50 transition-colors group"
+                        className="flex items-center justify-between p-4 rounded-lg bg-background-elevated border border-border-muted hover:border-primary/50 transition-colors group"
                       >
                         <div className="flex items-center gap-3">
-                          <FileText className="size-5 text-purple-400" />
-                          <div>
-                            <div className="text-text-primary group-hover:text-purple-400 transition-colors">
+                          <FileText className="size-5 text-primary" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-text-primary group-hover:text-primary transition-colors">
                               {resource.title}
                             </div>
                             <div className="text-sm text-text-muted">{resource.url}</div>
                           </div>
                         </div>
-                        <ExternalLink className="size-4 text-text-muted group-hover:text-purple-400 transition-colors" />
+                        <ExternalLink className="size-4 text-text-muted group-hover:text-primary transition-colors" />
                       </a>
                     ))
                   ) : (
@@ -2941,7 +2941,7 @@ export function LearningDetailsDialog({
           <div className="flex items-center gap-2">
             {module.status !== 'completed' && (
               <Button 
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
                 onClick={handleReviewModule}
               >
                 <Play className="size-4 mr-2" />
@@ -2950,7 +2950,7 @@ export function LearningDetailsDialog({
             )}
             {module.status === 'completed' && (
               <Button 
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
                 onClick={handleReviewModule}
               >
                 <ArrowRight className="size-4 mr-2" />

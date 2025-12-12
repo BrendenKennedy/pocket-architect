@@ -46,9 +46,9 @@ import { StatusBadge } from './ui/status-badge';
 
 // Helper function to get progress bar color based on percentage
 const getProgressColor = (progress: number): string => {
-  if (progress >= 75) return 'bg-success';
-  if (progress >= 40) return 'bg-warning';
-  return 'bg-error';
+  if (progress >= 75) return 'bg-status-success';
+  if (progress >= 40) return 'bg-status-warning';
+  return 'bg-status-error';
 };
 
 const mockLearningModules = [
@@ -486,13 +486,13 @@ export function Learning() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case 'beginner':
-        return 'text-success';
+        return 'text-status-success';
       case 'intermediate':
-        return 'text-warning';
+        return 'text-status-warning';
       case 'advanced':
-        return 'text-error';
+        return 'text-status-error';
       default:
-        return 'text-muted-foreground';
+        return 'text-text-muted';
     }
   };
 
@@ -596,19 +596,19 @@ export function Learning() {
           return (
             <Card
               key={module.id}
-              className={`bg-card border-border p-5 cursor-pointer transition-all hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 ${
+              className={`bg-card border-border p-5 cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 ${
                 selectedModules.includes(module.id)
-                  ? 'border-purple-500 shadow-lg shadow-purple-500/20'
+                  ? 'border-primary shadow-lg shadow-primary/20'
                   : ''
               }`}
               onClick={() => handleViewModule(module)}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                  <IconComponent className="size-5 text-primary" />
-                </div>
-                <StatusBadge status={module.status} />
-              </div>
+               <div className="flex items-start justify-between mb-4">
+                 <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/30">
+                   <IconComponent className="size-5 text-primary" />
+                 </div>
+                 <StatusBadge status={module.status} />
+               </div>
 
               <h3 className="text-text-primary mb-2">{module.title}</h3>
               <p className="text-text-muted text-sm mb-4 line-clamp-2">
@@ -635,15 +635,13 @@ export function Learning() {
                 </span>
               </div>
 
-              {module.progress > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-text-muted">Progress</span>
-                    <span className="text-primary">{module.progress}%</span>
+                    <span className="text-text-primary">{module.progress}%</span>
                   </div>
                   <Progress value={module.progress} className="h-1.5" indicatorClassName={getProgressColor(module.progress)} />
                 </div>
-              )}
             </Card>
           );
         })}
