@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner@2.0.3';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, Plus } from 'lucide-react';
 
 // UI Components
 import { DataTable, TableColumn, TableAction } from './ui/data-table';
@@ -9,6 +9,8 @@ import { PageHeader } from './ui/page-header';
 import { PageLayout } from './ui/page-layout';
 import { CreationWizard } from './ui/creation-wizard';
 import { DetailsWizard } from './ui/details-wizard';
+import { Card } from './ui/card';
+import { Button } from './ui/button';
 
 // Hooks
 import { useDataFilters } from '../hooks/useDataFilters';
@@ -236,19 +238,25 @@ export function CrudPage<T extends Record<string, any>>({
 
         {/* Empty State */}
         {!loading && filteredData.length === 0 && config.table.emptyState && (
-          <div className="text-center py-12">
-            <config.icon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">{config.table.emptyState.title}</h3>
-            <p className="text-muted-foreground mb-4">{config.table.emptyState.description}</p>
-            {config.table.emptyState.action && (
-              <button
-                onClick={config.table.emptyState.action.onClick}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-              >
-                {config.table.emptyState.action.label}
-              </button>
-            )}
-          </div>
+          <Card className="bg-card border-border">
+            <div className="py-24 text-center">
+              <config.icon className="size-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">{config.table.emptyState.title}</h3>
+              {config.table.emptyState.description && (
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">{config.table.emptyState.description}</p>
+              )}
+              {config.table.emptyState.action && (
+                <Button
+                  onClick={config.table.emptyState.action.onClick}
+                  size="lg"
+                  className="gap-2"
+                >
+                  <Plus className="size-5" />
+                  {config.table.emptyState.action.label}
+                </Button>
+              )}
+            </div>
+          </Card>
         )}
 
         {/* Create Wizard */}
