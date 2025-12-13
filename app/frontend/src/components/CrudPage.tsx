@@ -24,6 +24,7 @@ import { CrudPageConfig, CrudState } from '../types/crud';
 
 interface CrudPageProps<T = any> {
   config: CrudPageConfig<T>;
+  onView?: (item: T) => void;
 }
 
 interface TabContentProps<T = any> {
@@ -31,6 +32,7 @@ interface TabContentProps<T = any> {
   data: T[];
   loading: boolean;
   filteredData: T[];
+  onView?: (item: T) => void;
   onEdit: (item: T) => void;
   onDelete: (item: T) => void;
 }
@@ -40,6 +42,7 @@ function TabContent<T extends Record<string, any>>({
   data,
   loading,
   filteredData,
+  onView,
   onEdit,
   onDelete
 }: TabContentProps<T>) {
@@ -48,11 +51,12 @@ function TabContent<T extends Record<string, any>>({
     ...action,
     onClick: (item) => {
       switch (action.label.toLowerCase()) {
+        case 'view':
+          return onView?.(item);
         case 'edit':
           return onEdit(item);
         case 'delete':
           return onDelete(item);
-        // View actions are handled by individual components
         default:
           return action.onClick(item);
       }
@@ -99,7 +103,8 @@ function TabContent<T extends Record<string, any>>({
 }
 
 export function CrudPage<T extends Record<string, any>>({
-  config
+  config,
+  onView
 }: CrudPageProps<T>) {
   // Determine if this is a multi-tab configuration
   const isMultiTab = config.tabs && config.tabs.length > 0;
@@ -352,6 +357,7 @@ export function CrudPage<T extends Record<string, any>>({
                   data={tabData[tab.key] || []}
                   loading={tabLoading[tab.key] || false}
                   filteredData={tabFilters[tab.key]?.filteredData || []}
+                  onView={onView}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
@@ -364,6 +370,7 @@ export function CrudPage<T extends Record<string, any>>({
             data={data}
             loading={loading}
             filteredData={filteredData}
+            onView={onView}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />

@@ -185,6 +185,9 @@ export interface CrudPageConfig<T = any> {
   tabs?: CrudTabConfig[];
   defaultTab?: string;
 
+  // Custom callbacks
+  onView?: (item: T) => void;
+
   // Custom hooks
   hooks?: {
     useData?: () => { data: T[]; loading: boolean; refetch: () => void };

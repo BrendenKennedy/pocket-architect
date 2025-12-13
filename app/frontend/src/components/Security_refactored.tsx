@@ -6,25 +6,12 @@ import { useDialog } from '../hooks/useDialog';
 export function Security() {
   const detailsDialog = useDialog<any>();
 
-  // Override view actions to use custom details dialog
-  const enhancedConfig = {
-    ...securityPageConfig,
-    tabs: securityPageConfig.tabs?.map(tab => ({
-      ...tab,
-      table: {
-        ...tab.table,
-        actions: tab.table.actions.map(action =>
-          action.label === 'View'
-            ? { ...action, onClick: (item: any) => detailsDialog.open(item) }
-            : action
-        ),
-      },
-    })),
-  };
-
   return (
     <>
-      <CrudPage config={enhancedConfig} />
+      <CrudPage
+        config={securityPageConfig}
+        onView={(item) => detailsDialog.open(item)}
+      />
 
       {/* Custom Details Dialog */}
       <SecurityDetailsDialog
