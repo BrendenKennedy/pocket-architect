@@ -112,8 +112,14 @@ class AccountDB(Base):
     created = Column(DateTime, default=datetime.utcnow)
     last_synced = Column(DateTime)
 
+    # Security and role-based fields
+    role_arn = Column(String(500))  # IAM role ARN for role assumption
+    migrated_from_cli = Column(Boolean, default=False)  # Migration tracking
+    last_access = Column(DateTime)  # Audit trail
+    access_count = Column(Integer, default=0)  # Usage tracking
+
     # AWS-specific fields
-    aws_profile = Column(String(255))  # AWS CLI profile name
+    aws_profile = Column(String(255))  # AWS CLI profile name (legacy)
 
     # GCP-specific fields
     gcp_project_id = Column(String(255))

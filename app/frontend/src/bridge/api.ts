@@ -25,6 +25,7 @@ import type {
   IAMRole,
   Certificate,
   ApiResponse,
+  PermissionCheckResult,
 } from '../types/models';
 
 class BridgeAPI {
@@ -137,6 +138,18 @@ class BridgeAPI {
   async testAccountConnection(id: number): Promise<ApiResponse<void>> {
     const bridge = getBridge();
     const result = await bridge.test_account_connection(id);
+    return JSON.parse(result);
+  }
+
+  async validateAwsCredentials(accessKey: string, secretKey: string, region: string): Promise<{ success: boolean; accountId?: string; error?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.validate_aws_credentials(accessKey, secretKey, region);
+    return JSON.parse(result);
+  }
+
+  async checkAccountPermissions(accountId: number): Promise<PermissionCheckResult> {
+    const bridge = getBridge();
+    const result = await bridge.check_account_permissions(accountId);
     return JSON.parse(result);
   }
 

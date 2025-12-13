@@ -428,3 +428,33 @@ export interface CreateCertificateRequest {
   additionalDomains?: string[];
   validationMethod: string;
 }
+
+// ============================================================================
+// PERMISSIONS
+// ============================================================================
+
+export interface PermissionStatus {
+  action: string;
+  status: 'allowed' | 'denied' | 'unknown';
+  description: string;
+  critical: boolean;
+  featureImpact?: string;
+}
+
+export interface ServicePermissions {
+  service: string;
+  total: number;
+  allowed: number;
+  denied: number;
+  unknown: number;
+  permissions: PermissionStatus[];
+}
+
+export interface PermissionCheckResult {
+  accountId: number;
+  checkedAt: string;
+  services: ServicePermissions[];
+  canSimulate: boolean;
+  overallStatus: 'full' | 'partial' | 'none' | 'unknown';
+  minimalPolicy?: string;
+}

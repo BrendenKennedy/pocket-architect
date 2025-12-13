@@ -16,11 +16,14 @@ from pocket_architect.core.models import (
     CreateSecurityGroupRequest,
     CreateIAMRoleRequest,
     CreateCertificateRequest,
+    Account,
+    CreateAccountRequest,
 )
 from pocket_architect.providers.aws import AWSProvider
 from pocket_architect.services.project_service import ProjectService
 from pocket_architect.services.instance_service import InstanceService
 from pocket_architect.services.security_service import SecurityService
+from pocket_architect.services.account_service import AccountService
 from pocket_architect.db.session import get_db, init_db
 from pocket_architect.utils.logger import setup_logger
 
@@ -58,21 +61,58 @@ class ResourceManager:
         self.region = region or self.config.get_default_region()
         self.profile = profile
 
-        # Initialize AWS provider
-        self.aws = AWSProvider(self.region, self.profile)
+        # Initialize AWS provider (lazy loading for account operations)
+        self._aws_provider = None
 
         # Get or create database session
         self.db = db_session or get_db()
         self._owns_db = db_session is None  # Track if we own the session
 
-        # Initialize services
-        self.projects = ProjectService(self.aws, self.db)
-        self.instances = InstanceService(self.aws, self.db)
-        self.security = SecurityService(self.aws, self.db)
+        # Initialize services (AWS provider initialized lazily)
+        self.accounts = AccountService(self.db)
+        self._projects = None
+        self._instances = None
+        self._security = None
 
         logger.info(
             f"ResourceManager initialized (region={self.region}, profile={self.profile})"
         )
+
+    @property
+    def aws(self):
+        """Lazy-loaded AWS provider."""
+        if self._aws_provider is None:
+            from pocket_architect.providers.aws import AWSProvider
+
+            self._aws_provider = AWSProvider(self.region, self.profile)
+        return self._aws_provider
+
+    @property
+    def projects(self):
+        """Lazy-loaded project service."""
+        if self._projects is None:
+            from pocket_architect.services.project_service import ProjectService
+
+            self._projects = ProjectService(self.aws, self.db)
+        return self._projects
+
+    @property
+    def instances(self):
+        """Lazy-loaded instance service."""
+        if self._instances is None:
+            from pocket_architect.services.instance_service import InstanceService
+
+            self._instances = InstanceService(self.aws, self.db)
+        return self._instances
+
+    @property
+    def security(self):
+        """Lazy-loaded security service."""
+        if self._security is None:
+            from pocket_architect.services.security_service import SecurityService
+
+            self._security = SecurityService(self.aws, self.db)
+        return self._security
 
     def __enter__(self):
         """Context manager entry."""
@@ -350,6 +390,64 @@ class ResourceManager:
             certificate_arn: ARN of the certificate to delete
         """
         self.security.delete_certificate(certificate_arn)
+
+    # ========================================================================
+    # Account Operations
+    # ========================================================================
+
+    def list_accounts(self) -> List[Account]:
+        """
+        List all accounts.
+
+        Returns:
+            List of Account models
+        """
+        return self.accounts.list_accounts()
+
+    def get_account(self, account_id: int) -> Account:
+        """
+        Get account by ID.
+
+        Args:
+            account_id: Account ID
+
+        Returns:
+            Account model
+        """
+        return self.accounts.get_account(account_id)
+
+    def create_account(self, request: CreateAccountRequest) -> Account:
+        """
+        Create a new account.
+
+        Args:
+            request: Account creation request
+
+        Returns:
+            Created Account model
+        """
+        return self.accounts.create_account(request)
+
+    def test_account_connection(self, account_id: int) -> bool:
+        """
+        Test connection to account.
+
+        Args:
+            account_id: Account ID to test
+
+        Returns:
+            True if connection successful
+        """
+        return self.accounts.test_connection(account_id)
+
+    def delete_account(self, account_id: int) -> None:
+        """
+        Delete account.
+
+        Args:
+            account_id: Account ID to delete
+        """
+        self.accounts.delete_account(account_id)
 
     # ========================================================================
     # Utility Methods

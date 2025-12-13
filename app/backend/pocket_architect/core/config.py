@@ -10,6 +10,7 @@ import boto3
 from dotenv import load_dotenv
 
 from pocket_architect.core.exceptions import ConfigurationError
+from pocket_architect.core.secure_store import SecureCredentialStore
 from pocket_architect.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -38,14 +39,16 @@ class Config:
     def get_aws_session(
         self,
         profile: Optional[str] = None,
-        region: Optional[str] = None
+        region: Optional[str] = None,
+        role_arn: Optional[str] = None,
     ) -> boto3.Session:
         """
-        Get AWS boto3 session with credentials.
+        Get AWS boto3 session with secure credentials.
 
         Args:
-            profile: AWS profile name (from ~/.aws/credentials)
+            profile: Account ID for keychain lookup
             region: AWS region (defaults to configured default)
+            role_arn: IAM role ARN for role assumption
 
         Returns:
             boto3.Session configured with credentials
@@ -56,15 +59,43 @@ class Config:
         try:
             region = region or self.get_default_region()
 
-            # Try to create session with profile
+            # Try secure keychain first
             if profile:
-                session = boto3.Session(profile_name=profile, region_name=region)
+                access_key, secret_key = SecureCredentialStore.get_aws_credentials(
+                    profile
+                )
+                if access_key and secret_key:
+                    session = boto3.Session(
+                        aws_access_key_id=access_key,
+                        aws_secret_access_key=secret_key,
+                        region_name=region,
+                    )
+                else:
+                    raise ConfigurationError(
+                        f"No secure credentials found for account: {profile}"
+                    )
             else:
-                # Use default credentials (env vars, ~/.aws/credentials, IAM role, etc.)
+                # Fallback to standard AWS chain (env vars, ~/.aws/credentials, IAM role, etc.)
                 session = boto3.Session(region_name=region)
 
+            # Handle role assumption if specified
+            if role_arn:
+                sts = session.client("sts")
+                response = sts.assume_role(
+                    RoleArn=role_arn,
+                    RoleSessionName="pocket-architect-session",
+                    DurationSeconds=3600,
+                )
+                creds = response["Credentials"]
+                session = boto3.Session(
+                    aws_access_key_id=creds["AccessKeyId"],
+                    aws_secret_access_key=creds["SecretAccessKey"],
+                    aws_session_token=creds["SessionToken"],
+                    region_name=region,
+                )
+
             # Test credentials by making a simple call
-            sts = session.client('sts')
+            sts = session.client("sts")
             identity = sts.get_caller_identity()
             logger.info(f"AWS session created for account: {identity['Account']}")
 
@@ -74,11 +105,8 @@ class Config:
             logger.error(f"Failed to create AWS session: {e}")
             raise ConfigurationError(
                 f"AWS credentials not configured. Error: {e}\n"
-                "Please configure AWS credentials using one of these methods:\n"
-                "1. Run 'aws configure' (AWS CLI)\n"
-                "2. Set environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY\n"
-                "3. Create a .env file with AWS credentials\n"
-                "4. Use ~/.aws/credentials file"
+                "Please configure AWS credentials using Pocket Architect's secure interface.\n"
+                "Secure credentials are stored encrypted in your OS keychain."
             )
 
     def get_default_region(self) -> str:
@@ -93,11 +121,7 @@ class Config:
         2. AWS_REGION environment variable
         3. Default to 'us-east-1'
         """
-        return (
-            os.getenv('AWS_DEFAULT_REGION') or
-            os.getenv('AWS_REGION') or
-            'us-east-1'
-        )
+        return os.getenv("AWS_DEFAULT_REGION") or os.getenv("AWS_REGION") or "us-east-1"
 
     # ========================================================================
     # Database Configuration
@@ -123,7 +147,7 @@ class Config:
 
     def get_log_level(self) -> str:
         """Get logging level from environment."""
-        return os.getenv('LOG_LEVEL', 'INFO').upper()
+        return os.getenv("LOG_LEVEL", "INFO").upper()
 
     def get_log_file(self) -> Optional[Path]:
         """Get log file path."""
@@ -132,7 +156,7 @@ class Config:
 
     def is_debug_mode(self) -> bool:
         """Check if debug mode is enabled."""
-        return os.getenv('DEBUG', '').lower() in ('true', '1', 'yes')
+        return os.getenv("DEBUG", "").lower() in ("true", "1", "yes")
 
     # ========================================================================
     # Utility Methods

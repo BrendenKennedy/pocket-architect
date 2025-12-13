@@ -17,6 +17,7 @@ from pocket_architect.core.models import (
     CreateSecurityGroupRequest,
     CreateIAMRoleRequest,
     CreateCertificateRequest,
+    CreateAccountRequest,
 )
 from pocket_architect.utils.logger import setup_logger
 
@@ -459,8 +460,9 @@ class BackendBridge(QObject):
         """List all accounts."""
         try:
             logger.info("list_accounts called")
-            # TODO: Implement actual account listing logic
-            return json.dumps([])
+            manager = self._get_manager()
+            accounts = manager.list_accounts()
+            return json.dumps([a.dict() for a in accounts])
         except Exception as e:
             logger.error(f"Failed to list accounts: {e}")
             return json.dumps([])
@@ -471,8 +473,16 @@ class BackendBridge(QObject):
         try:
             data = json.loads(account_data)
             logger.info(f"create_account called with data={data}")
-            # TODO: Implement actual account creation logic
-            return json.dumps({"success": True, "message": "Account created (mock)"})
+
+            # Create request object
+            request = CreateAccountRequest(**data)
+            manager = self._get_manager()
+            account = manager.create_account(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("accounts", json.dumps([account.dict()]))
+
+            return json.dumps({"success": True, "data": account.dict()})
         except Exception as e:
             logger.error(f"Failed to create account: {e}")
             return json.dumps({"success": False, "error": str(e)})
@@ -482,13 +492,62 @@ class BackendBridge(QObject):
         """Test account connection."""
         try:
             logger.info(f"test_account_connection called with id={account_id}")
-            # TODO: Implement actual connection test logic
-            return json.dumps(
-                {"success": True, "message": "Connection successful (mock)"}
-            )
+            manager = self._get_manager()
+            success = manager.test_account_connection(account_id)
+
+            if success:
+                return json.dumps({"success": True, "message": "Connection successful"})
+            else:
+                return json.dumps({"success": False, "error": "Connection failed"})
         except Exception as e:
             logger.error(f"Failed to test connection: {e}")
             return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, str, str, result=str)
+    def validate_aws_credentials(
+        self, access_key: str, secret_key: str, region: str
+    ) -> str:
+        """Validate AWS credentials and return account ID."""
+        try:
+            logger.info("validate_aws_credentials called")
+
+            # Create a direct session with the provided credentials
+            import boto3
+
+            temp_session = boto3.Session(
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                region_name=region,
+            )
+
+            # Test credentials with STS GetCallerIdentity
+            sts = temp_session.client("sts")
+            identity = sts.get_caller_identity()
+
+            account_id = identity["Account"]
+            logger.info(f"AWS credentials validated for account: {account_id}")
+
+            return json.dumps({"success": True, "accountId": account_id})
+
+        except Exception as e:
+            logger.error(f"Failed to validate AWS credentials: {e}")
+
+            # Map AWS errors to user-friendly messages
+            error_str = str(e)
+            if "InvalidAccessKeyId" in error_str:
+                error_msg = "Invalid AWS access key ID"
+            elif "SignatureDoesNotMatch" in error_str:
+                error_msg = "Invalid AWS secret access key"
+            elif "InvalidClientTokenId" in error_str:
+                error_msg = "AWS credentials are invalid or expired"
+            elif "UnauthorizedOperation" in error_str:
+                error_msg = "Insufficient permissions - need sts:GetCallerIdentity"
+            elif "Network" in error_str or "timeout" in error_str:
+                error_msg = "Network error - check internet connection"
+            else:
+                error_msg = f"AWS API error: {error_str}"
+
+            return json.dumps({"success": False, "error": error_msg})
 
     # ========================================================================
     # COST MANAGEMENT OPERATIONS
@@ -585,3 +644,27 @@ class BackendBridge(QObject):
         except Exception as e:
             logger.error(f"Failed to save config: {e}")
             return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(int, result=str)
+    def check_account_permissions(self, account_id: int) -> str:
+        """
+        Check AWS permissions for an account.
+
+        Args:
+            account_id: Account ID to check
+
+        Returns:
+            JSON string with permission check results
+        """
+        try:
+            logger.info(f"check_account_permissions called with id={account_id}")
+            manager = self._get_manager()
+            result = manager.accounts.check_permissions(account_id)
+            return json.dumps(result.dict())
+        except Exception as e:
+            logger.error(f"Failed to check permissions: {e}", exc_info=True)
+            return json.dumps({
+                "success": False,
+                "error": str(e),
+                "canSimulate": False
+            })

@@ -483,3 +483,40 @@ class CreateCertificateRequest(BaseModel):
     domain: str
     additionalDomains: Optional[List[str]] = None
     validationMethod: str = "DNS"
+
+
+# ============================================================================
+# PERMISSIONS
+# ============================================================================
+
+
+class PermissionStatus(BaseModel):
+    """Individual permission status."""
+
+    action: str  # e.g., "ec2:DescribeInstances"
+    status: str  # "allowed" | "denied" | "unknown"
+    description: str  # User-friendly description
+    critical: bool  # Whether this permission is critical
+    featureImpact: Optional[str] = None  # What feature won't work
+
+
+class ServicePermissions(BaseModel):
+    """Permissions grouped by AWS service."""
+
+    service: str  # e.g., "EC2", "IAM"
+    total: int  # Total permissions for service
+    allowed: int  # Number allowed
+    denied: int  # Number denied
+    unknown: int  # Number unknown
+    permissions: List[PermissionStatus]
+
+
+class PermissionCheckResult(BaseModel):
+    """Complete permission check result."""
+
+    accountId: int
+    checkedAt: str  # ISO timestamp
+    services: List[ServicePermissions]
+    canSimulate: bool  # Whether IAM simulator was available
+    overallStatus: str  # "full" | "partial" | "none" | "unknown"
+    minimalPolicy: Optional[str] = None  # Generated IAM policy JSON for denied permissions

@@ -18,6 +18,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { getRegionsForPlatform, getDefaultRegion } from './data/regions';
 import type { Platform } from './types/models';
 import { loadConfig, configSetters } from './services';
+import { bridgeApi } from './bridge/api';
 
 export type Page = 'dashboard' | 'projects' | 'blueprints' | 'security' | 'images' | 'instances' | 'accounts' | 'cost' | 'settings' | 'learning';
 
@@ -49,9 +50,39 @@ function AppContent() {
   }, []);
 
   // Connection status for each provider
-  const [awsConnected, setAwsConnected] = useState(true);
-  const [gcpConnected, setGcpConnected] = useState(true);
-  const [azureConnected, setAzureConnected] = useState(true);
+  const [awsConnected, setAwsConnected] = useState(false);
+  const [gcpConnected, setGcpConnected] = useState(false);
+  const [azureConnected, setAzureConnected] = useState(false);
+
+  // Fetch account connection status
+  useEffect(() => {
+    const fetchAccountStatus = async () => {
+      try {
+        const accounts = await bridgeApi.listAccounts();
+
+        // Check each platform
+        const awsAccount = accounts.find(acc => acc.platform === 'aws');
+        const gcpAccount = accounts.find(acc => acc.platform === 'gcp');
+        const azureAccount = accounts.find(acc => acc.platform === 'azure');
+
+        setAwsConnected(awsAccount?.status === 'connected');
+        setGcpConnected(gcpAccount?.status === 'connected');
+        setAzureConnected(azureAccount?.status === 'connected');
+      } catch (error) {
+        console.error('Failed to fetch account status:', error);
+        // Default to disconnected on error
+        setAwsConnected(false);
+        setGcpConnected(false);
+        setAzureConnected(false);
+      }
+    };
+
+    fetchAccountStatus();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchAccountStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Save active page to config when it changes
   useEffect(() => {
@@ -161,11 +192,11 @@ function AppContent() {
             </SelectContent>
           </Select>
           <span className="text-border">|</span>
-          {/* Connection Status Indicator - 3 Lights for AWS, GCP, Azure - MOVED TO FARTHEST RIGHT */}
+          {/* Connection Status Indicator - 3 Lights for AWS, GCP, Azure */}
           <button
             onClick={() => setActivePage('accounts')}
             className="flex flex-col gap-0.5 px-2 py-1.5 rounded hover:bg-accent transition-colors group"
-            title={`AWS: ${awsConnected ? 'Connected' : 'Disconnected'}\nGCP: ${gcpConnected ? 'Connected' : 'Disconnected'}\nAzure: ${azureConnected ? 'Connected' : 'Disconnected'}`}
+            title={`Cloud Accounts\n\nAWS: ${awsConnected ? '✓ Connected' : '✗ Disconnected'}\nGCP: ${gcpConnected ? '✓ Connected' : '✗ Disconnected'}\nAzure: ${azureConnected ? '✓ Connected' : '✗ Disconnected'}\n\nClick to manage accounts`}
           >
             {/* AWS */}
             <div 
