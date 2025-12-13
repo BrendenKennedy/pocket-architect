@@ -52,13 +52,17 @@ function TabContent<T extends Record<string, any>>({
     onClick: (item) => {
       switch (action.label.toLowerCase()) {
         case 'view':
-          return onView?.(item);
+          onView?.(item);
+          break;
         case 'edit':
-          return onEdit(item);
+          onEdit(item);
+          break;
         case 'delete':
-          return onDelete(item);
+          onDelete(item);
+          break;
         default:
-          return action.onClick(item);
+          action.onClick(item);
+          break;
       }
     },
   }));
@@ -246,22 +250,7 @@ export function CrudPage<T extends Record<string, any>>({
 
 
 
-  // Enhanced actions with config permissions
-  const enhancedActions: TableAction<T>[] = (currentTabConfig?.table.actions || []).map(action => ({
-    ...action,
-    onClick: (item) => {
-      switch (action.label.toLowerCase()) {
-        case 'edit':
-          return handleEdit(item);
-        case 'delete':
-          return handleDelete(item);
-        case 'view':
-          return handleView(item);
-        default:
-          return action.onClick(item);
-      }
-    },
-  }));
+
 
   // Render wizard step content
   const renderWizardStep = () => {

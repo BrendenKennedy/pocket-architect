@@ -7,22 +7,12 @@ import { Project } from '../types/models';
 export function Projects() {
   const detailsDialog = useDialog<Project>();
 
-  // Override the view action to use our custom details dialog
-  const enhancedConfig = {
-    ...projectsConfig,
-    table: {
-      ...projectsConfig.table,
-      actions: projectsConfig.table.actions.map(action =>
-        action.label === 'View'
-          ? { ...action, onClick: (item: Project) => detailsDialog.open(item) }
-          : action
-      ),
-    },
-  };
-
   return (
     <>
-      <CrudPage config={enhancedConfig} />
+      <CrudPage
+        config={projectsConfig}
+        onView={(item) => detailsDialog.open(item)}
+      />
 
       {/* Custom Details Dialog */}
       <ProjectDetailsDialog

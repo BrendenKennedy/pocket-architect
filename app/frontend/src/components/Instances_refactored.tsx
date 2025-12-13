@@ -7,22 +7,12 @@ import { Instance } from '../types/models';
 export function Instances() {
   const detailsDialog = useDialog<Instance>();
 
-  // Override the view action to use our custom details dialog
-  const enhancedConfig = {
-    ...instancesConfig,
-    table: {
-      ...instancesConfig.table,
-      actions: instancesConfig.table.actions.map(action =>
-        action.label === 'View'
-          ? { ...action, onClick: (item: Instance) => detailsDialog.open(item) }
-          : action
-      ),
-    },
-  };
-
   return (
     <>
-      <CrudPage config={enhancedConfig} />
+      <CrudPage
+        config={instancesConfig}
+        onView={(item) => detailsDialog.open(item)}
+      />
 
       {/* Custom Details Dialog */}
       <InstanceDetailsDialog

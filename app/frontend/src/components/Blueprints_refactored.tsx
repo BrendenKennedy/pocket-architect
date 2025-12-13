@@ -7,22 +7,12 @@ import { Blueprint } from '../types/models';
 export function Blueprints() {
   const detailsDialog = useDialog<Blueprint>();
 
-  // Override the view action to use our custom details dialog
-  const enhancedConfig = {
-    ...blueprintsConfig,
-    table: {
-      ...blueprintsConfig.table,
-      actions: blueprintsConfig.table.actions.map(action =>
-        action.label === 'View'
-          ? { ...action, onClick: (item: Blueprint) => detailsDialog.open(item) }
-          : action
-      ),
-    },
-  };
-
   return (
     <>
-      <CrudPage config={enhancedConfig} />
+      <CrudPage
+        config={blueprintsConfig}
+        onView={(item) => detailsDialog.open(item)}
+      />
 
       {/* Custom Details Dialog */}
       <BlueprintDetailsDialog
