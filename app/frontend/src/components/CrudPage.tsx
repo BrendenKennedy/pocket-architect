@@ -228,17 +228,16 @@ export function CrudPage<T extends Record<string, any>>({
           }
         />
 
-        {/* Data Table */}
-        <DataTable
-          data={filteredData}
-          columns={config.table.columns}
-          actions={enhancedActions}
-          getRowId={config.table.getRowId}
-          loading={loading}
-        />
-
-        {/* Empty State */}
-        {!loading && filteredData.length === 0 && config.table.emptyState && (
+        {/* Data Table or Empty State */}
+        {loading || filteredData.length > 0 ? (
+          <DataTable
+            data={filteredData}
+            columns={config.table.columns}
+            actions={enhancedActions}
+            getRowId={config.table.getRowId}
+            loading={loading}
+          />
+        ) : config.table.emptyState ? (
           <Card className={cn(theme.table.wrapper())}>
             <div className={cn(theme.empty.wrapper(), "py-24")}>
               <config.icon className={cn(theme.empty.icon(), "size-16 mb-4")} />
@@ -258,6 +257,14 @@ export function CrudPage<T extends Record<string, any>>({
               )}
             </div>
           </Card>
+        ) : (
+          <DataTable
+            data={filteredData}
+            columns={config.table.columns}
+            actions={enhancedActions}
+            getRowId={config.table.getRowId}
+            loading={loading}
+          />
         )}
 
         {/* Create Wizard */}
