@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, AlertCircle, Cloud, Key, Terminal, RefreshCw, ChevronRight, ChevronDown, Copy, Server, Shield, Loader2 } from 'lucide-react';
+import { AWSLogo, AzureLogo, GCPLogo } from './CloudLogos';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -56,7 +57,7 @@ interface CloudProvider {
   id: string;
   name: string;
   status: AuthStatus;
-  icon: string;
+  icon: React.ReactElement;
   details: {
     account?: string;
     profile?: string;
@@ -173,21 +174,21 @@ export function Accounts() {
       id: 'aws',
       name: 'Amazon Web Services',
       status: 'disconnected' as AuthStatus,
-      icon: '☁️',
+      icon: <AWSLogo className="w-8 h-8" />,
       details: {}
     },
     {
       id: 'gcp',
       name: 'Google Cloud Platform',
       status: 'disconnected' as AuthStatus,
-      icon: '🌥️',
+      icon: <GCPLogo className="w-8 h-8" />,
       details: {}
     },
     {
       id: 'azure',
       name: 'Microsoft Azure',
       status: 'disconnected' as AuthStatus,
-      icon: '⛅',
+      icon: <AzureLogo className="w-8 h-8" />,
       details: {}
     }
   ];
@@ -200,7 +201,7 @@ export function Accounts() {
         id: account.platform,
         name: account.name,
         status: account.status as AuthStatus,
-        icon: account.platform === 'aws' ? '☁️' : account.platform === 'gcp' ? '🌥️' : '⛅',
+        icon: account.platform === 'aws' ? <AWSLogo className="w-8 h-8" /> : account.platform === 'gcp' ? <GCPLogo className="w-8 h-8" /> : <AzureLogo className="w-8 h-8" />,
         details: {
           account: account.accountId,
           region: account.region,
@@ -421,7 +422,7 @@ export function Accounts() {
       return (
         <Card className="bg-blue-500/10 border-blue-500/30 p-6">
           <div className="text-center">
-            <div className="text-4xl mb-4">{selectedProvider === 'gcp' ? '🌥️' : '⛅'}</div>
+            <div className="mb-4 flex justify-center">{selectedProvider === 'gcp' ? <GCPLogo className="w-12 h-12" /> : <AzureLogo className="w-12 h-12" />}</div>
             <h3 className="text-lg font-semibold mb-2">
               {selectedProvider === 'gcp' ? 'Google Cloud Platform' : 'Microsoft Azure'}
             </h3>
@@ -1076,18 +1077,18 @@ export function Accounts() {
       {/* Provider Tabs */}
       <Tabs defaultValue="aws" className="w-full">
         <TabsList className="w-full justify-start">
-          <TabsTrigger value="aws" className="flex items-center gap-2">
-            <span className="text-lg">☁️</span>
-            Amazon Web Services
-          </TabsTrigger>
-          <TabsTrigger value="gcp" className="flex items-center gap-2">
-            <span className="text-lg">🌥️</span>
-            Google Cloud Platform
-          </TabsTrigger>
-          <TabsTrigger value="azure" className="flex items-center gap-2">
-            <span className="text-lg">⛅</span>
-            Microsoft Azure
-          </TabsTrigger>
+           <TabsTrigger value="aws" className="flex items-center gap-2">
+             <AWSLogo className="w-4 h-4" />
+             Amazon Web Services
+           </TabsTrigger>
+           <TabsTrigger value="gcp" className="flex items-center gap-2">
+             <GCPLogo className="w-4 h-4" />
+             Google Cloud Platform
+           </TabsTrigger>
+           <TabsTrigger value="azure" className="flex items-center gap-2">
+             <AzureLogo className="w-4 h-4" />
+             Microsoft Azure
+           </TabsTrigger>
         </TabsList>
 
         {/* AWS Tab */}
@@ -1306,7 +1307,7 @@ export function Accounts() {
 
                 <div className="border-t border-border pt-4 mt-4">
                   <div className="text-center py-8">
-                    <div className="text-4xl mb-4">🌥️</div>
+                     <div className="mb-4 flex justify-center"><GCPLogo className="w-12 h-12" /></div>
                     <h4 className="text-lg font-semibold mb-2">Google Cloud Platform</h4>
                     <p className="text-text-secondary mb-4">
                       GCP integration is coming soon with support for:
@@ -1365,7 +1366,7 @@ export function Accounts() {
 
                 <div className="border-t border-border pt-4 mt-4">
                   <div className="text-center py-8">
-                    <div className="text-4xl mb-4">⛅</div>
+                     <div className="mb-4 flex justify-center"><AzureLogo className="w-12 h-12" /></div>
                     <h4 className="text-lg font-semibold mb-2">Microsoft Azure</h4>
                     <p className="text-text-secondary mb-4">
                       Azure integration is coming soon with support for:

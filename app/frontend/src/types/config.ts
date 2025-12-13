@@ -39,11 +39,72 @@ export interface AppConfig {
   dashboard: {
     quotaSelections: Record<string, string[]>;
     autoRefreshInterval: number; // seconds, 0 = disabled
+    resourceViewMode: 'cards' | 'table' | 'list';
+    itemsPerPage: number;
+    showProjectStats: boolean;
   };
 
-  // AWS Configuration
-  aws: {
-    defaultRegion: string;
+  // Notification Settings
+  notifications: {
+    healthChecks: boolean;
+    accountReconnect: boolean;
+    costWarnings: {
+      enabled: boolean;
+      thresholds: number[];
+    };
+    quotaWarnings: {
+      enabled: boolean;
+      thresholds: number[];
+    };
+    toastDuration: number; // seconds
+    desktopNotifications: boolean;
+  };
+
+  // Cloud Provider Settings
+  cloudProviders: {
+    aws: {
+      defaultRegion: string;
+      profile: string;
+      credentialCacheDuration: number; // minutes
+    };
+    gcp: {
+      defaultRegion: string;
+      projectId: string;
+    };
+    azure: {
+      defaultRegion: string;
+      subscriptionId: string;
+    };
+  };
+
+  // Project Settings
+  projects: {
+    defaultInstanceType: string;
+    defaultSnapshotRetention: number; // days
+    autoTagNewResources: boolean;
+    confirmDestructiveActions: boolean;
+  };
+
+  // Performance Settings
+  performance: {
+    cacheDuration: number; // minutes
+    concurrentApiCalls: number;
+    enableRequestBatching: boolean;
+  };
+
+  // Security Settings
+  security: {
+    autoLockAfterInactivity: number; // minutes, 0 = disabled
+    requireConfirmationForDelete: boolean;
+    enableAuditLogging: boolean;
+  };
+
+  // Advanced Settings
+  advanced: {
+    debugMode: boolean;
+    loggingLevel: 'error' | 'warn' | 'info' | 'debug';
+    showRawApiResponses: boolean;
+    enableDevTools: boolean;
   };
 
   // Timestamps
@@ -80,10 +141,66 @@ export const DEFAULT_CONFIG: AppConfig = {
   dashboard: {
     quotaSelections: {},
     autoRefreshInterval: 30,
+    resourceViewMode: 'cards',
+    itemsPerPage: 20,
+    showProjectStats: true,
   },
 
-  aws: {
-    defaultRegion: 'us-east-1',
+  notifications: {
+    healthChecks: true,
+    accountReconnect: true,
+    costWarnings: {
+      enabled: true,
+      thresholds: [50, 80, 90, 95, 100],
+    },
+    quotaWarnings: {
+      enabled: true,
+      thresholds: [50, 80, 90, 95, 100],
+    },
+    toastDuration: 10,
+    desktopNotifications: true,
+  },
+
+  cloudProviders: {
+    aws: {
+      defaultRegion: 'us-east-1',
+      profile: 'default',
+      credentialCacheDuration: 60,
+    },
+    gcp: {
+      defaultRegion: 'us-central1',
+      projectId: '',
+    },
+    azure: {
+      defaultRegion: 'eastus',
+      subscriptionId: '',
+    },
+  },
+
+  projects: {
+    defaultInstanceType: 't3.micro',
+    defaultSnapshotRetention: 30,
+    autoTagNewResources: true,
+    confirmDestructiveActions: true,
+  },
+
+  performance: {
+    cacheDuration: 5,
+    concurrentApiCalls: 5,
+    enableRequestBatching: true,
+  },
+
+  security: {
+    autoLockAfterInactivity: 0,
+    requireConfirmationForDelete: true,
+    enableAuditLogging: false,
+  },
+
+  advanced: {
+    debugMode: false,
+    loggingLevel: 'info',
+    showRawApiResponses: false,
+    enableDevTools: false,
   },
 
   lastModified: new Date().toISOString(),

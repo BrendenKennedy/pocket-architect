@@ -180,6 +180,10 @@ function createMockBackend(): BackendBridge {
     create_certificate: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Certificate created' }),
     delete_certificate: async (certificateArn: string) => JSON.stringify({ success: true, message: 'Mock: Certificate deleted' }),
 
+    // Config operations
+    load_config: async () => JSON.stringify({}),
+    save_config: async (configJson: string) => JSON.stringify({ success: true }),
+
     // Utility
     ping: async () => JSON.stringify({ status: 'ok', message: 'Mock bridge working!' }),
   } as BackendBridge;

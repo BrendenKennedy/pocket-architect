@@ -19,6 +19,7 @@ import { getRegionsForPlatform, getDefaultRegion } from './data/regions';
 import type { Platform } from './types/models';
 import { loadConfig, configSetters } from './services';
 import { bridgeApi } from './bridge/api';
+import { AWSLogo, AzureLogo, GCPLogo } from './components/CloudLogos';
 
 export type Page = 'dashboard' | 'projects' | 'blueprints' | 'security' | 'images' | 'instances' | 'accounts' | 'cost' | 'settings' | 'learning';
 
@@ -169,16 +170,31 @@ function AppContent() {
         <div className="flex items-center gap-2">
           <span className="text-border">|</span>
           {/* Platform Selector */}
-          <Select onValueChange={(value) => handlePlatformChange(value as Platform)} value={selectedPlatform}>
-            <SelectTrigger className="w-auto h-7 border-none bg-transparent hover:bg-accent focus:ring-0 text-muted-foreground text-xs px-2">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="aws">☁️ AWS</SelectItem>
-              <SelectItem value="gcp">🌐 GCP</SelectItem>
-              <SelectItem value="azure">⛅ Azure</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select onValueChange={(value) => handlePlatformChange(value as Platform)} value={selectedPlatform}>
+              <SelectTrigger className="w-auto h-7 border-none bg-transparent hover:bg-accent focus:ring-0 text-muted-foreground text-xs px-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="aws">
+                  <div className="flex items-center gap-2">
+                    <AWSLogo />
+                    AWS
+                  </div>
+                </SelectItem>
+                <SelectItem value="gcp">
+                  <div className="flex items-center gap-2">
+                    <GCPLogo />
+                    GCP
+                  </div>
+                </SelectItem>
+                <SelectItem value="azure">
+                  <div className="flex items-center gap-2">
+                    <AzureLogo />
+                    Azure
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           <span className="text-border">|</span>
           {/* Region Selector */}
           <Select onValueChange={setSelectedRegion} value={selectedRegion}>

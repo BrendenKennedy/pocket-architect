@@ -11,6 +11,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ThemeConfig, getAllThemes, getThemeByName } from '../config/themes';
 import * as themeService from '../services/themeService';
+import { loadConfig, configSetters } from '../services';
 
 interface ThemeContextType {
   currentTheme: ThemeConfig;
@@ -26,29 +27,59 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize with saved theme or default
   const [currentTheme, setCurrentTheme] = useState<ThemeConfig>(() => {
-    const savedThemeName = themeService.getActiveThemeName();
-    const theme = getThemeByName(savedThemeName);
+    // Try to load from config first, fallback to localStorage, then default
+    let themeName = 'pocket-dark';
 
-    if (!theme) {
-      // Fallback to default if saved theme doesn't exist
-      const defaultTheme = getThemeByName('pocket-dark')!;
-      themeService.setActiveThemeName('pocket-dark');
-      return defaultTheme;
+    try {
+      // This will be async in the useEffect, but for initial state we need sync
+      // We'll handle the async loading in useEffect
+      const savedThemeName = themeService.getActiveThemeName();
+      if (savedThemeName) {
+        themeName = savedThemeName;
+      }
+    } catch (error) {
+      console.warn('Failed to load theme from localStorage:', error);
     }
 
-    return theme;
+    const theme = getThemeByName(themeName);
+    return theme || getThemeByName('pocket-dark')!;
   });
+
+  // Load theme from config on mount
+  useEffect(() => {
+    const loadThemeFromConfig = async () => {
+      try {
+        const config = await loadConfig();
+        const themeName = config.appearance.theme || 'pocket-dark';
+        const theme = getThemeByName(themeName);
+        if (theme && theme.name !== currentTheme.name) {
+          setCurrentTheme(theme);
+        }
+      } catch (error) {
+        console.warn('Failed to load theme from config:', error);
+      }
+    };
+
+    loadThemeFromConfig();
+  }, []);
 
   // Apply theme on mount and when it changes
   useEffect(() => {
     themeService.applyTheme(currentTheme);
   }, [currentTheme]);
 
-  const setTheme = (themeName: string) => {
+  const setTheme = async (themeName: string) => {
     const theme = getThemeByName(themeName);
     if (theme) {
       setCurrentTheme(theme);
       themeService.setActiveThemeName(themeName);
+
+      // Save to config
+      try {
+        await configSetters.setTheme(themeName);
+      } catch (error) {
+        console.warn('Failed to save theme to config:', error);
+      }
     }
   };
 

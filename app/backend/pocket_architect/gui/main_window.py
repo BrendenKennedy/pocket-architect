@@ -26,6 +26,15 @@ class MainWindow(QMainWindow):
         # Create web view
         self.web_view = QWebEngineView()
 
+        # Disable caching to ensure latest frontend is loaded
+        profile = self.web_view.page().profile()
+        profile.setHttpCacheType(profile.HttpCacheType.NoCache)
+        profile.setPersistentCookiesPolicy(
+            profile.PersistentCookiesPolicy.NoPersistentCookies
+        )
+        # Clear any existing cache
+        profile.clearHttpCache()
+
         # Setup web channel for React-Python bridge
         self.bridge = BackendBridge()
         self.channel = QWebChannel()
@@ -81,6 +90,12 @@ class MainWindow(QMainWindow):
             if self.web_view:
                 self.web_view.stop()
                 logger.debug("Web view stopped")
+
+            # Clear web cache
+            if self.web_view and self.web_view.page():
+                profile = self.web_view.page().profile()
+                profile.clearHttpCache()
+                logger.debug("Web cache cleared")
 
             # Clean up the bridge (this will close any open database connections)
             if self.bridge:
