@@ -31,7 +31,6 @@ interface TabContentProps<T = any> {
   data: T[];
   loading: boolean;
   filteredData: T[];
-  onView: (item: T) => void;
   onEdit: (item: T) => void;
   onDelete: (item: T) => void;
 }
@@ -41,7 +40,6 @@ function TabContent<T extends Record<string, any>>({
   data,
   loading,
   filteredData,
-  onView,
   onEdit,
   onDelete
 }: TabContentProps<T>) {
@@ -54,8 +52,7 @@ function TabContent<T extends Record<string, any>>({
           return onEdit(item);
         case 'delete':
           return onDelete(item);
-        case 'view':
-          return onView(item);
+        // View actions are handled by individual components
         default:
           return action.onClick(item);
       }
@@ -180,7 +177,7 @@ export function CrudPage<T extends Record<string, any>>({
   // Current tab's wizard hook
   const createWizard = tabWizards[activeTab];
 
-  const detailsDialog = useDialog<T>();
+
 
   // Per-tab wizard data
   const [tabWizardData, setTabWizardData] = useState<Record<string, Record<string, any>>>({});
@@ -242,9 +239,7 @@ export function CrudPage<T extends Record<string, any>>({
     }
   };
 
-  const handleView = (item: T) => {
-    detailsDialog.open(item);
-  };
+
 
   // Enhanced actions with config permissions
   const enhancedActions: TableAction<T>[] = (currentTabConfig?.table.actions || []).map(action => ({
@@ -310,28 +305,7 @@ export function CrudPage<T extends Record<string, any>>({
     );
   };
 
-  // Render details dialog
-  const renderDetailsDialog = () => {
-    if (!detailsDialog.data) return null;
 
-    return (
-      <DetailsWizard
-        open={detailsDialog.isOpen}
-        onOpenChange={detailsDialog.setIsOpen}
-        title={`${config.title} Details`}
-        description={`Detailed information about ${detailsDialog.data.name || 'this item'}`}
-        icon={config.icon}
-        showFooter={false}
-        size="lg"
-      >
-        <div className="p-4">
-          <pre className="text-sm overflow-auto">
-            {JSON.stringify(detailsDialog.data, null, 2)}
-          </pre>
-        </div>
-      </DetailsWizard>
-    );
-  };
 
   return (
     <PageLayout>
@@ -378,7 +352,6 @@ export function CrudPage<T extends Record<string, any>>({
                   data={tabData[tab.key] || []}
                   loading={tabLoading[tab.key] || false}
                   filteredData={tabFilters[tab.key]?.filteredData || []}
-                  onView={handleView}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
@@ -391,7 +364,6 @@ export function CrudPage<T extends Record<string, any>>({
             data={data}
             loading={loading}
             filteredData={filteredData}
-            onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
@@ -416,8 +388,7 @@ export function CrudPage<T extends Record<string, any>>({
           {renderWizardStep()}
         </CreationWizard>
 
-        {/* Details Dialog */}
-        {renderDetailsDialog()}
+
       </div>
     </PageLayout>
   );
