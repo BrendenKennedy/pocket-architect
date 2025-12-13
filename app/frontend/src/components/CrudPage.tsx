@@ -159,7 +159,7 @@ export function CrudPage<T extends Record<string, any>>({
     const wizards: Record<string, ReturnType<typeof useWizard>> = {};
     tabConfigs.forEach(tab => {
       wizards[tab.key] = useWizard({
-        totalSteps: tab.wizard.steps.length,
+        totalSteps: tab.wizard?.steps?.length || 0,
         onComplete: async () => {
           try {
             const result = await tab.api.create(wizardData);
@@ -183,8 +183,20 @@ export function CrudPage<T extends Record<string, any>>({
     return wizards;
   }, [tabConfigs, activeTab]);
 
-  // Current tab's wizard hook
-  const createWizard = tabWizards[activeTab];
+  // Current tab's wizard hook - provide safe fallback
+  const createWizard = tabWizards[activeTab] || {
+    isOpen: false,
+    setIsOpen: () => {},
+    currentStep: 1,
+    isFirstStep: true,
+    isLastStep: false,
+    nextStep: () => {},
+    previousStep: () => {},
+    goToStep: () => {},
+    reset: () => {},
+    open: () => {},
+    cancel: () => {},
+  };
 
 
 
@@ -366,23 +378,25 @@ export function CrudPage<T extends Record<string, any>>({
         )}
 
         {/* Create Wizard */}
-        <CreationWizard
-          open={createWizard.isOpen}
-          onOpenChange={createWizard.setIsOpen}
-          title={currentTabConfig?.wizard.title || config.wizard?.title || 'Create New Item'}
-          description={`Create a new ${currentTabConfig?.label?.slice(0, -1)?.toLowerCase() || config.title?.slice(0, -1)?.toLowerCase() || 'item'}`}
-          icon={currentTabConfig?.icon || config.icon}
-          currentStep={createWizard.currentStep}
-          totalSteps={currentTabConfig?.wizard.steps.length || config.wizard?.steps.length || 0}
-          onNext={createWizard.nextStep}
-          onPrevious={!createWizard.isFirstStep ? createWizard.previousStep : undefined}
-          onCancel={createWizard.cancel}
-          nextLabel={createWizard.isLastStep ? 'Create' : 'Next'}
-          nextDisabled={false} // TODO: Add validation
-          size="md"
-        >
-          {renderWizardStep()}
-        </CreationWizard>
+        {currentTabConfig && (
+          <CreationWizard
+            open={createWizard.isOpen}
+            onOpenChange={createWizard.setIsOpen}
+            title={currentTabConfig?.wizard.title || config.wizard?.title || 'Create New Item'}
+            description={`Create a new ${currentTabConfig?.label?.slice(0, -1)?.toLowerCase() || config.title?.slice(0, -1)?.toLowerCase() || 'item'}`}
+            icon={currentTabConfig?.icon || config.icon}
+            currentStep={createWizard.currentStep}
+            totalSteps={currentTabConfig?.wizard.steps.length || config.wizard?.steps.length || 0}
+            onNext={createWizard.nextStep}
+            onPrevious={!createWizard.isFirstStep ? createWizard.previousStep : undefined}
+            onCancel={createWizard.cancel}
+            nextLabel={createWizard.isLastStep ? 'Create' : 'Next'}
+            nextDisabled={false} // TODO: Add validation
+            size="md"
+          >
+            {renderWizardStep()}
+          </CreationWizard>
+        )}
 
 
       </div>
