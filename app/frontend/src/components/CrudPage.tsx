@@ -12,6 +12,7 @@ import { CreationWizard } from './ui/creation-wizard';
 import { DetailsWizard } from './ui/details-wizard';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 // Hooks
 import { useDataFilters } from '../hooks/useDataFilters';
@@ -21,73 +22,198 @@ import { useDialog } from '../hooks/useDialog';
 // Types
 import { CrudPageConfig, CrudState } from '../types/crud';
 
-interface CrudPageProps<T> {
+interface CrudPageProps<T = any> {
   config: CrudPageConfig<T>;
+}
+
+interface TabContentProps<T = any> {
+  tab: CrudTabConfig<T>;
+  data: T[];
+  loading: boolean;
+  filteredData: T[];
+  onView: (item: T) => void;
+  onEdit: (item: T) => void;
+  onDelete: (item: T) => void;
+}
+
+function TabContent<T extends Record<string, any>>({
+  tab,
+  data,
+  loading,
+  filteredData,
+  onView,
+  onEdit,
+  onDelete
+}: TabContentProps<T>) {
+  // Enhanced actions for this tab
+  const enhancedActions: TableAction<T>[] = tab.table.actions.map(action => ({
+    ...action,
+    onClick: (item) => {
+      switch (action.label.toLowerCase()) {
+        case 'edit':
+          return onEdit(item);
+        case 'delete':
+          return onDelete(item);
+        case 'view':
+          return onView(item);
+        default:
+          return action.onClick(item);
+      }
+    },
+  }));
+
+  return loading || filteredData.length > 0 ? (
+    <DataTable
+      data={filteredData}
+      columns={tab.table.columns}
+      actions={enhancedActions}
+      getRowId={tab.table.getRowId}
+      loading={loading}
+    />
+  ) : tab.table.emptyState ? (
+    <Card className={cn(theme.table.wrapper())}>
+      <div className={cn(theme.empty.wrapper(), "py-24")}>
+        {tab.icon && <tab.icon className={cn(theme.empty.icon(), "size-16 mb-4")} />}
+        <h3 className="text-xl font-semibold mb-2">{tab.table.emptyState.title}</h3>
+        {tab.table.emptyState.description && (
+          <p className={cn(theme.empty.text(), "mb-6 max-w-md mx-auto")}>{tab.table.emptyState.description}</p>
+        )}
+        {tab.table.emptyState.action && (
+          <Button
+            onClick={tab.table.emptyState.action.onClick}
+            size="lg"
+            className="gap-2"
+          >
+            <Plus className="size-5" />
+            {tab.table.emptyState.action.label}
+          </Button>
+        )}
+      </div>
+    </Card>
+  ) : (
+    <DataTable
+      data={filteredData}
+      columns={tab.table.columns}
+      actions={enhancedActions}
+      getRowId={tab.table.getRowId}
+      loading={loading}
+    />
+  );
 }
 
 export function CrudPage<T extends Record<string, any>>({
   config
 }: CrudPageProps<T>) {
-  // State management
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Determine if this is a multi-tab configuration
+  const isMultiTab = config.tabs && config.tabs.length > 0;
+  const tabConfigs = config.tabs || [config as CrudTabConfig<T>];
+  const defaultTab = config.defaultTab || tabConfigs[0]?.key || 'default';
 
-  // Custom hooks
-  const { searchQuery, setSearchQuery, filterValue, setFilterValue, filteredData } = useDataFilters({
-    data,
-    searchFields: config.filters?.searchFields || [],
-    filterFn: config.filters?.filterOptions ? (item, filter) => {
-      // Apply filters based on config
-      return true; // TODO: Implement filter logic
-    } : undefined,
-  });
+  // Active tab state
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
-  const createWizard = useWizard({
-    totalSteps: config.wizard.steps.length,
-    onComplete: async () => {
-      try {
-        const result = await config.api.create(wizardData);
-        setData(prev => [...prev, result]);
-        toast.success(`${config.title} created successfully!`);
-        resetWizard();
-      } catch (error) {
-        toast.error(`Failed to create ${config.title.toLowerCase()}`);
-        console.error('Create error:', error);
-      }
-    },
-    onCancel: () => {
-      resetWizard();
-      config.wizard.onCancel?.();
-    },
-  });
+  // Per-tab state management
+  const [tabData, setTabData] = useState<Record<string, T[]>>({});
+  const [tabLoading, setTabLoading] = useState<Record<string, boolean>>({});
+
+  // Get current tab configuration
+  const currentTabConfig = tabConfigs.find(tab => tab.key === activeTab) || tabConfigs[0];
+
+  // Backward compatibility: if single-tab, use old state names
+  const data = isMultiTab ? tabData[activeTab] || [] : (tabData[activeTab] || []);
+  const loading = isMultiTab ? tabLoading[activeTab] || false : (tabLoading[activeTab] || false);
+
+  // Per-tab filter hooks
+  const tabFilters = useMemo(() => {
+    const filters: Record<string, ReturnType<typeof useDataFilters>> = {};
+    tabConfigs.forEach(tab => {
+      filters[tab.key] = useDataFilters({
+        data: tabData[tab.key] || [],
+        searchFields: tab.filters?.searchFields || [],
+        filterFn: tab.filters?.filterOptions ? (item, filter) => {
+          // Apply filters based on config
+          return true; // TODO: Implement filter logic
+        } : undefined,
+      });
+    });
+    return filters;
+  }, [tabConfigs, tabData]);
+
+  // Current tab's filter hook
+  const { searchQuery, setSearchQuery, filterValue, setFilterValue, filteredData } = tabFilters[activeTab] || {
+    searchQuery: '',
+    setSearchQuery: () => {},
+    filterValue: '',
+    setFilterValue: () => {},
+    filteredData: []
+  };
+
+  // Per-tab wizard hooks
+  const tabWizards = useMemo(() => {
+    const wizards: Record<string, ReturnType<typeof useWizard>> = {};
+    tabConfigs.forEach(tab => {
+      wizards[tab.key] = useWizard({
+        totalSteps: tab.wizard.steps.length,
+        onComplete: async () => {
+          try {
+            const result = await tab.api.create(wizardData);
+            setTabData(prev => ({
+              ...prev,
+              [activeTab]: [...(prev[activeTab] || []), result]
+            }));
+            toast.success(`${tab.label} created successfully!`);
+            resetWizard();
+          } catch (error) {
+            toast.error(`Failed to create ${tab.label.toLowerCase()}`);
+            console.error('Create error:', error);
+          }
+        },
+        onCancel: () => {
+          resetWizard();
+          tab.wizard.onCancel?.();
+        },
+      });
+    });
+    return wizards;
+  }, [tabConfigs, activeTab]);
+
+  // Current tab's wizard hook
+  const createWizard = tabWizards[activeTab];
 
   const detailsDialog = useDialog<T>();
 
-  // Wizard form state
-  const [wizardData, setWizardData] = useState<Record<string, any>>(config.wizard.initialData || {});
+  // Per-tab wizard data
+  const [tabWizardData, setTabWizardData] = useState<Record<string, Record<string, any>>>({});
 
-  // Load data on mount
+  // Load data on mount and tab change
   useEffect(() => {
-    loadData();
-  }, []);
+    loadTabData(activeTab);
+  }, [activeTab]);
 
-  const loadData = async () => {
+  const loadTabData = async (tabKey: string) => {
+    const tab = tabConfigs.find(t => t.key === tabKey);
+    if (!tab) return;
+
     try {
-      setLoading(true);
-      const result = await config.api.list();
-      setData(result);
+      setTabLoading(prev => ({ ...prev, [tabKey]: true }));
+      const result = await tab.api.list();
+      setTabData(prev => ({ ...prev, [tabKey]: result }));
     } catch (error) {
-      toast.error(`Failed to load ${config.title.toLowerCase()}`);
+      toast.error(`Failed to load ${tab.label.toLowerCase()}`);
       console.error('Load error:', error);
     } finally {
-      setLoading(false);
+      setTabLoading(prev => ({ ...prev, [tabKey]: false }));
     }
   };
 
   const resetWizard = () => {
-    setWizardData(config.wizard.initialData || {});
+    const currentData = currentTabConfig?.wizard.initialData || {};
+    setTabWizardData(prev => ({ ...prev, [activeTab]: currentData }));
     createWizard.reset();
   };
+
+  // Get current wizard data
+  const wizardData = tabWizardData[activeTab] || currentTabConfig?.wizard.initialData || {};
 
   const handleCreate = () => {
     resetWizard();
@@ -96,17 +222,22 @@ export function CrudPage<T extends Record<string, any>>({
 
   const handleEdit = (item: T) => {
     // TODO: Implement edit functionality
-    toast.info(`Edit functionality for ${config.title.toLowerCase()}`);
+    toast.info(`Edit functionality for ${currentTabConfig?.label || config.title}`);
   };
 
   const handleDelete = async (item: T) => {
     try {
-      const id = config.table.getRowId(item);
-      await config.api.delete(id);
-      setData(prev => prev.filter(i => config.table.getRowId(i) !== id));
-      toast.success(`${config.title} deleted successfully!`);
+      const id = currentTabConfig?.table.getRowId(item);
+      if (id && currentTabConfig) {
+        await currentTabConfig.api.delete(id);
+        setTabData(prev => ({
+          ...prev,
+          [activeTab]: (prev[activeTab] || []).filter(i => currentTabConfig.table.getRowId(i) !== id)
+        }));
+        toast.success(`${currentTabConfig.label} deleted successfully!`);
+      }
     } catch (error) {
-      toast.error(`Failed to delete ${config.title.toLowerCase()}`);
+      toast.error(`Failed to delete ${currentTabConfig?.label || config.title}`);
       console.error('Delete error:', error);
     }
   };
@@ -116,7 +247,7 @@ export function CrudPage<T extends Record<string, any>>({
   };
 
   // Enhanced actions with config permissions
-  const enhancedActions: TableAction<T>[] = config.table.actions.map(action => ({
+  const enhancedActions: TableAction<T>[] = (currentTabConfig?.table.actions || []).map(action => ({
     ...action,
     onClick: (item) => {
       switch (action.label.toLowerCase()) {
@@ -134,7 +265,7 @@ export function CrudPage<T extends Record<string, any>>({
 
   // Render wizard step content
   const renderWizardStep = () => {
-    const step = config.wizard.steps[createWizard.currentStep - 1];
+    const step = currentTabConfig?.wizard.steps[createWizard.currentStep - 1];
     if (!step) return null;
 
     return (
@@ -218,52 +349,51 @@ export function CrudPage<T extends Record<string, any>>({
           onSearchChange={setSearchQuery}
           filterValue={filterValue}
           onFilterChange={setFilterValue}
-          filterOptions={config.filters?.filterOptions}
-          onRefresh={loadData}
+          filterOptions={currentTabConfig?.filters?.filterOptions}
+          onRefresh={() => loadTabData(activeTab)}
           createButton={
-            config.permissions?.canCreate !== false && {
-              label: `Create ${config.title.slice(0, -1)}`,
+            currentTabConfig?.permissions?.canCreate !== false && {
+              label: `Create ${currentTabConfig?.label.slice(0, -1) || config.title.slice(0, -1)}`,
               onClick: handleCreate,
             }
           }
         />
 
-        {/* Data Table or Empty State */}
-        {loading || filteredData.length > 0 ? (
-          <DataTable
-            data={filteredData}
-            columns={config.table.columns}
-            actions={enhancedActions}
-            getRowId={config.table.getRowId}
-            loading={loading}
-          />
-        ) : config.table.emptyState ? (
-          <Card className={cn(theme.table.wrapper())}>
-            <div className={cn(theme.empty.wrapper(), "py-24")}>
-              <config.icon className={cn(theme.empty.icon(), "size-16 mb-4")} />
-              <h3 className="text-xl font-semibold mb-2">{config.table.emptyState.title}</h3>
-              {config.table.emptyState.description && (
-                <p className={cn(theme.empty.text(), "mb-6 max-w-md mx-auto")}>{config.table.emptyState.description}</p>
-              )}
-              {config.table.emptyState.action && (
-                <Button
-                  onClick={config.table.emptyState.action.onClick}
-                  size="lg"
-                  className="gap-2"
-                >
-                  <Plus className="size-5" />
-                  {config.table.emptyState.action.label}
-                </Button>
-              )}
-            </div>
-          </Card>
+        {/* Tab Navigation or Single Content */}
+        {isMultiTab ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              {tabConfigs.map(tab => (
+                <TabsTrigger key={tab.key} value={tab.key} className="flex items-center gap-2">
+                  {tab.icon && <tab.icon className="w-4 h-4" />}
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {tabConfigs.map(tab => (
+              <TabsContent key={tab.key} value={tab.key} className="mt-6">
+                <TabContent
+                  tab={tab}
+                  data={tabData[tab.key] || []}
+                  loading={tabLoading[tab.key] || false}
+                  filteredData={tabFilters[tab.key]?.filteredData || []}
+                  onView={handleView}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              </TabsContent>
+            ))}
+          </Tabs>
         ) : (
-          <DataTable
-            data={filteredData}
-            columns={config.table.columns}
-            actions={enhancedActions}
-            getRowId={config.table.getRowId}
+          <TabContent
+            tab={currentTabConfig}
+            data={data}
             loading={loading}
+            filteredData={filteredData}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
@@ -271,11 +401,11 @@ export function CrudPage<T extends Record<string, any>>({
         <CreationWizard
           open={createWizard.isOpen}
           onOpenChange={createWizard.setIsOpen}
-          title={config.wizard.title}
-          description={`Create a new ${config.title.slice(0, -1).toLowerCase()}`}
-          icon={config.icon}
+          title={currentTabConfig?.wizard.title || config.wizard?.title || 'Create New Item'}
+          description={`Create a new ${currentTabConfig?.label.slice(0, -1).toLowerCase() || config.title.slice(0, -1).toLowerCase()}`}
+          icon={currentTabConfig?.icon || config.icon}
           currentStep={createWizard.currentStep}
-          totalSteps={config.wizard.steps.length}
+          totalSteps={currentTabConfig?.wizard.steps.length || config.wizard?.steps.length || 0}
           onNext={createWizard.nextStep}
           onPrevious={!createWizard.isFirstStep ? createWizard.previousStep : undefined}
           onCancel={createWizard.cancel}

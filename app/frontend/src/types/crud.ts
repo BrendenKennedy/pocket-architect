@@ -75,11 +75,10 @@ export interface WizardStepConfig {
 // CRUD PAGE CONFIGURATION
 // ============================================================================
 
-export interface CrudPageConfig<T> {
-  // Page metadata
-  title: string;
-  icon: LucideIcon;
-  description?: string;
+export interface CrudTabConfig<T = any> {
+  key: string;
+  label: string;
+  icon?: LucideIcon;
 
   // Data management
   api: {
@@ -129,6 +128,62 @@ export interface CrudPageConfig<T> {
     canEdit?: boolean;
     canDelete?: boolean;
   };
+}
+
+export interface CrudPageConfig<T = any> {
+  // Page metadata
+  title: string;
+  icon: LucideIcon;
+  description?: string;
+
+  // Single-tab configuration (backward compatibility)
+  api?: {
+    list: () => Promise<T[]>;
+    create: (data: any) => Promise<T>;
+    update: (id: string | number, data: any) => Promise<T>;
+    delete: (id: string | number) => Promise<void>;
+  };
+
+  table?: {
+    columns: TableColumn<T>[];
+    actions: TableAction<T>[];
+    getRowId: (item: T) => string | number;
+    emptyState?: {
+      title: string;
+      description: string;
+      action?: {
+        label: string;
+        onClick: () => void;
+      };
+    };
+  };
+
+  wizard?: {
+    title: string;
+    steps: WizardStepConfig[];
+    initialData?: Record<string, any>;
+    onComplete?: (data: Record<string, any>) => Promise<void>;
+    onCancel?: () => void;
+  };
+
+  filters?: {
+    searchFields: (keyof T)[];
+    filterOptions?: {
+      key: string;
+      label: string;
+      options: { value: string; label: string }[];
+    }[];
+  };
+
+  permissions?: {
+    canCreate?: boolean;
+    canEdit?: boolean;
+    canDelete?: boolean;
+  };
+
+  // Multi-tab configuration
+  tabs?: CrudTabConfig[];
+  defaultTab?: string;
 
   // Custom hooks
   hooks?: {
