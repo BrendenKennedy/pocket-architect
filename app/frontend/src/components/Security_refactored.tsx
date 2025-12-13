@@ -2,10 +2,9 @@ import { CrudPage } from './CrudPage';
 import { SecurityDetailsDialog } from './SecurityDetailsDialog';
 import { securityPageConfig } from '../configs/security';
 import { useDialog } from '../hooks/useDialog';
-import { SecurityItem } from '../types/models';
 
 export function Security() {
-  const detailsDialog = useDialog<SecurityItem>();
+  const detailsDialog = useDialog<any>();
 
   // Override view actions to use custom details dialog
   const enhancedConfig = {

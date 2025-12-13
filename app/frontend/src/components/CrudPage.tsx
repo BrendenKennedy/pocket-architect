@@ -353,7 +353,7 @@ export function CrudPage<T extends Record<string, any>>({
           onRefresh={() => loadTabData(activeTab)}
           createButton={
             currentTabConfig?.permissions?.canCreate !== false && {
-              label: `Create ${currentTabConfig?.label.slice(0, -1) || config.title.slice(0, -1)}`,
+              label: `Create ${currentTabConfig?.label?.slice(0, -1) || config.title?.slice(0, -1) || 'Item'}`,
               onClick: handleCreate,
             }
           }
@@ -402,7 +402,7 @@ export function CrudPage<T extends Record<string, any>>({
           open={createWizard.isOpen}
           onOpenChange={createWizard.setIsOpen}
           title={currentTabConfig?.wizard.title || config.wizard?.title || 'Create New Item'}
-          description={`Create a new ${currentTabConfig?.label.slice(0, -1).toLowerCase() || config.title.slice(0, -1).toLowerCase()}`}
+          description={`Create a new ${currentTabConfig?.label?.slice(0, -1)?.toLowerCase() || config.title?.slice(0, -1)?.toLowerCase() || 'item'}`}
           icon={currentTabConfig?.icon || config.icon}
           currentStep={createWizard.currentStep}
           totalSteps={currentTabConfig?.wizard.steps.length || config.wizard?.steps.length || 0}
