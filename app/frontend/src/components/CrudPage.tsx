@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner@2.0.3';
 import { LucideIcon, Plus } from 'lucide-react';
+import { theme, cn } from '../lib/theme-factory';
 
 // UI Components
 import { DataTable, TableColumn, TableAction } from './ui/data-table';
@@ -238,12 +239,12 @@ export function CrudPage<T extends Record<string, any>>({
 
         {/* Empty State */}
         {!loading && filteredData.length === 0 && config.table.emptyState && (
-          <Card className="bg-card border-border">
-            <div className="py-24 text-center">
-              <config.icon className="size-16 text-muted-foreground mx-auto mb-4" />
+          <Card className={cn(theme.table.wrapper())}>
+            <div className={cn(theme.empty.wrapper(), "py-24")}>
+              <config.icon className={cn(theme.empty.icon(), "size-16 mb-4")} />
               <h3 className="text-xl font-semibold mb-2">{config.table.emptyState.title}</h3>
               {config.table.emptyState.description && (
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">{config.table.emptyState.description}</p>
+                <p className={cn(theme.empty.text(), "mb-6 max-w-md mx-auto")}>{config.table.emptyState.description}</p>
               )}
               {config.table.emptyState.action && (
                 <Button
