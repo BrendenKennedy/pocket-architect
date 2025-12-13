@@ -1203,20 +1203,20 @@ export function Accounts() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-muted rounded-lg border border-input">
+                      <div className="p-3 bg-muted rounded-lg">
                         <div className="text-xs text-text-tertiary mb-1">Account ID</div>
                         <div className="text-sm font-mono font-medium">{provider.details.account}</div>
                         <div className="text-xs text-text-muted mt-1">Unique identifier</div>
                       </div>
 
-                      <div className="p-3 bg-muted rounded-lg border border-input">
+                      <div className="p-3 bg-muted rounded-lg">
                         <div className="text-xs text-text-tertiary mb-1">Region</div>
                         <div className="text-sm font-medium">{provider.details.region || 'N/A'}</div>
                         <div className="text-xs text-text-muted mt-1">Default region</div>
                       </div>
 
                       {provider.details.profile && (
-                        <div className="p-3 bg-muted rounded-lg border border-input">
+                        <div className="p-3 bg-muted rounded-lg">
                           <div className="text-xs text-text-tertiary mb-1">Profile</div>
                           <div className="text-sm font-medium">{provider.details.profile}</div>
                           <div className="text-xs text-text-muted mt-1">AWS CLI profile name</div>
@@ -1224,7 +1224,7 @@ export function Accounts() {
                       )}
 
                       {provider.details.user && (
-                        <div className="p-3 bg-muted rounded-lg border border-input">
+                        <div className="p-3 bg-muted rounded-lg">
                           <div className="text-xs text-text-tertiary mb-1">Identity</div>
                           <div className="text-sm font-mono text-xs truncate" title={provider.details.user}>
                             {provider.details.user}
@@ -1233,17 +1233,20 @@ export function Accounts() {
                         </div>
                       )}
 
-                      <div className="p-3 bg-muted rounded-lg border border-green-500/30">
+                      <div className="p-3 bg-muted rounded-lg">
                         <div className="text-xs text-text-tertiary mb-1">Connection Status</div>
                         <div className="text-sm font-medium text-green-500 flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" />
                           Connected
                         </div>
-                        <div className="text-xs text-text-muted mt-1">Credentials validated</div>
+                        <div className="text-xs text-text-muted mt-1">
+                          Last verified: {provider.details.lastChecked ?
+                            new Date(provider.details.lastChecked).toLocaleString() : 'Never'}
+                        </div>
                       </div>
 
                       {provider.details.lastChecked && (
-                        <div className="p-3 bg-muted rounded-lg border border-input">
+                        <div className="p-3 bg-muted rounded-lg">
                           <div className="text-xs text-text-tertiary mb-1">Last Verified</div>
                           <div className="text-sm font-medium">{provider.details.lastChecked}</div>
                           <div className="text-xs text-text-muted mt-1">Connection test timestamp</div>
@@ -1251,7 +1254,7 @@ export function Accounts() {
                       )}
                     </div>
 
-                    <div className="mt-3 p-2 bg-muted rounded-lg border border-input text-xs text-text-quaternary">
+                    <div className="mt-3 p-2 bg-muted rounded-lg text-xs text-text-quaternary">
                       Account connection secured with OS keychain encryption. Last verified: {provider.details.lastChecked || 'Never'}
                     </div>
 
