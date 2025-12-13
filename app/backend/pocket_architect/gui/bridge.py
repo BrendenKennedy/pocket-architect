@@ -50,6 +50,26 @@ class BackendBridge(QObject):
             self._manager = ResourceManager(region=region)
         return self._manager
 
+    def cleanup(self):
+        """Clean up resources before shutdown."""
+        logger.info("BackendBridge cleanup initiated")
+
+        try:
+            # Close the ResourceManager if it exists
+            if self._manager:
+                self._manager.close()
+                self._manager = None
+                logger.debug("ResourceManager closed")
+
+            # Additional cleanup can be added here
+            logger.info("BackendBridge cleanup completed")
+
+        except Exception as e:
+            logger.error(f"Error during BackendBridge cleanup: {e}")
+            import traceback
+
+            traceback.print_exc()
+
     # ========================================================================
     # PROJECT OPERATIONS
     # ========================================================================
@@ -663,8 +683,4 @@ class BackendBridge(QObject):
             return json.dumps(result.dict())
         except Exception as e:
             logger.error(f"Failed to check permissions: {e}", exc_info=True)
-            return json.dumps({
-                "success": False,
-                "error": str(e),
-                "canSimulate": False
-            })
+            return json.dumps({"success": False, "error": str(e), "canSimulate": False})

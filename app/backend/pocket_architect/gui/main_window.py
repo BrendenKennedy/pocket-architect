@@ -42,6 +42,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.web_view)
         self.setCentralWidget(central_widget)
 
+        # Add keyboard shortcuts
+        self._setup_shortcuts()
+
     def _load_frontend(self):
         """Load the built React frontend."""
         # Find the built frontend
@@ -53,8 +56,65 @@ class MainWindow(QMainWindow):
             self.web_view.setUrl(url)
             logger.info(f"Loaded frontend from {index_html}")
         else:
-            logger.warning(f"Frontend not found at {index_html}, loading from development server")
+            logger.warning(
+                f"Frontend not found at {index_html}, loading from development server"
+            )
             # Load from development server
             dev_url = QUrl("http://localhost:3000")
             self.web_view.setUrl(dev_url)
             logger.info("Loading from development server at http://localhost:3000")
+
+    def _setup_shortcuts(self):
+        """Setup keyboard shortcuts."""
+        from PySide6.QtGui import QShortcut, QKeySequence
+
+        # Ctrl+Q to quit
+        quit_shortcut = QShortcut(QKeySequence.Quit, self)
+        quit_shortcut.activated.connect(self.close)
+
+    def cleanup(self):
+        """Perform cleanup operations before application shutdown."""
+        logger.info("MainWindow cleanup initiated")
+
+        try:
+            # Stop any ongoing web page operations
+            if self.web_view:
+                self.web_view.stop()
+                logger.debug("Web view stopped")
+
+            # Clean up the bridge (this will close any open database connections)
+            if self.bridge:
+                self.bridge.cleanup()
+                logger.debug("Backend bridge cleaned up")
+
+            # Additional cleanup can be added here as needed
+            logger.info("MainWindow cleanup completed")
+
+        except Exception as e:
+            logger.error(f"Error during MainWindow cleanup: {e}")
+            import traceback
+
+            traceback.print_exc()
+
+    def closeEvent(self, event):
+        """Handle window close event."""
+        logger.info("MainWindow close event received")
+
+        # Simple confirmation dialog
+        from PySide6.QtWidgets import QMessageBox
+
+        reply = QMessageBox.question(
+            self,
+            "Confirm Exit",
+            "Are you sure you want to exit Pocket Architect?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            logger.info("User confirmed exit, proceeding with cleanup")
+            self.cleanup()
+            event.accept()
+        else:
+            logger.info("User cancelled exit")
+            event.ignore()
