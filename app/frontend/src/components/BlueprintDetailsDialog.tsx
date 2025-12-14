@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Copy, Check, FileText } from 'lucide-react';
 import { Card } from './ui/card';
 import { DetailsWizard } from './ui/details-wizard';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 
 interface BlueprintDetailsDialogProps {
   open: boolean;
@@ -19,25 +19,7 @@ export function BlueprintDetailsDialog({
 }: BlueprintDetailsDialogProps) {
   if (!blueprint) return null;
 
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-
-  const handleCopyField = (value: string, label: string) => {
-    // Use fallback method for copying that doesn't require clipboard permissions
-    try {
-      const textarea = document.createElement('textarea');
-      textarea.value = value;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopiedField(label);
-      setTimeout(() => setCopiedField(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
+  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   return (
     <DetailsWizard
@@ -69,9 +51,9 @@ export function BlueprintDetailsDialog({
                       size="sm"
                       variant="ghost"
                       className="h-6 w-6 p-0"
-                      onClick={() => handleCopyField(blueprint.name, 'Blueprint Name')}
+                      onClick={() => copyToClipboard(blueprint.name, 'Blueprint Name copied!')}
                     >
-                      {copiedField === 'Blueprint Name' ? (
+                      {isCopied(blueprint.name) ? (
                         <Check className="h-3 w-3 text-green-500" />
                       ) : (
                         <Copy className="h-3 w-3" />
@@ -121,18 +103,18 @@ export function BlueprintDetailsDialog({
                 <div className="text-text-tertiary mb-1">Instance Type</div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono">{blueprint.instanceType}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0"
-                    onClick={() => handleCopyField(blueprint.instanceType, 'Instance Type')}
-                  >
-                    {copiedField === 'Instance Type' ? (
-                      <Check className="h-3 w-3 text-green-500" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                  </Button>
+                   <Button
+                     size="sm"
+                     variant="ghost"
+                     className="h-6 w-6 p-0"
+                     onClick={() => copyToClipboard(blueprint.instanceType, 'Instance Type copied!')}
+                   >
+                     {isCopied(blueprint.instanceType) ? (
+                       <Check className="h-3 w-3 text-green-500" />
+                     ) : (
+                       <Copy className="h-3 w-3" />
+                     )}
+                   </Button>
                 </div>
               </div>
 
@@ -172,9 +154,9 @@ export function BlueprintDetailsDialog({
                     size="sm"
                     variant="ghost"
                     className="h-6 w-6 p-0"
-                    onClick={() => handleCopyField(blueprint.id.toString(), 'Blueprint ID')}
+                    onClick={() => copyToClipboard(blueprint.id.toString(), 'Blueprint ID copied!')}
                   >
-                    {copiedField === 'Blueprint ID' ? (
+                    {isCopied(blueprint.id.toString()) ? (
                       <Check className="h-3 w-3 text-green-500" />
                     ) : (
                       <Copy className="h-3 w-3" />

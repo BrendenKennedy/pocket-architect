@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Copy, Check, HardDrive } from 'lucide-react';
 import { Card } from './ui/card';
 import { DetailsWizard } from './ui/details-wizard';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 
 interface ImageDetailsDialogProps {
   open: boolean;
@@ -17,27 +17,9 @@ export function ImageDetailsDialog({
   onOpenChange,
   image
 }: ImageDetailsDialogProps) {
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   if (!image) return null;
-
-  const handleCopyField = (value: string, label: string) => {
-    // Use fallback method for copying that doesn't require clipboard permissions
-    try {
-      const textarea = document.createElement('textarea');
-      textarea.value = value;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopiedField(label);
-      setTimeout(() => setCopiedField(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
 
   return (
     <DetailsWizard
@@ -68,9 +50,9 @@ export function ImageDetailsDialog({
                     size="sm"
                     variant="ghost"
                     className="h-6 w-6 p-0"
-                    onClick={() => handleCopyField(image.name, 'Image Name')}
+                    onClick={() => copyToClipboard(image.name, 'Image Name copied!')}
                   >
-                    {copiedField === 'Image Name' ? (
+                    {isCopied(image.name) ? (
                       <Check className="h-3 w-3 text-green-500" />
                     ) : (
                       <Copy className="h-3 w-3" />
@@ -87,9 +69,9 @@ export function ImageDetailsDialog({
                     size="sm"
                     variant="ghost"
                     className="h-6 w-6 p-0"
-                    onClick={() => handleCopyField(image.amiId, 'AMI ID')}
+                    onClick={() => copyToClipboard(image.amiId, 'AMI ID copied!')}
                   >
-                    {copiedField === 'AMI ID' ? (
+                    {isCopied(image.amiId) ? (
                       <Check className="h-3 w-3 text-green-500" />
                     ) : (
                       <Copy className="h-3 w-3" />
@@ -188,9 +170,9 @@ export function ImageDetailsDialog({
                     size="sm"
                     variant="ghost"
                     className="h-6 w-6 p-0"
-                    onClick={() => handleCopyField(image.id.toString(), 'Image ID')}
+                    onClick={() => copyToClipboard(image.id.toString(), 'Image ID copied!')}
                   >
-                    {copiedField === 'Image ID' ? (
+                    {isCopied(image.id.toString()) ? (
                       <Check className="h-3 w-3 text-green-500" />
                     ) : (
                       <Copy className="h-3 w-3" />

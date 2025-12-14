@@ -12,13 +12,12 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner@2.0.3';
 import { useWizard } from '../hooks/useWizard';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 
 interface ProjectDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   project: any;
-  copiedField: string;
-  onCopyField: (value: string, label: string) => void;
 }
 
 type Instance = {
@@ -47,10 +46,9 @@ const instanceTypes = [
 export function ProjectDetailsDialog({
   open,
   onOpenChange,
-  project,
-  copiedField,
-  onCopyField
+  project
 }: ProjectDetailsDialogProps) {
+  const { copyToClipboard, isCopied } = useCopyToClipboard();
   const [instances, setInstances] = useState<Instance[]>(project?.instances || []);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingInstanceId, setEditingInstanceId] = useState<string | null>(null);
@@ -344,9 +342,9 @@ export function ProjectDetailsDialog({
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0"
-                        onClick={() => onCopyField(project.name, 'Project Name')}
+                        onClick={() => copyToClipboard(project.name, 'Project Name copied!')}
                       >
-                        {copiedField === 'Project Name' ? (
+                        {isCopied(project.name) ? (
                           <Check className="h-3 w-3 text-green-500" />
                         ) : (
                           <Copy className="h-3 w-3" />
@@ -507,9 +505,9 @@ export function ProjectDetailsDialog({
                       size="sm"
                       variant="ghost"
                       className="h-6 w-6 p-0"
-                      onClick={() => onCopyField(project.vpc, 'VPC')}
+                      onClick={() => copyToClipboard(project.vpc, 'VPC copied!')}
                     >
-                      {copiedField === 'VPC' ? (
+                      {isCopied(project.vpc) ? (
                         <Check className="h-3 w-3 text-green-500" />
                       ) : (
                         <Copy className="h-3 w-3" />
@@ -552,9 +550,9 @@ export function ProjectDetailsDialog({
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0"
-                        onClick={() => onCopyField(project.id.toString(), 'Project ID')}
+                        onClick={() => copyToClipboard(project.id.toString(), 'Project ID copied!')}
                       >
-                        {copiedField === 'Project ID' ? (
+                        {isCopied(project.id.toString()) ? (
                           <Check className="h-3 w-3 text-green-500" />
                         ) : (
                           <Copy className="h-3 w-3" />
