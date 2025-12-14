@@ -4,10 +4,10 @@ Provides Qt Web Channel bridge for React-Python communication.
 """
 
 from pathlib import Path
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
-from PySide6.QtCore import QUrl, QSize
-from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWebChannel import QWebChannel
+from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
+from PyQt6.QtCore import QUrl, QSize
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebChannel import QWebChannel
 
 from pocket_architect.gui.bridge import BackendBridge
 from pocket_architect.utils.logger import setup_logger
@@ -41,6 +41,9 @@ class MainWindow(QMainWindow):
         self.channel.registerObject("backend", self.bridge)
         self.web_view.page().setWebChannel(self.channel)
 
+        # Connect to web view signals for error handling
+        self._connect_signals()
+
         # Load React frontend
         self._load_frontend()
 
@@ -55,30 +58,77 @@ class MainWindow(QMainWindow):
         self._setup_shortcuts()
 
     def _load_frontend(self):
-        """Load the built React frontend."""
-        # Find the built frontend
-        resources_dir = Path(__file__).parent.parent / "resources" / "frontend"
-        index_html = resources_dir / "index.html"
+        """Load the React frontend from built files or development server."""
+        import pocket_architect
 
-        if index_html.exists():
-            url = QUrl.fromLocalFile(str(index_html.absolute()))
-            self.web_view.setUrl(url)
-            logger.info(f"Loaded frontend from {index_html}")
+        # Try to load from built files first (production mode)
+        package_path = Path(pocket_architect.__file__).parent
+        frontend_index = package_path / "resources" / "frontend" / "index.html"
+
+        if frontend_index.exists():
+            file_url = QUrl.fromLocalFile(str(frontend_index))
+            self.web_view.setUrl(file_url)
+            logger.info(f"Loading from built files at {file_url.toString()}")
         else:
-            logger.warning(
-                f"Frontend not found at {index_html}, loading from development server"
-            )
-            # Load from development server
+            # Fallback to development server
             dev_url = QUrl("http://localhost:3000")
             self.web_view.setUrl(dev_url)
-            logger.info("Loading from development server at http://localhost:3000")
+            logger.info(
+                "Loading from development server at http://localhost:3000 (built files not found)"
+            )
+
+    def _connect_signals(self):
+        """Connect to web view signals for error handling and debugging."""
+        # Connect load finished signal
+        self.web_view.loadFinished.connect(self._on_load_finished)
+
+        # Connect JavaScript console messages for debugging
+        self.web_view.page().javaScriptConsoleMessage = self._on_js_console_message
+
+    def _on_load_finished(self, success):
+        """Handle web page load completion."""
+        if not success:
+            url = self.web_view.url().toString()
+            logger.error("🚨 CRITICAL: Frontend failed to load!")
+            logger.error(f"Failed URL: {url}")
+
+            # Show error dialog
+            from PyQt6.QtWidgets import QMessageBox
+
+            QMessageBox.critical(
+                self,
+                "Load Error",
+                f"Failed to load frontend from:\n{url}\n\n"
+                "This usually indicates:\n"
+                "• Built frontend files are missing (run build first)\n"
+                "• Development server is not running\n"
+                "• Qt WebEngine setup issues\n\n"
+                "Check the application logs for more details.",
+            )
+        else:
+            logger.info("Frontend loaded successfully")
+
+    def _on_js_console_message(self, level, message, line_number, source_id):
+        """Capture JavaScript console messages for debugging."""
+        level_name = {0: "INFO", 1: "WARNING", 2: "ERROR"}.get(level, "UNKNOWN")
+
+        log_message = f"JS {level_name}: {message}"
+        if source_id:
+            log_message += f" ({source_id}:{line_number})"
+
+        if level == 2:  # Error
+            logger.error(f"🚨 {log_message}")
+        elif level == 1:  # Warning
+            logger.warning(log_message)
+        else:  # Info
+            logger.info(log_message)
 
     def _setup_shortcuts(self):
         """Setup keyboard shortcuts."""
-        from PySide6.QtGui import QShortcut, QKeySequence
+        from PyQt6.QtGui import QShortcut, QKeySequence
 
         # Ctrl+Q to quit
-        quit_shortcut = QShortcut(QKeySequence.Quit, self)
+        quit_shortcut = QShortcut(QKeySequence("Ctrl+Q"), self)
         quit_shortcut.activated.connect(self.close)
 
     def cleanup(self):
@@ -116,7 +166,7 @@ class MainWindow(QMainWindow):
         logger.info("MainWindow close event received")
 
         # Simple confirmation dialog
-        from PySide6.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
 
         reply = QMessageBox.question(
             self,

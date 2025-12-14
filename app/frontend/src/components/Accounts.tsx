@@ -44,12 +44,7 @@ const AWS_REGIONS = [
   { value: 'us-gov-west-1', label: 'AWS GovCloud (US-West)' },
 ];
 
-// Get existing AWS CLI profiles
-const getExistingAwsProfiles = () => {
-  // This would be called from the backend, but for now return a placeholder
-  // In a real implementation, this would query the backend for AWS CLI profiles
-  return ['default', 'production', 'development'];
-};
+
 
 type AuthStatus = 'connected' | 'disconnected' | 'expired' | 'partial' | 'pending';
 
@@ -94,9 +89,12 @@ export function Accounts() {
   const [permissionData, setPermissionData] = useState<Record<number, PermissionCheckResult>>({});
   const [permissionLoading, setPermissionLoading] = useState<Record<number, boolean>>({});
 
+  // AWS CLI profiles state
+  const [awsProfiles, setAwsProfiles] = useState<string[]>([]);
+
   const fetchAccounts = async () => {
     try {
-      const data = await bridgeApi.listAccounts();
+      const data = await bridgeApi.listAccounts() || [];
       setAccounts(data);
     } catch (error) {
       console.error('Failed to fetch accounts:', error);
@@ -168,6 +166,22 @@ export function Accounts() {
       });
   }, [accounts]);
 
+  // Fetch AWS CLI profiles on mount
+  useEffect(() => {
+    const fetchAwsProfiles = async () => {
+      try {
+        const profiles = await bridgeApi.listAwsProfiles();
+        setAwsProfiles(profiles);
+      } catch (error) {
+        console.error('Failed to fetch AWS profiles:', error);
+        setAwsProfiles([]);
+      }
+    };
+    fetchAwsProfiles();
+  }, []);
+
+
+
   // Convert accounts to provider format - only one account per platform
   const providers: CloudProvider[] = [
     {
@@ -217,7 +231,7 @@ export function Accounts() {
   const [wizardStep, setWizardStep] = useState(1);
   
   // AWS Setup State
-  const [awsAuthMethod, setAwsAuthMethod] = useState('access-keys');
+  const [awsAuthMethod, setAwsAuthMethod] = useState('existing-profile');
   const [awsAccessKey, setAwsAccessKey] = useState('');
   const [awsSecretKey, setAwsSecretKey] = useState('');
   const [awsProfile, setAwsProfile] = useState('');
@@ -233,6 +247,26 @@ export function Accounts() {
   const [azureTenantId, setAzureTenantId] = useState('');
   const [azureClientId, setAzureClientId] = useState('');
   const [azureClientSecret, setAzureClientSecret] = useState('');
+
+  // Import credentials when profile is selected
+  useEffect(() => {
+    if (awsProfile && awsAuthMethod === 'existing-profile') {
+      const importCredentials = async () => {
+        try {
+          const credentials = await bridgeApi.getAwsProfileCredentials(awsProfile);
+          if (credentials.access_key && credentials.secret_key) {
+            setAwsAccessKey(credentials.access_key);
+            setAwsSecretKey(credentials.secret_key);
+            toast.success(`Credentials imported from profile '${awsProfile}'`);
+          }
+        } catch (error) {
+          console.error('Failed to import credentials:', error);
+          toast.error('Failed to import credentials from profile');
+        }
+      };
+      importCredentials();
+    }
+  }, [awsProfile, awsAuthMethod]);
 
   const getStatusColor = (status: AuthStatus) => {
     switch (status) {
@@ -343,13 +377,14 @@ export function Accounts() {
           accountId = await detectAwsAccountId(accessKey, secretKey, selectedRegion);
 
         } else if (awsAuthMethod === 'existing-profile') {
-          toast.info('Importing AWS CLI profile...');
+          toast.info('Using imported AWS CLI profile credentials...');
 
-          // For existing profiles, we would need to read from AWS CLI config
-          // This is a placeholder - in a real implementation, this would call
-          // a backend method to read the AWS CLI profile credentials
-          toast.error('❌ Existing AWS CLI profile import not yet implemented. Please use Access Keys method.');
-          return;
+          // Use the imported credentials
+          accessKey = awsAccessKey;
+          secretKey = awsSecretKey;
+
+          // Auto-detect Account ID from credentials
+          accountId = await detectAwsAccountId(accessKey, secretKey, selectedRegion);
 
         } else {
           // SSO and other methods not implemented yet
@@ -443,106 +478,42 @@ export function Accounts() {
           {wizardStep === 1 && (
             <>
               <div className="space-y-2">
-                <Label>Authentication Method</Label>
-                <Select value={awsAuthMethod} onValueChange={setAwsAuthMethod}>
+                <Label>AWS CLI Profile</Label>
+                <Select value={awsProfile} onValueChange={setAwsProfile}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select existing profile" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {awsProfiles.map(profile => (
+                      <SelectItem key={profile} value={profile}>
+                        {profile}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-text-tertiary">
+                  Select an existing AWS CLI profile to import its credentials
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Default Region</Label>
+                <Select value={selectedRegion} onValueChange={setSelectedRegion}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="access-keys">Access Keys (IAM User)</SelectItem>
-                    <SelectItem value="existing-profile">Existing AWS CLI Profile</SelectItem>
-                    <SelectItem value="sso">AWS SSO</SelectItem>
+                    {AWS_REGIONS.map(region => (
+                      <SelectItem key={region.value} value={region.value}>
+                        {region.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {awsAuthMethod === 'access-keys' && (
-                <>
-                  <div className="space-y-2">
-                    <Label>AWS Access Key ID</Label>
-                    <Input
-                      type="text"
-                      value={awsAccessKey}
-                      onChange={(e) => setAwsAccessKey(e.target.value)}
-                      placeholder="AKIAIOSFODNN7EXAMPLE"
-                      className="bg-muted border-border font-mono"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>AWS Secret Access Key</Label>
-                    <Input
-                      type="password"
-                      value={awsSecretKey}
-                      onChange={(e) => setAwsSecretKey(e.target.value)}
-                      placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-                      className="bg-muted border-border font-mono"
-                    />
-                   </div>
-                   <div className="space-y-2">
-                     <Label>Default Region</Label>
-                     <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                       <SelectTrigger>
-                         <SelectValue placeholder="Select AWS region" />
-                       </SelectTrigger>
-                       <SelectContent>
-                         {AWS_REGIONS.map(region => (
-                           <SelectItem key={region.value} value={region.value}>
-                             {region.label}
-                           </SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
-                   </div>
-                   <div className="space-y-2">
-                     <Label>Profile Name (Optional)</Label>
-                     <Input
-                       value={awsProfile}
-                       onChange={(e) => setAwsProfile(e.target.value)}
-                       placeholder="my-production-account"
-                       className="bg-muted border-border"
-                     />
-                     <p className="text-xs text-text-tertiary">
-                       Leave blank to use account ID as profile name
-                     </p>
-                   </div>
-                </>
-               )}
 
-               {awsAuthMethod === 'existing-profile' && (
-                 <>
-                   <div className="space-y-2">
-                     <Label>AWS CLI Profile</Label>
-                     <Select value={awsProfile} onValueChange={setAwsProfile}>
-                       <SelectTrigger>
-                         <SelectValue placeholder="Select existing profile" />
-                       </SelectTrigger>
-                       <SelectContent>
-                         {getExistingAwsProfiles().map(profile => (
-                           <SelectItem key={profile} value={profile}>
-                             {profile}
-                           </SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
-                     <p className="text-xs text-text-tertiary">
-                       Select an existing AWS CLI profile to import its credentials
-                     </p>
-                   </div>
-                 </>
-               )}
 
-               {awsAuthMethod === 'sso' && (
-                <Card className="bg-blue-500/10 border-blue-500/30 p-4">
-                  <div className="text-sm text-blue-400">
-                    <div className="mb-2">AWS SSO Setup:</div>
-                    <ol className="list-decimal list-inside space-y-1 text-text-secondary">
-                      <li>Run: <code className="bg-muted px-2 py-1 rounded">aws configure sso</code></li>
-                      <li>Follow the prompts to configure your SSO session</li>
-                      <li>Return here and refresh to verify connection</li>
-                    </ol>
-                  </div>
-                </Card>
-              )}
 
               {awsAuthMethod === 'profile' && (
                 <div className="space-y-2">
@@ -572,7 +543,7 @@ export function Accounts() {
                 <div className="space-y-2 text-text-secondary">
                   <p>Your AWS credentials have been configured with:</p>
                   <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>Authentication Method: {awsAuthMethod === 'access-keys' ? 'Access Keys' : awsAuthMethod === 'sso' ? 'AWS SSO' : 'Profile'}</li>
+                    <li>Authentication Method: AWS CLI Profile</li>
                     <li>Profile: {awsProfile}</li>
                     {awsAccessKey && <li>Access Key: {awsAccessKey.slice(0, 8)}...****</li>}
                   </ul>

@@ -1,13 +1,15 @@
 """
-GUI entry point using PySide6.
+GUI entry point using PyQt6.
 Embeds React frontend using QWebEngineView.
 """
 
 import sys
 import signal
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QFont
-from PySide6.QtCore import Qt, QTimer
+import os
+import platform
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt, QTimer
 
 from pocket_architect.gui.main_window import MainWindow
 from pocket_architect.utils.logger import setup_logger
@@ -17,6 +19,13 @@ logger = setup_logger(__name__)
 
 def main():
     """Launch the GUI application."""
+    # macOS WebEngine environment setup
+    if platform.system() == "Darwin":  # macOS
+        # Disable WebEngine sandbox which can cause issues on macOS
+        if "QTWEBENGINE_DISABLE_SANDBOX" not in os.environ:
+            os.environ["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
+            logger.info("Set QTWEBENGINE_DISABLE_SANDBOX=1 for macOS compatibility")
+
     # Enable High DPI scaling
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough

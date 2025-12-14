@@ -3,7 +3,7 @@ Qt Web Channel bridge for React-Python communication.
 Exposes Python methods to JavaScript via Qt's bridge mechanism.
 """
 
-from PySide6.QtCore import QObject, Slot, Signal
+from PyQt6.QtCore import QObject, pyqtSlot as Slot, pyqtSignal as Signal
 from typing import Optional
 import json
 from pathlib import Path
@@ -13,6 +13,7 @@ from pocket_architect.core.models import (
     CreateProjectRequest,
     UpdateProjectRequest,
     CreateInstanceRequest,
+    CreateBlueprintRequest,
     CreateKeyPairRequest,
     CreateSecurityGroupRequest,
     CreateIAMRoleRequest,
@@ -49,6 +50,19 @@ class BackendBridge(QObject):
         if self._manager is None:
             self._manager = ResourceManager(region=region)
         return self._manager
+
+    def _get_config_path(self) -> Path:
+        """
+        Get the path to the config file.
+
+        Returns:
+            Path to config file
+        """
+        from pathlib import Path
+
+        config_dir = Path.home() / ".pocket-architect"
+        config_dir.mkdir(exist_ok=True)
+        return config_dir / "config.json"
 
     def cleanup(self):
         """Clean up resources before shutdown."""
@@ -162,473 +176,106 @@ class BackendBridge(QObject):
             return json.dumps({"success": False, "error": str(e)})
 
     # ========================================================================
-    # INSTANCE OPERATIONS
+    # AWS CLI PROFILES
     # ========================================================================
 
     @Slot(result=str)
-    def list_instances(self) -> str:
-        """List all instances."""
+    def list_aws_profiles(self) -> str:
+        """List available AWS CLI profiles."""
         try:
-            logger.info("list_instances called")
-            manager = self._get_manager()
-            instances = manager.list_instances()
-            return json.dumps([i.dict() for i in instances])
+            import boto3
+
+            profiles = boto3.Session().available_profiles
+            return json.dumps(profiles)
         except Exception as e:
-            logger.error(f"Failed to list instances: {e}")
-            return json.dumps([])
-
-    @Slot(int, result=str)
-    def get_instance(self, instance_id: int) -> str:
-        """Get instance by ID."""
-        try:
-            logger.info(f"get_instance called with id={instance_id}")
-            manager = self._get_manager()
-            instance = manager.get_instance(instance_id)
-            return json.dumps(instance.dict())
-        except Exception as e:
-            logger.error(f"Failed to get instance: {e}")
-            return json.dumps({})
-
-    @Slot(str, result=str)
-    def create_instance(self, instance_data: str) -> str:
-        """Create new instance."""
-        try:
-            data = json.loads(instance_data)
-            logger.info(f"create_instance called with data={data}")
-
-            # Get region from data or use default
-            region = data.get("region", "us-east-1")
-            manager = self._get_manager(region=region)
-
-            # Create request object
-            request = CreateInstanceRequest(**data)
-            instance = manager.create_instance(request)
-
-            # Emit signal to update frontend
-            self.data_updated.emit("instances", json.dumps([instance.dict()]))
-
-            return json.dumps({"success": True, "data": instance.dict()})
-        except Exception as e:
-            logger.error(f"Failed to create instance: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(int, result=str)
-    def start_instance(self, instance_id: int) -> str:
-        """Start instance."""
-        try:
-            logger.info(f"start_instance called with id={instance_id}")
-            manager = self._get_manager()
-            instance = manager.start_instance(instance_id)
-
-            # Emit signal to update frontend
-            self.data_updated.emit("instances", json.dumps([instance.dict()]))
-
-            return json.dumps({"success": True, "data": instance.dict()})
-        except Exception as e:
-            logger.error(f"Failed to start instance: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(int, result=str)
-    def stop_instance(self, instance_id: int) -> str:
-        """Stop instance."""
-        try:
-            logger.info(f"stop_instance called with id={instance_id}")
-            manager = self._get_manager()
-            instance = manager.stop_instance(instance_id)
-
-            # Emit signal to update frontend
-            self.data_updated.emit("instances", json.dumps([instance.dict()]))
-
-            return json.dumps({"success": True, "data": instance.dict()})
-        except Exception as e:
-            logger.error(f"Failed to stop instance: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(int, result=str)
-    def restart_instance(self, instance_id: int) -> str:
-        """Restart instance."""
-        try:
-            logger.info(f"restart_instance called with id={instance_id}")
-            manager = self._get_manager()
-            instance = manager.restart_instance(instance_id)
-
-            # Emit signal to update frontend
-            self.data_updated.emit("instances", json.dumps([instance.dict()]))
-
-            return json.dumps({"success": True, "data": instance.dict()})
-        except Exception as e:
-            logger.error(f"Failed to restart instance: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    # ========================================================================
-    # SECURITY OPERATIONS
-    # ========================================================================
-
-    @Slot(result=str)
-    def list_key_pairs(self) -> str:
-        """List SSH key pairs."""
-        try:
-            logger.info("list_key_pairs called")
-            manager = self._get_manager()
-            key_pairs = manager.list_key_pairs()
-
-            return json.dumps({"success": True, "data": key_pairs})
-        except Exception as e:
-            logger.error(f"Failed to list key pairs: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(str, result=str)
-    def create_key_pair(self, key_pair_data: str) -> str:
-        """Create SSH key pair."""
-        try:
-            logger.info(f"create_key_pair called with data={key_pair_data}")
-            data = json.loads(key_pair_data)
-            request = CreateKeyPairRequest(**data)
-
-            manager = self._get_manager()
-            key_pair = manager.create_key_pair(request)
-
-            # Emit signal to update frontend
-            self.data_updated.emit("key_pairs", json.dumps([key_pair]))
-
-            return json.dumps({"success": True, "data": key_pair})
-        except Exception as e:
-            logger.error(f"Failed to create key pair: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(str, result=str)
-    def delete_key_pair(self, key_name: str) -> str:
-        """Delete SSH key pair."""
-        try:
-            logger.info(f"delete_key_pair called with name={key_name}")
-            manager = self._get_manager()
-            manager.delete_key_pair(key_name)
-
-            return json.dumps({"success": True})
-        except Exception as e:
-            logger.error(f"Failed to delete key pair: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(result=str)
-    def list_security_groups(self) -> str:
-        """List security groups."""
-        try:
-            logger.info("list_security_groups called")
-            manager = self._get_manager()
-            security_groups = manager.list_security_groups()
-
-            return json.dumps({"success": True, "data": security_groups})
-        except Exception as e:
-            logger.error(f"Failed to list security groups: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(str, result=str)
-    def create_security_group(self, security_group_data: str) -> str:
-        """Create security group."""
-        try:
-            logger.info(f"create_security_group called with data={security_group_data}")
-            data = json.loads(security_group_data)
-            request = CreateSecurityGroupRequest(**data)
-
-            manager = self._get_manager()
-            security_group = manager.create_security_group(request)
-
-            # Emit signal to update frontend
-            self.data_updated.emit("security_groups", json.dumps([security_group]))
-
-            return json.dumps({"success": True, "data": security_group})
-        except Exception as e:
-            logger.error(f"Failed to create security group: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(str, result=str)
-    def delete_security_group(self, group_id: str) -> str:
-        """Delete security group."""
-        try:
-            logger.info(f"delete_security_group called with id={group_id}")
-            manager = self._get_manager()
-            manager.delete_security_group(group_id)
-
-            return json.dumps({"success": True})
-        except Exception as e:
-            logger.error(f"Failed to delete security group: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(result=str)
-    def list_iam_roles(self) -> str:
-        """List IAM roles."""
-        try:
-            logger.info("list_iam_roles called")
-            manager = self._get_manager()
-            iam_roles = manager.list_iam_roles()
-
-            return json.dumps({"success": True, "data": iam_roles})
-        except Exception as e:
-            logger.error(f"Failed to list IAM roles: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(str, result=str)
-    def create_iam_role(self, iam_role_data: str) -> str:
-        """Create IAM role."""
-        try:
-            logger.info(f"create_iam_role called with data={iam_role_data}")
-            data = json.loads(iam_role_data)
-            request = CreateIAMRoleRequest(**data)
-
-            manager = self._get_manager()
-            iam_role = manager.create_iam_role(request)
-
-            # Emit signal to update frontend
-            self.data_updated.emit("iam_roles", json.dumps([iam_role]))
-
-            return json.dumps({"success": True, "data": iam_role})
-        except Exception as e:
-            logger.error(f"Failed to create IAM role: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(str, result=str)
-    def delete_iam_role(self, role_name: str) -> str:
-        """Delete IAM role."""
-        try:
-            logger.info(f"delete_iam_role called with name={role_name}")
-            manager = self._get_manager()
-            manager.delete_iam_role(role_name)
-
-            return json.dumps({"success": True})
-        except Exception as e:
-            logger.error(f"Failed to delete IAM role: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(result=str)
-    def list_certificates(self) -> str:
-        """List certificates."""
-        try:
-            logger.info("list_certificates called")
-            manager = self._get_manager()
-            certificates = manager.list_certificates()
-
-            return json.dumps({"success": True, "data": certificates})
-        except Exception as e:
-            logger.error(f"Failed to list certificates: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(str, result=str)
-    def create_certificate(self, certificate_data: str) -> str:
-        """Create certificate."""
-        try:
-            logger.info(f"create_certificate called with data={certificate_data}")
-            data = json.loads(certificate_data)
-            request = CreateCertificateRequest(**data)
-
-            manager = self._get_manager()
-            certificate = manager.create_certificate(request)
-
-            # Emit signal to update frontend
-            self.data_updated.emit("certificates", json.dumps([certificate]))
-
-            return json.dumps({"success": True, "data": certificate})
-        except Exception as e:
-            logger.error(f"Failed to create certificate: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(str, result=str)
-    def delete_certificate(self, certificate_arn: str) -> str:
-        """Delete certificate."""
-        try:
-            logger.info(f"delete_certificate called with arn={certificate_arn}")
-            manager = self._get_manager()
-            manager.delete_certificate(certificate_arn)
-
-            return json.dumps({"success": True})
-        except Exception as e:
-            logger.error(f"Failed to delete certificate: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    # ========================================================================
-    # BLUEPRINT OPERATIONS
-    # ========================================================================
-
-    @Slot(result=str)
-    def list_blueprints(self) -> str:
-        """List all blueprints."""
-        try:
-            logger.info("list_blueprints called")
-            # TODO: Implement actual blueprint listing logic
-            return json.dumps([])
-        except Exception as e:
-            logger.error(f"Failed to list blueprints: {e}")
+            logger.error(f"Failed to list AWS profiles: {e}")
             return json.dumps([])
 
     @Slot(str, result=str)
-    def create_blueprint(self, blueprint_data: str) -> str:
-        """Create new blueprint."""
+    def get_aws_profile_credentials(self, profile_name: str) -> str:
+        """Get AWS credentials for a specific profile."""
         try:
-            data = json.loads(blueprint_data)
-            logger.info(f"create_blueprint called with data={data}")
-            # TODO: Implement actual blueprint creation logic
-            return json.dumps({"success": True, "message": "Blueprint created (mock)"})
-        except Exception as e:
-            logger.error(f"Failed to create blueprint: {e}")
-            return json.dumps({"success": False, "error": str(e)})
+            import boto3
 
-    # ========================================================================
-    # ACCOUNT OPERATIONS
-    # ========================================================================
-
-    @Slot(result=str)
-    def list_accounts(self) -> str:
-        """List all accounts."""
-        try:
-            logger.info("list_accounts called")
-            manager = self._get_manager()
-            accounts = manager.list_accounts()
-            return json.dumps([a.dict() for a in accounts])
-        except Exception as e:
-            logger.error(f"Failed to list accounts: {e}")
-            return json.dumps([])
-
-    @Slot(str, result=str)
-    def create_account(self, account_data: str) -> str:
-        """Create new account."""
-        try:
-            data = json.loads(account_data)
-            logger.info(f"create_account called with data={data}")
-
-            # Create request object
-            request = CreateAccountRequest(**data)
-            manager = self._get_manager()
-            account = manager.create_account(request)
-
-            # Emit signal to update frontend
-            self.data_updated.emit("accounts", json.dumps([account.dict()]))
-
-            return json.dumps({"success": True, "data": account.dict()})
-        except Exception as e:
-            logger.error(f"Failed to create account: {e}")
-            return json.dumps({"success": False, "error": str(e)})
-
-    @Slot(int, result=str)
-    def test_account_connection(self, account_id: int) -> str:
-        """Test account connection."""
-        try:
-            logger.info(f"test_account_connection called with id={account_id}")
-            manager = self._get_manager()
-            success = manager.test_account_connection(account_id)
-
-            if success:
-                return json.dumps({"success": True, "message": "Connection successful"})
+            session = boto3.Session(profile_name=profile_name)
+            credentials = session.get_credentials()
+            if credentials:
+                return json.dumps(
+                    {
+                        "access_key": credentials.access_key,
+                        "secret_key": credentials.secret_key,
+                    }
+                )
             else:
-                return json.dumps({"success": False, "error": "Connection failed"})
+                return json.dumps({})
         except Exception as e:
-            logger.error(f"Failed to test connection: {e}")
-            return json.dumps({"success": False, "error": str(e)})
+            logger.error(f"Failed to get credentials for profile {profile_name}: {e}")
+            return json.dumps({})
 
     @Slot(str, str, str, result=str)
     def validate_aws_credentials(
         self, access_key: str, secret_key: str, region: str
     ) -> str:
-        """Validate AWS credentials and return account ID."""
+        """Validate AWS credentials and get account ID."""
         try:
-            logger.info("validate_aws_credentials called")
-
-            # Create a direct session with the provided credentials
+            logger.info("Validating AWS credentials")
             import boto3
+            from botocore.exceptions import (
+                NoCredentialsError,
+                PartialCredentialsError,
+                ClientError,
+            )
 
-            temp_session = boto3.Session(
+            sts_client = boto3.client(
+                "sts",
                 aws_access_key_id=access_key,
                 aws_secret_access_key=secret_key,
                 region_name=region,
             )
-
-            # Test credentials with STS GetCallerIdentity
-            sts = temp_session.client("sts")
-            identity = sts.get_caller_identity()
-
-            account_id = identity["Account"]
-            logger.info(f"AWS credentials validated for account: {account_id}")
-
+            response = sts_client.get_caller_identity()
+            account_id = response["Account"]
             return json.dumps({"success": True, "accountId": account_id})
-
+        except (NoCredentialsError, PartialCredentialsError) as e:
+            logger.error(f"Invalid AWS credentials: {e}")
+            return json.dumps({"success": False, "error": "Invalid AWS credentials"})
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "InvalidAccessKeyId":
+                return json.dumps(
+                    {"success": False, "error": "Invalid AWS access key ID"}
+                )
+            elif error_code == "SignatureDoesNotMatch":
+                return json.dumps(
+                    {"success": False, "error": "Invalid AWS secret access key"}
+                )
+            elif error_code == "InvalidClientTokenId":
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": "AWS credentials are invalid or expired",
+                    }
+                )
+            elif error_code == "UnauthorizedOperation":
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": "Insufficient permissions - need sts:GetCallerIdentity",
+                    }
+                )
+            else:
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": f"AWS API error: {e.response['Error']['Message']}",
+                    }
+                )
         except Exception as e:
             logger.error(f"Failed to validate AWS credentials: {e}")
-
-            # Map AWS errors to user-friendly messages
-            error_str = str(e)
-            if "InvalidAccessKeyId" in error_str:
-                error_msg = "Invalid AWS access key ID"
-            elif "SignatureDoesNotMatch" in error_str:
-                error_msg = "Invalid AWS secret access key"
-            elif "InvalidClientTokenId" in error_str:
-                error_msg = "AWS credentials are invalid or expired"
-            elif "UnauthorizedOperation" in error_str:
-                error_msg = "Insufficient permissions - need sts:GetCallerIdentity"
-            elif "Network" in error_str or "timeout" in error_str:
-                error_msg = "Network error - check internet connection"
-            else:
-                error_msg = f"AWS API error: {error_str}"
-
-            return json.dumps({"success": False, "error": error_msg})
-
-    # ========================================================================
-    # COST MANAGEMENT OPERATIONS
-    # ========================================================================
-
-    @Slot(result=str)
-    def get_cost_summary(self) -> str:
-        """Get cost summary."""
-        try:
-            logger.info("get_cost_summary called")
-            # TODO: Implement actual cost summary logic
-            summary = {
-                "currentMonth": 0.0,
-                "lastMonth": 0.0,
-                "projectedMonth": 0.0,
-                "byService": [],
-                "dailyData": [],
-            }
-            return json.dumps(summary)
-        except Exception as e:
-            logger.error(f"Failed to get cost summary: {e}")
-            return json.dumps({})
-
-    # ========================================================================
-    # QUOTA OPERATIONS
-    # ========================================================================
-
-    @Slot(result=str)
-    def get_quotas(self) -> str:
-        """Get AWS service quotas."""
-        try:
-            logger.info("get_quotas called")
-            # TODO: Implement real AWS quota fetching
-            # For now, return empty structure
-            quotas = {"categories": []}
-            return json.dumps(quotas)
-        except Exception as e:
-            logger.error(f"Failed to get quotas: {e}")
-            return json.dumps({"categories": []})
-
-    # ========================================================================
-    # UTILITY OPERATIONS
-    # ========================================================================
-
-    @Slot(result=str)
-    def ping(self) -> str:
-        """Ping to test bridge connection."""
-        logger.info("ping called")
-        return json.dumps({"status": "ok", "message": "Bridge is working!"})
+            return json.dumps({"success": False, "error": str(e)})
 
     # ========================================================================
     # CONFIG FILE OPERATIONS
     # ========================================================================
-
-    def _get_config_path(self) -> Path:
-        """Get the path to the config file."""
-        # Use user's home directory for config storage
-        home_dir = Path.home()
-        config_dir = home_dir / ".pocket-architect"
-        config_dir.mkdir(exist_ok=True)
-        return config_dir / "config.json"
 
     @Slot(result=str)
     def load_config(self) -> str:
@@ -684,3 +331,473 @@ class BackendBridge(QObject):
         except Exception as e:
             logger.error(f"Failed to check permissions: {e}", exc_info=True)
             return json.dumps({"success": False, "error": str(e), "canSimulate": False})
+
+    # ========================================================================
+    # INSTANCE OPERATIONS
+    # ========================================================================
+
+    @Slot(result=str)
+    def list_instances(self) -> str:
+        """List all instances."""
+        try:
+            logger.info("list_instances called")
+            manager = self._get_manager()
+            instances = manager.list_instances()
+            return json.dumps([i.dict() for i in instances])
+        except Exception as e:
+            logger.error(f"Failed to list instances: {e}")
+            self.error_occurred.emit("list_instances", str(e))
+            return json.dumps([])
+
+    @Slot(int, result=str)
+    def get_instance(self, instance_id: int) -> str:
+        """Get instance by ID."""
+        try:
+            logger.info(f"get_instance called with id={instance_id}")
+            manager = self._get_manager()
+            instance = manager.get_instance(instance_id)
+            return json.dumps(instance.dict())
+        except Exception as e:
+            logger.error(f"Failed to get instance {instance_id}: {e}")
+            self.error_occurred.emit("get_instance", str(e))
+            return json.dumps({})
+
+    @Slot(str, result=str)
+    def create_instance(self, instance_data: str) -> str:
+        """Create new instance."""
+        try:
+            data = json.loads(instance_data)
+            logger.info(f"create_instance called with data={data}")
+
+            # Get region from data or use default
+            region = data.get("region", "us-east-1")
+            manager = self._get_manager(region=region)
+
+            # Create request object
+            request = CreateInstanceRequest(**data)
+            instance = manager.create_instance(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("instances", json.dumps([instance.dict()]))
+
+            return json.dumps({"success": True, "data": instance.dict()})
+        except Exception as e:
+            logger.error(f"Failed to create instance: {e}")
+            self.error_occurred.emit("create_instance", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(int, result=str)
+    def start_instance(self, instance_id: int) -> str:
+        """Start an instance."""
+        try:
+            logger.info(f"start_instance called with id={instance_id}")
+            manager = self._get_manager()
+            instance = manager.start_instance(instance_id)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("instances", json.dumps([instance.dict()]))
+
+            return json.dumps({"success": True, "data": instance.dict()})
+        except Exception as e:
+            logger.error(f"Failed to start instance {instance_id}: {e}")
+            self.error_occurred.emit("start_instance", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(int, result=str)
+    def stop_instance(self, instance_id: int) -> str:
+        """Stop an instance."""
+        try:
+            logger.info(f"stop_instance called with id={instance_id}")
+            manager = self._get_manager()
+            instance = manager.stop_instance(instance_id)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("instances", json.dumps([instance.dict()]))
+
+            return json.dumps({"success": True, "data": instance.dict()})
+        except Exception as e:
+            logger.error(f"Failed to stop instance {instance_id}: {e}")
+            self.error_occurred.emit("stop_instance", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(int, result=str)
+    def restart_instance(self, instance_id: int) -> str:
+        """Restart an instance."""
+        try:
+            logger.info(f"restart_instance called with id={instance_id}")
+            manager = self._get_manager()
+            instance = manager.restart_instance(instance_id)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("instances", json.dumps([instance.dict()]))
+
+            return json.dumps({"success": True, "data": instance.dict()})
+        except Exception as e:
+            logger.error(f"Failed to restart instance {instance_id}: {e}")
+            self.error_occurred.emit("restart_instance", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    # ========================================================================
+    # BLUEPRINT OPERATIONS
+    # ========================================================================
+
+    @Slot(result=str)
+    def list_blueprints(self) -> str:
+        """List all blueprints."""
+        try:
+            logger.info("list_blueprints called")
+            manager = self._get_manager()
+            blueprints = manager.list_blueprints()
+            return json.dumps([b.dict() for b in blueprints])
+        except Exception as e:
+            logger.error(f"Failed to list blueprints: {e}")
+            self.error_occurred.emit("list_blueprints", str(e))
+            return json.dumps([])
+
+    @Slot(str, result=str)
+    def create_blueprint(self, blueprint_data: str) -> str:
+        """Create new blueprint."""
+        try:
+            data = json.loads(blueprint_data)
+            logger.info(f"create_blueprint called with data={data}")
+
+            # Get region from data or use default
+            region = data.get("region", "us-east-1")
+            manager = self._get_manager(region=region)
+
+            # Create request object
+            request = CreateBlueprintRequest(**data)
+            blueprint = manager.create_blueprint(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("blueprints", json.dumps([blueprint.dict()]))
+
+            return json.dumps({"success": True, "data": blueprint.dict()})
+        except Exception as e:
+            logger.error(f"Failed to create blueprint: {e}")
+            self.error_occurred.emit("create_blueprint", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    # ========================================================================
+    # ACCOUNT OPERATIONS
+    # ========================================================================
+
+    @Slot(result=str)
+    def list_accounts(self) -> str:
+        """List all accounts."""
+        try:
+            logger.info("list_accounts called")
+            manager = self._get_manager()
+            accounts = manager.list_accounts()
+            return json.dumps([a.dict() for a in accounts])
+        except Exception as e:
+            logger.error(f"Failed to list accounts: {e}")
+            self.error_occurred.emit("list_accounts", str(e))
+            return json.dumps([])
+
+    @Slot(str, result=str)
+    def create_account(self, account_data: str) -> str:
+        """Create new account."""
+        try:
+            data = json.loads(account_data)
+            logger.info(f"create_account called with data={data}")
+
+            # Get region from data or use default
+            region = data.get("region", "us-east-1")
+            manager = self._get_manager(region=region)
+
+            # Create request object
+            request = CreateAccountRequest(**data)
+            account = manager.create_account(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("accounts", json.dumps([account.dict()]))
+
+            return json.dumps({"success": True, "data": account.dict()})
+        except Exception as e:
+            logger.error(f"Failed to create account: {e}")
+            self.error_occurred.emit("create_account", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(int, result=str)
+    def test_account_connection(self, account_id: int) -> str:
+        """Test account connection."""
+        try:
+            logger.info(f"test_account_connection called with id={account_id}")
+            manager = self._get_manager()
+            result = manager.test_account_connection(account_id)
+            return json.dumps({"success": True, "connected": result})
+        except Exception as e:
+            logger.error(f"Failed to test account connection {account_id}: {e}")
+            self.error_occurred.emit("test_account_connection", str(e))
+            return json.dumps({"success": False, "connected": False, "error": str(e)})
+
+    # ========================================================================
+    # COST MANAGEMENT
+    # ========================================================================
+
+    @Slot(result=str)
+    def get_cost_summary(self) -> str:
+        """Get cost summary."""
+        try:
+            logger.info("get_cost_summary called")
+            manager = self._get_manager()
+            # This would need to be implemented in the manager
+            # For now, return mock data
+            return json.dumps(
+                {
+                    "currentMonth": 0,
+                    "lastMonth": 0,
+                    "projectedMonth": 0,
+                    "byService": [],
+                    "dailyData": [],
+                }
+            )
+        except Exception as e:
+            logger.error(f"Failed to get cost summary: {e}")
+            self.error_occurred.emit("get_cost_summary", str(e))
+            return json.dumps(
+                {
+                    "currentMonth": 0,
+                    "lastMonth": 0,
+                    "projectedMonth": 0,
+                    "byService": [],
+                    "dailyData": [],
+                }
+            )
+
+    # ========================================================================
+    # SECURITY OPERATIONS
+    # ========================================================================
+
+    @Slot(result=str)
+    def list_key_pairs(self) -> str:
+        """List all key pairs."""
+        try:
+            logger.info("list_key_pairs called")
+            manager = self._get_manager()
+            key_pairs = manager.list_key_pairs()
+            return json.dumps(key_pairs)
+        except Exception as e:
+            logger.error(f"Failed to list key pairs: {e}")
+            self.error_occurred.emit("list_key_pairs", str(e))
+            return json.dumps([])
+
+    @Slot(str, result=str)
+    def create_key_pair(self, key_pair_data: str) -> str:
+        """Create new key pair."""
+        try:
+            data = json.loads(key_pair_data)
+            logger.info(f"create_key_pair called with data={data}")
+
+            manager = self._get_manager()
+            request = CreateKeyPairRequest(**data)
+            result = manager.create_key_pair(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("key_pairs", json.dumps([result]))
+
+            return json.dumps({"success": True, "data": result})
+        except Exception as e:
+            logger.error(f"Failed to create key pair: {e}")
+            self.error_occurred.emit("create_key_pair", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def delete_key_pair(self, key_name: str) -> str:
+        """Delete key pair."""
+        try:
+            logger.info(f"delete_key_pair called with name={key_name}")
+            manager = self._get_manager()
+            manager.delete_key_pair(key_name)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("key_pairs", json.dumps([]))
+
+            return json.dumps({"success": True})
+        except Exception as e:
+            logger.error(f"Failed to delete key pair {key_name}: {e}")
+            self.error_occurred.emit("delete_key_pair", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(result=str)
+    def list_security_groups(self) -> str:
+        """List all security groups."""
+        try:
+            logger.info("list_security_groups called")
+            manager = self._get_manager()
+            security_groups = manager.list_security_groups()
+            return json.dumps(security_groups)
+        except Exception as e:
+            logger.error(f"Failed to list security groups: {e}")
+            self.error_occurred.emit("list_security_groups", str(e))
+            return json.dumps([])
+
+    @Slot(str, result=str)
+    def create_security_group(self, security_group_data: str) -> str:
+        """Create new security group."""
+        try:
+            data = json.loads(security_group_data)
+            logger.info(f"create_security_group called with data={data}")
+
+            manager = self._get_manager()
+            request = CreateSecurityGroupRequest(**data)
+            result = manager.create_security_group(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("security_groups", json.dumps([result]))
+
+            return json.dumps({"success": True, "data": result})
+        except Exception as e:
+            logger.error(f"Failed to create security group: {e}")
+            self.error_occurred.emit("create_security_group", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def delete_security_group(self, group_id: str) -> str:
+        """Delete security group."""
+        try:
+            logger.info(f"delete_security_group called with id={group_id}")
+            manager = self._get_manager()
+            manager.delete_security_group(group_id)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("security_groups", json.dumps([]))
+
+            return json.dumps({"success": True})
+        except Exception as e:
+            logger.error(f"Failed to delete security group {group_id}: {e}")
+            self.error_occurred.emit("delete_security_group", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(result=str)
+    def list_iam_roles(self) -> str:
+        """List all IAM roles."""
+        try:
+            logger.info("list_iam_roles called")
+            manager = self._get_manager()
+            iam_roles = manager.list_iam_roles()
+            return json.dumps(iam_roles)
+        except Exception as e:
+            logger.error(f"Failed to list IAM roles: {e}")
+            self.error_occurred.emit("list_iam_roles", str(e))
+            return json.dumps([])
+
+    @Slot(str, result=str)
+    def create_iam_role(self, iam_role_data: str) -> str:
+        """Create new IAM role."""
+        try:
+            data = json.loads(iam_role_data)
+            logger.info(f"create_iam_role called with data={data}")
+
+            manager = self._get_manager()
+            request = CreateIAMRoleRequest(**data)
+            result = manager.create_iam_role(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("iam_roles", json.dumps([result]))
+
+            return json.dumps({"success": True, "data": result})
+        except Exception as e:
+            logger.error(f"Failed to create IAM role: {e}")
+            self.error_occurred.emit("create_iam_role", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def delete_iam_role(self, role_name: str) -> str:
+        """Delete IAM role."""
+        try:
+            logger.info(f"delete_iam_role called with name={role_name}")
+            manager = self._get_manager()
+            manager.delete_iam_role(role_name)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("iam_roles", json.dumps([]))
+
+            return json.dumps({"success": True})
+        except Exception as e:
+            logger.error(f"Failed to delete IAM role {role_name}: {e}")
+            self.error_occurred.emit("delete_iam_role", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(result=str)
+    def list_certificates(self) -> str:
+        """List all certificates."""
+        try:
+            logger.info("list_certificates called")
+            manager = self._get_manager()
+            certificates = manager.list_certificates()
+            return json.dumps(certificates)
+        except Exception as e:
+            logger.error(f"Failed to list certificates: {e}")
+            self.error_occurred.emit("list_certificates", str(e))
+            return json.dumps([])
+
+    @Slot(str, result=str)
+    def create_certificate(self, certificate_data: str) -> str:
+        """Create new certificate."""
+        try:
+            data = json.loads(certificate_data)
+            logger.info(f"create_certificate called with data={data}")
+
+            manager = self._get_manager()
+            request = CreateCertificateRequest(**data)
+            result = manager.create_certificate(request)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("certificates", json.dumps([result]))
+
+            return json.dumps({"success": True, "data": result})
+        except Exception as e:
+            logger.error(f"Failed to create certificate: {e}")
+            self.error_occurred.emit("create_certificate", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def delete_certificate(self, certificate_arn: str) -> str:
+        """Delete certificate."""
+        try:
+            logger.info(f"delete_certificate called with arn={certificate_arn}")
+            manager = self._get_manager()
+            manager.delete_certificate(certificate_arn)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("certificates", json.dumps([]))
+
+            return json.dumps({"success": True})
+        except Exception as e:
+            logger.error(f"Failed to delete certificate {certificate_arn}: {e}")
+            self.error_occurred.emit("delete_certificate", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    # ========================================================================
+    # QUOTA OPERATIONS
+    # ========================================================================
+
+    @Slot(result=str)
+    def get_quotas(self) -> str:
+        """Get AWS quotas."""
+        try:
+            logger.info("get_quotas called")
+            manager = self._get_manager()
+            # This would need to be implemented in the manager
+            # For now, return mock data
+            return json.dumps([])
+        except Exception as e:
+            logger.error(f"Failed to get quotas: {e}")
+            self.error_occurred.emit("get_quotas", str(e))
+            return json.dumps([])
+
+    # ========================================================================
+    # UTILITY OPERATIONS
+    # ========================================================================
+
+    @Slot(result=str)
+    def ping(self) -> str:
+        """Ping the backend to check connectivity."""
+        try:
+            logger.info("ping called")
+            return json.dumps({"status": "ok", "message": "Backend bridge working!"})
+        except Exception as e:
+            logger.error(f"Ping failed: {e}")
+            return json.dumps({"status": "error", "message": str(e)})

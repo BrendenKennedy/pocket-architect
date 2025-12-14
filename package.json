@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "npm run dev --workspace=app/frontend",
     "dev:frontend": "npm run dev --workspace=app/frontend",
+    "dev:gui": "./scripts/dev.sh",
     "build": "./scripts/build.sh",
     "build:frontend": "npm run build --workspace=app/frontend",
     "clean": "./scripts/clean.sh"

@@ -59,7 +59,7 @@ function AppContent() {
   useEffect(() => {
     const fetchAccountStatus = async () => {
       try {
-        const accounts = await bridgeApi.listAccounts();
+        const accounts = await bridgeApi.listAccounts() || [];
 
         // Check each platform
         const awsAccount = accounts.find(acc => acc.platform === 'aws');

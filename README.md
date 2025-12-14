@@ -78,16 +78,25 @@ pip install -e ".[dev]"
 
 ### Run Development Mode
 
-The easiest way to develop is using the dev script, which starts both the React dev server and the GUI:
+The easiest way to develop is using the dev script, which builds the frontend and launches the GUI:
 
 ```bash
 ./scripts/dev.sh
+# or
+npm run dev:gui
 ```
 
 This will:
-1. Start the React dev server at `http://localhost:3000` with hot reload
-2. Launch the Qt GUI which loads from the dev server
-3. Any changes to React code will hot reload automatically
+1. Build the React frontend for production
+2. Launch the Qt GUI which loads from the built files
+3. Ensures you're always working with the latest compiled code
+
+For hot reload development with the dev server, use:
+```bash
+npm run dev:frontend  # Start dev server at http://localhost:3000
+# Then run GUI separately
+python -m pocket_architect gui
+```
 
 **Alternative: Run components separately:**
 

@@ -36,6 +36,10 @@ export interface BackendBridge {
   create_account: (account_data: string) => Promise<string>;
   test_account_connection: (account_id: number) => Promise<string>;
 
+  // AWS CLI profiles
+  list_aws_profiles: () => Promise<string>;
+  get_aws_profile_credentials: (profile_name: string) => Promise<string>;
+
   // Cost management operations
   get_cost_summary: () => Promise<string>;
 

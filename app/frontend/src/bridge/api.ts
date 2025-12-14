@@ -153,6 +153,18 @@ class BridgeAPI {
     return JSON.parse(result);
   }
 
+  async listAwsProfiles(): Promise<string[]> {
+    const bridge = getBridge();
+    const result = await bridge.list_aws_profiles();
+    return JSON.parse(result);
+  }
+
+  async getAwsProfileCredentials(profileName: string): Promise<{ access_key?: string; secret_key?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.get_aws_profile_credentials(profileName);
+    return JSON.parse(result);
+  }
+
   // ========================================================================
   // COST MANAGEMENT
   // ========================================================================

@@ -1,6 +1,7 @@
 /**
  * Qt Web Channel bridge initialization.
  * Connects React frontend to Python backend via Qt's JavaScript bridge.
+ * REQUIRES Qt WebEngine environment - no fallback to mock data.
  */
 
 import type { BackendBridge } from './types';
@@ -11,6 +12,7 @@ let initializationPromise: Promise<BackendBridge> | null = null;
 /**
  * Initialize the Qt Web Channel bridge.
  * Must be called before using any backend methods.
+ * @throws Error if Qt WebChannel is not available
  */
 export async function initBridge(): Promise<BackendBridge> {
   // Return existing bridge if already initialized
@@ -24,11 +26,11 @@ export async function initBridge(): Promise<BackendBridge> {
   }
 
   initializationPromise = new Promise((resolve, reject) => {
-    // Check if running in Qt WebEngine
+    // REQUIRE Qt WebEngine environment - no fallback allowed
     if (!window.qt?.webChannelTransport) {
-      console.warn('Qt Web Channel not available, using mock backend for development');
-      bridge = createMockBackend();
-      resolve(bridge!);
+      const errorMsg = 'CRITICAL ERROR: Qt Web Channel not available! This application requires a Qt WebEngine environment to function. Ensure you are running this through the PyQt GUI application, not a regular web browser.';
+      console.error(errorMsg);
+      reject(new Error(errorMsg));
       return;
     }
 
@@ -40,21 +42,23 @@ export async function initBridge(): Promise<BackendBridge> {
         initializeChannel(resolve, reject);
       };
       script.onerror = () => {
-        reject(new Error('Failed to load qwebchannel.js'));
+        const errorMsg = 'CRITICAL ERROR: Failed to load qwebchannel.js from Qt resources. This indicates a problem with the Qt WebEngine setup.';
+        console.error(errorMsg);
+        reject(new Error(errorMsg));
       };
       document.head.appendChild(script);
     } else {
       initializeChannel(resolve, reject);
     }
 
-    // Timeout after 5 seconds
+    // Timeout after 10 seconds (increased for reliable connection)
     setTimeout(() => {
       if (!bridge) {
-        console.error('Bridge initialization timeout');
-        bridge = createMockBackend();
-        resolve(bridge!);
+        const errorMsg = 'CRITICAL ERROR: Bridge initialization timeout after 10 seconds. Qt WebChannel connection failed. Check that PySide6-WebEngine is properly installed and the backend bridge is registered.';
+        console.error(errorMsg);
+        reject(new Error(errorMsg));
       }
-    }, 5000);
+    }, 10000);
   });
 
   return initializationPromise;
@@ -78,7 +82,9 @@ function initializeChannel(resolve: (bridge: BackendBridge) => void, reject: (er
       resolve(bridge!);
     });
   } catch (error) {
-    reject(error as Error);
+    const errorMsg = `CRITICAL ERROR: Failed to initialize Qt Web Channel: ${error}. This indicates a problem with the Qt WebEngine setup or backend bridge registration.`;
+    console.error(errorMsg);
+    reject(new Error(errorMsg));
   }
 }
 
@@ -100,91 +106,4 @@ export function isQtEnvironment(): boolean {
   return !!window.qt?.webChannelTransport;
 }
 
-/**
- * Create mock backend for development (when not in Qt).
- */
-function createMockBackend(): BackendBridge {
-  console.log('Creating mock backend for development');
 
-  const mockData = {
-    projects: [],
-    instances: [],
-    blueprints: [],
-    accounts: [],
-    keyPairs: [],
-    securityGroups: [],
-    iamRoles: [],
-    certificates: [],
-  };
-
-  return {
-    // Mock signals
-    data_updated: {
-      connect: (callback: any) => {
-        console.log('Mock: data_updated.connect called');
-      },
-    },
-    error_occurred: {
-      connect: (callback: any) => {
-        console.log('Mock: error_occurred.connect called');
-      },
-    },
-
-    // Project operations
-    list_projects: async () => JSON.stringify(mockData.projects),
-    get_project: async (id: number) => JSON.stringify({}),
-    create_project: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Project created' }),
-    update_project: async (id: number, data: string) => JSON.stringify({ success: true, message: 'Mock: Project updated' }),
-    delete_project: async (id: number) => JSON.stringify({ success: true, message: 'Mock: Project deleted' }),
-
-    // Instance operations
-    list_instances: async () => JSON.stringify(mockData.instances),
-    get_instance: async (id: number) => JSON.stringify({}),
-    create_instance: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Instance created' }),
-    start_instance: async (id: number) => JSON.stringify({ success: true, message: 'Mock: Instance started' }),
-    stop_instance: async (id: number) => JSON.stringify({ success: true, message: 'Mock: Instance stopped' }),
-    restart_instance: async (id: number) => JSON.stringify({ success: true, message: 'Mock: Instance restarted' }),
-
-    // Blueprint operations
-    list_blueprints: async () => JSON.stringify(mockData.blueprints),
-    create_blueprint: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Blueprint created' }),
-
-    // Account operations
-    list_accounts: async () => JSON.stringify(mockData.accounts),
-    create_account: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Account created' }),
-    test_account_connection: async (id: number) => JSON.stringify({ success: true, message: 'Mock: Connection successful' }),
-
-    // Cost management
-    get_cost_summary: async () => JSON.stringify({
-      currentMonth: 0,
-      lastMonth: 0,
-      projectedMonth: 0,
-      byService: [],
-      dailyData: [],
-    }),
-
-    // Security operations
-    list_key_pairs: async () => JSON.stringify(mockData.keyPairs),
-    create_key_pair: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Key pair created' }),
-    delete_key_pair: async (keyName: string) => JSON.stringify({ success: true, message: 'Mock: Key pair deleted' }),
-
-    list_security_groups: async () => JSON.stringify(mockData.securityGroups),
-    create_security_group: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Security group created' }),
-    delete_security_group: async (groupId: string) => JSON.stringify({ success: true, message: 'Mock: Security group deleted' }),
-
-    list_iam_roles: async () => JSON.stringify(mockData.iamRoles),
-    create_iam_role: async (data: string) => JSON.stringify({ success: true, message: 'Mock: IAM role created' }),
-    delete_iam_role: async (roleName: string) => JSON.stringify({ success: true, message: 'Mock: IAM role deleted' }),
-
-    list_certificates: async () => JSON.stringify(mockData.certificates),
-    create_certificate: async (data: string) => JSON.stringify({ success: true, message: 'Mock: Certificate created' }),
-    delete_certificate: async (certificateArn: string) => JSON.stringify({ success: true, message: 'Mock: Certificate deleted' }),
-
-    // Config operations
-    load_config: async () => JSON.stringify({}),
-    save_config: async (configJson: string) => JSON.stringify({ success: true }),
-
-    // Utility
-    ping: async () => JSON.stringify({ status: 'ok', message: 'Mock bridge working!' }),
-  } as BackendBridge;
-}
