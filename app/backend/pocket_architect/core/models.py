@@ -324,6 +324,7 @@ class Account(BaseModel):
     created: str
     lastSynced: str
     resourceCount: ResourceCount
+    accountAlias: Optional[str] = None
 
 
 class CreateAccountRequest(BaseModel):
@@ -335,6 +336,7 @@ class CreateAccountRequest(BaseModel):
     region: str
     accessKey: str
     secretKey: str
+    profile: Optional[str] = None  # AWS CLI profile name
     isDefault: Optional[bool] = False
 
 
@@ -519,4 +521,6 @@ class PermissionCheckResult(BaseModel):
     services: List[ServicePermissions]
     canSimulate: bool  # Whether IAM simulator was available
     overallStatus: str  # "full" | "partial" | "none" | "unknown"
-    minimalPolicy: Optional[str] = None  # Generated IAM policy JSON for denied permissions
+    minimalPolicy: Optional[str] = (
+        None  # Generated IAM policy JSON for denied permissions
+    )

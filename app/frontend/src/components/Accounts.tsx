@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, AlertCircle, Cloud, Key, Terminal, RefreshCw, ChevronRight, ChevronDown, Copy, Server, Shield, Loader2 } from 'lucide-react';
-import { AWSLogo, AzureLogo, GCPLogo } from './CloudLogos';
+import { CheckCircle2, XCircle, AlertCircle, Cloud, Key, Terminal, RefreshCw, ChevronRight, ChevronDown, Copy, Server, Shield, Loader2, AlertTriangle } from 'lucide-react';
+import { AWSLogo } from './CloudLogos';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Progress } from './ui/progress';
 import { CreationWizard } from './ui/creation-wizard';
 import { toast } from 'sonner@2.0.3';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+
 import { bridgeApi } from '../bridge/api';
 import type { PermissionCheckResult } from '../types/models';
 
@@ -99,6 +99,7 @@ export function Accounts() {
     } catch (error) {
       console.error('Failed to fetch accounts:', error);
       toast.error('Failed to load accounts');
+      setAccounts([]);
     } finally {
       setLoading(false);
     }
@@ -116,6 +117,24 @@ export function Accounts() {
       setPermissionLoading(prev => ({ ...prev, [accountId]: false }));
     }
   };
+
+  // Auto-refresh permissions every 60 minutes for connected accounts
+  useEffect(() => {
+    const refreshPermissions = () => {
+      accounts.forEach(account => {
+        if (account.status === 'connected') {
+          fetchPermissions(account.id);
+        }
+      });
+    };
+
+    // Initial refresh
+    refreshPermissions();
+
+    // Set up interval for auto-refresh (60 minutes)
+    const interval = setInterval(refreshPermissions, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [accounts]);
 
   // Utility function to detect AWS Account ID from credentials
   const detectAwsAccountId = async (accessKey: string, secretKey: string, region: string): Promise<string> => {
@@ -169,12 +188,15 @@ export function Accounts() {
   // Fetch AWS CLI profiles on mount
   useEffect(() => {
     const fetchAwsProfiles = async () => {
+      setLoadingProfiles(true);
       try {
         const profiles = await bridgeApi.listAwsProfiles();
         setAwsProfiles(profiles);
       } catch (error) {
         console.error('Failed to fetch AWS profiles:', error);
         setAwsProfiles([]);
+      } finally {
+        setLoadingProfiles(false);
       }
     };
     fetchAwsProfiles();
@@ -182,53 +204,26 @@ export function Accounts() {
 
 
 
-  // Convert accounts to provider format - only one account per platform
-  const providers: CloudProvider[] = [
-    {
-      id: 'aws',
-      name: 'Amazon Web Services',
-      status: 'disconnected' as AuthStatus,
-      icon: <AWSLogo className="w-8 h-8" />,
-      details: {}
-    },
-    {
-      id: 'gcp',
-      name: 'Google Cloud Platform',
-      status: 'disconnected' as AuthStatus,
-      icon: <GCPLogo className="w-8 h-8" />,
-      details: {}
-    },
-    {
-      id: 'azure',
-      name: 'Microsoft Azure',
-      status: 'disconnected' as AuthStatus,
-      icon: <AzureLogo className="w-8 h-8" />,
-      details: {}
-    }
-  ];
-
-  // Update providers with actual account data (only one per platform)
-  const updatedProviders = providers.map(provider => {
-    const account = accounts.find(acc => acc.platform === provider.id);
-    if (account) {
-      return {
-        id: account.platform,
-        name: account.name,
-        status: account.status as AuthStatus,
-        icon: account.platform === 'aws' ? <AWSLogo className="w-8 h-8" /> : account.platform === 'gcp' ? <GCPLogo className="w-8 h-8" /> : <AzureLogo className="w-8 h-8" />,
-        details: {
-          account: account.accountId,
-          region: account.region,
-          profile: account.platform === 'aws' ? account.name : undefined,
-          lastChecked: account.lastSynced,
-        },
-      };
-    }
-    return provider;
-  });
+  // AWS-only provider - session-based, no persistence
+  const awsAccount = accounts.find(acc => acc.platform === 'aws');
+  const awsProvider: CloudProvider = {
+    id: 'aws',
+    name: 'Amazon Web Services',
+    status: awsAccount ? (awsAccount.status as AuthStatus) : 'disconnected',
+    icon: <AWSLogo className="w-8 h-8" />,
+    details: awsAccount ? {
+      account: awsAccount.accountId,
+      region: awsAccount.region,
+      profile: awsAccount.name,
+      lastChecked: awsAccount.lastSynced,
+    } : {}
+  };
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [wizardStep, setWizardStep] = useState(1);
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const [disconnectingAccount, setDisconnectingAccount] = useState(false);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
   
   // AWS Setup State
   const [awsAuthMethod, setAwsAuthMethod] = useState('existing-profile');
@@ -248,25 +243,25 @@ export function Accounts() {
   const [azureClientId, setAzureClientId] = useState('');
   const [azureClientSecret, setAzureClientSecret] = useState('');
 
-  // Import credentials when profile is selected
+  // Validate profile when selected
   useEffect(() => {
     if (awsProfile && awsAuthMethod === 'existing-profile') {
-      const importCredentials = async () => {
+      const validateProfile = async () => {
         try {
-          const credentials = await bridgeApi.getAwsProfileCredentials(awsProfile);
-          if (credentials.access_key && credentials.secret_key) {
-            setAwsAccessKey(credentials.access_key);
-            setAwsSecretKey(credentials.secret_key);
-            toast.success(`Credentials imported from profile '${awsProfile}'`);
+          const result = await bridgeApi.validateAwsProfile(awsProfile, selectedRegion);
+          if (result.success) {
+            toast.success(`Profile '${awsProfile}' validated successfully`);
+          } else {
+            toast.error(`Profile validation failed: ${result.error}`);
           }
         } catch (error) {
-          console.error('Failed to import credentials:', error);
-          toast.error('Failed to import credentials from profile');
+          console.error('Failed to validate profile:', error);
+          toast.error('Failed to validate AWS profile');
         }
       };
-      importCredentials();
+      validateProfile();
     }
-  }, [awsProfile, awsAuthMethod]);
+  }, [awsProfile, awsAuthMethod, selectedRegion]);
 
   const getStatusColor = (status: AuthStatus) => {
     switch (status) {
@@ -311,6 +306,8 @@ export function Accounts() {
     }
   };
 
+  const [testingConnection, setTestingConnection] = useState(false);
+
   const handleTestConnection = async (providerId: string) => {
     const account = accounts.find(acc => acc.platform === providerId);
 
@@ -319,21 +316,25 @@ export function Accounts() {
       return;
     }
 
+    setTestingConnection(true);
     try {
       toast.info(`Testing connection to ${providerId.toUpperCase()}...`);
 
       // Call real backend test
       const result = await bridgeApi.testAccountConnection(account.id);
 
-      if (result.success) {
+      if (result.success && result.connected) {
         toast.success('✅ Connection successful!');
         await fetchAccounts(); // Refresh last synced timestamp
       } else {
+        // Auto-disconnect on failure
+        await handleDisconnect(providerId);
+
         // Handle specific error types from backend
         const error = result.error || 'Unknown error';
 
         if (error.includes('InvalidAccessKeyId') || error.includes('InvalidClientTokenId')) {
-          toast.error('❌ Invalid credentials. Please reconfigure your account.');
+          toast.error('❌ Invalid credentials. Account has been disconnected.');
         } else if (error.includes('Network') || error.includes('timeout')) {
           toast.error('❌ Network error. Please check your internet connection.');
         } else if (error.includes('UnauthorizedOperation') || error.includes('AccessDenied')) {
@@ -343,24 +344,27 @@ export function Accounts() {
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
+      // Auto-disconnect on exception
+      await handleDisconnect(providerId);
       toast.error('❌ Connection test failed: ' + error.message);
+    } finally {
+      setTestingConnection(false);
     }
   };
 
   const handleSetupProvider = (providerId: string) => {
     if (providerId === 'aws') {
-      // Go directly to the configuration wizard
+      // Go directly to configuration wizard for session-based auth
       setSelectedProvider(providerId);
       setWizardStep(1);
       setSetupDialogOpen(true);
-    } else {
-      toast.info(`${providerId.toUpperCase()} integration coming soon!`);
     }
   };
 
   const handleCompleteSetup = async () => {
     if (selectedProvider === 'aws') {
+      setCreatingAccount(true);
       try {
         let accountId: string;
         let accessKey: string;
@@ -377,14 +381,18 @@ export function Accounts() {
           accountId = await detectAwsAccountId(accessKey, secretKey, selectedRegion);
 
         } else if (awsAuthMethod === 'existing-profile') {
-          toast.info('Using imported AWS CLI profile credentials...');
+          toast.info('Validating AWS CLI profile...');
 
-          // Use the imported credentials
-          accessKey = awsAccessKey;
-          secretKey = awsSecretKey;
+          // Validate profile and get account ID
+          const profileResult = await bridgeApi.validateAwsProfile(awsProfile, selectedRegion);
+          if (!profileResult.success) {
+            toast.error(`Profile validation failed: ${profileResult.error}`);
+            return;
+          }
 
-          // Auto-detect Account ID from credentials
-          accountId = await detectAwsAccountId(accessKey, secretKey, selectedRegion);
+          accountId = profileResult.accountId!;
+          accessKey = '';  // Not needed for profile-based auth
+          secretKey = '';
 
         } else {
           // SSO and other methods not implemented yet
@@ -402,6 +410,7 @@ export function Accounts() {
           region: selectedRegion,
           accessKey: accessKey,
           secretKey: secretKey,
+          profile: awsAuthMethod === 'existing-profile' ? awsProfile : undefined,
         };
 
         // Create account in backend
@@ -410,16 +419,14 @@ export function Accounts() {
         // Refresh UI
         await fetchAccounts();
 
-        toast.success(`AWS account ${accountId} configured as "${profileName}"!`);
-
-        // Reset form
+        // Close dialog and reset
         setSetupDialogOpen(false);
         setWizardStep(1);
-        setSelectedProvider(null);
         setAwsAccessKey('');
         setAwsSecretKey('');
         setAwsProfile('');
-        setSelectedRegion('us-east-1');
+
+        toast.success('✅ AWS account configured successfully!');
 
       } catch (error: any) {
         // Handle specific error types
@@ -436,17 +443,32 @@ export function Accounts() {
         } else {
           toast.error(`❌ Setup failed: ${error.message}`);
         }
+      } finally {
+        setCreatingAccount(false);
       }
     }
   };
 
 
 
-  const handleDisconnect = (providerId: string) => {
-    // In a real implementation, this would call the backend to disconnect
-    // For now, just refresh to show updated state
-    fetchAccounts();
-    toast.success(`Disconnected from ${providerId.toUpperCase()}`);
+  const handleDisconnect = async (providerId: string) => {
+    const account = accounts.find(acc => acc.platform === providerId);
+    if (!account) {
+      toast.error('No account found to disconnect');
+      return;
+    }
+
+    setDisconnectingAccount(true);
+    try {
+      await bridgeApi.disconnectAccount(account.id);
+      await fetchAccounts(); // Refresh to show updated status
+      toast.success(`Disconnected from ${providerId.toUpperCase()}`);
+    } catch (error) {
+      console.error('Failed to disconnect account:', error);
+      toast.error('Failed to disconnect account');
+    } finally {
+      setDisconnectingAccount(false);
+    }
   };
 
   const renderWizardContent = () => {
@@ -479,16 +501,27 @@ export function Accounts() {
             <>
               <div className="space-y-2">
                 <Label>AWS CLI Profile</Label>
-                <Select value={awsProfile} onValueChange={setAwsProfile}>
+                <Select value={awsProfile} onValueChange={setAwsProfile} disabled={loadingProfiles}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select existing profile" />
+                    <SelectValue placeholder={loadingProfiles ? "Loading profiles..." : "Select existing profile"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {awsProfiles.map(profile => (
-                      <SelectItem key={profile} value={profile}>
-                        {profile}
-                      </SelectItem>
-                    ))}
+                    {loadingProfiles ? (
+                      <div className="p-2 text-center text-sm text-text-tertiary">
+                        <Loader2 className="w-4 h-4 animate-spin mx-auto mb-1" />
+                        Loading AWS profiles...
+                      </div>
+                    ) : awsProfiles.length > 0 ? (
+                      awsProfiles.map(profile => (
+                        <SelectItem key={profile} value={profile}>
+                          {profile}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-2 text-center text-sm text-text-tertiary">
+                        No AWS profiles found
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-text-tertiary">
@@ -740,7 +773,7 @@ export function Accounts() {
     return true;
   };
 
-  const connectedCount = updatedProviders.filter(p => p.status === 'connected').length;
+  const connectedCount = accounts.filter(acc => acc.status === 'connected').length;
 
   // Permission Display Component
   const PermissionDisplay = ({
@@ -871,6 +904,9 @@ export function Accounts() {
               {data.overallStatus === 'none' && 'No Access'}
               {data.overallStatus === 'unknown' && 'Unknown'}
             </Badge>
+            <span className="text-xs text-text-tertiary">
+              Auto-refresh: 60min
+            </span>
           </div>
           <div className="flex gap-2">
             {totalDenied > 0 && (
@@ -931,50 +967,48 @@ export function Accounts() {
           })}
         </div>
 
-        {/* Expanded Service Details */}
-        {Array.from(expandedServices).map(serviceName => {
-          const service = data.services.find(s => s.service === serviceName);
-          if (!service) return null;
-
-          return (
-            <div key={serviceName} className={`p-3 bg-muted rounded-lg border ${getServiceBorderColor(service)}`}>
+        {/* All Permissions List - Always Visible */}
+        <div className="space-y-4">
+          {data.services.map(service => (
+            <div key={service.service} className={`p-4 bg-muted rounded-lg border ${getServiceBorderColor(service)}`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{service.service} Service</span>
-                  <span className="text-xs text-text-tertiary">
-                    ({service.allowed}/{service.total} allowed)
-                  </span>
+                  <span className="text-sm font-medium">{service.service} Permissions</span>
+                  <Badge variant="outline" className="text-xs">
+                    {service.allowed}/{service.total} granted
+                  </Badge>
                 </div>
-                <Button
-                  onClick={() => toggleService(serviceName)}
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 px-2"
-                >
-                  <ChevronDown className="w-3 h-3 rotate-180" />
-                </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {service.permissions.map(perm => (
                   <div
                     key={perm.action}
-                    className={`flex items-start gap-2 text-xs p-2 rounded border ${
-                      perm.status === 'allowed' ? 'bg-green-500/5 border-green-500/20' :
-                      perm.status === 'denied' ? 'bg-red-500/5 border-red-500/20' :
-                      'bg-yellow-500/5 border-yellow-500/20'
+                    className={`flex items-start gap-3 p-3 rounded-lg border ${
+                      perm.status === 'allowed' ? 'bg-green-500/5 border-green-500/30' :
+                      perm.status === 'denied' ? 'bg-red-500/5 border-red-500/30' :
+                      'bg-yellow-500/5 border-yellow-500/30'
                     }`}
                   >
-                    {getStatusIcon(perm.status)}
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getStatusIcon(perm.status, 'sm')}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-mono text-xs truncate" title={perm.action}>
-                        {perm.action.split(':')[1] || perm.action}
+                      <div className="flex items-center gap-2 mb-1">
+                        <code className="text-xs font-mono bg-background px-1.5 py-0.5 rounded text-primary">
+                          {perm.action}
+                        </code>
+                        {perm.critical && (
+                          <Badge variant="destructive" className="text-xs px-1 py-0">
+                            Critical
+                          </Badge>
+                        )}
                       </div>
-                      <div className="text-text-tertiary text-xs">{perm.description}</div>
+                      <div className="text-sm text-text-secondary mb-1">{perm.description}</div>
                       {perm.status === 'denied' && perm.featureImpact && (
-                        <div className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                          <AlertCircle className="w-2 h-2" />
-                          <span className="truncate">{perm.featureImpact}</span>
+                        <div className="text-red-600 text-xs flex items-center gap-1 bg-red-500/10 px-2 py-1 rounded">
+                          <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                          <span>{perm.featureImpact}</span>
                         </div>
                       )}
                     </div>
@@ -982,8 +1016,8 @@ export function Accounts() {
                 ))}
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
 
         {/* Warning if can't simulate */}
         {!data.canSimulate && (
@@ -1000,12 +1034,29 @@ export function Accounts() {
           </div>
         )}
 
-        <div className="text-xs text-text-quaternary text-right">
-          Last checked: {new Date(data.checkedAt).toLocaleString()}
+        <div className="text-xs text-text-quaternary text-right flex items-center gap-2">
+          <span>Last checked: {new Date(data.checkedAt).toLocaleString()}</span>
+          <span>•</span>
+          <span>Auto-refresh every 60 minutes</span>
         </div>
       </div>
     );
   };
+
+  // Show loading state while fetching initial data
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">Loading Accounts</h3>
+            <p className="text-text-tertiary">Checking account status and permissions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -1024,9 +1075,12 @@ export function Accounts() {
       <Card className="bg-card border-border p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm text-text-tertiary mb-1">Provider Status</div>
+            <div className="text-sm text-text-tertiary mb-1">AWS Account Status</div>
             <div className="text-2xl">
-              {connectedCount} of {providers.length} Connected
+              {connectedCount > 0 ? 'Connected' : 'Session-Based Auth'}
+            </div>
+            <div className="text-xs text-text-quaternary mt-1">
+              {connectedCount > 0 ? 'Active session' : 'Configure to connect'}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -1045,328 +1099,229 @@ export function Accounts() {
         </div>
       </Card>
 
-      {/* Provider Tabs */}
-      <Tabs defaultValue="aws" className="w-full">
-        <TabsList className="w-full justify-start">
-           <TabsTrigger value="aws" className="flex items-center gap-2">
-             <AWSLogo className="w-4 h-4" />
-             Amazon Web Services
-           </TabsTrigger>
-           <TabsTrigger value="gcp" className="flex items-center gap-2">
-             <GCPLogo className="w-4 h-4" />
-             Google Cloud Platform
-           </TabsTrigger>
-           <TabsTrigger value="azure" className="flex items-center gap-2">
-             <AzureLogo className="w-4 h-4" />
-             Microsoft Azure
-           </TabsTrigger>
-        </TabsList>
-
-        {/* AWS Tab */}
-        <TabsContent value="aws" className="mt-6">
-          <div className="space-y-4">
-            {updatedProviders.filter(p => p.id === 'aws').map((provider) => (
-              <Card key={provider.id} className="bg-card border-border p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl">{provider.icon}</div>
-                    <div>
-                      <h3 className="text-lg mb-1">{provider.name}</h3>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(provider.status)}
-                        <span className={`text-sm ${getStatusColor(provider.status)}`}>
-                          {getStatusText(provider.status)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {provider.status === 'connected' ? (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-input hover:bg-accent"
-                          onClick={() => handleTestConnection(provider.id)}
-                        >
-                          <Terminal className="w-4 h-4 mr-2" />
-                          Test
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-input hover:bg-accent"
-                          onClick={() => handleDisconnect(provider.id)}
-                        >
-                          Disconnect
-                        </Button>
-                      </>
-                    ) : provider.id === 'aws' ? (
-                      <Button
-                        size="sm"
-                        onClick={() => handleSetupProvider(provider.id)}
-                      >
-                        <Key className="w-4 h-4 mr-2" />
-                        Configure
-                      </Button>
+      {/* AWS Provider Card */}
+      <div className="space-y-4">
+        <Card key={awsProvider.id} className="bg-card border-border p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">{awsProvider.icon}</div>
+              <div>
+                <h3 className="text-lg mb-1">{awsProvider.name}</h3>
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(awsProvider.status)}
+                  <span className={`text-sm ${getStatusColor(awsProvider.status)}`}>
+                    {getStatusText(awsProvider.status)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {awsProvider.status === 'connected' ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-input hover:bg-accent"
+                    onClick={() => handleTestConnection(awsProvider.id)}
+                    disabled={testingConnection}
+                  >
+                    {testingConnection ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled
-                        className="opacity-50 cursor-not-allowed"
-                      >
-                        <Key className="w-4 h-4 mr-2" />
-                        Coming Soon
-                      </Button>
+                      <Terminal className="w-4 h-4 mr-2" />
                     )}
-                  </div>
-                </div>
-
-                {/* Provider Details */}
-                {Object.keys(provider.details).length > 0 && (
-                  <div className="border-t border-border pt-4 mt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {provider.details.account && (
-                        <div>
-                          <div className="text-xs text-text-tertiary mb-1">Account ID</div>
-                          <div className="text-sm font-mono">{provider.details.account}</div>
-                        </div>
-                      )}
-                      {provider.details.profile && (
-                        <div>
-                          <div className="text-xs text-text-tertiary mb-1">Profile</div>
-                          <div className="text-sm">{provider.details.profile}</div>
-                        </div>
-                      )}
-                      {provider.details.region && (
-                        <div>
-                          <div className="text-xs text-text-tertiary mb-1">Default Region</div>
-                          <div className="text-sm">{provider.details.region}</div>
-                        </div>
-                      )}
-                      {provider.details.user && (
-                        <div>
-                          <div className="text-xs text-text-tertiary mb-1">User/Identity</div>
-                          <div className="text-sm font-mono text-xs truncate" title={provider.details.user}>
-                            {provider.details.user}
-                          </div>
-                        </div>
-                      )}
-                      {provider.details.lastChecked && (
-                        <div className="col-span-2">
-                          <div className="text-xs text-text-tertiary mb-1">Last Checked</div>
-                          <div className="text-sm">{provider.details.lastChecked}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Account Details - Show when connected */}
-                {provider.status === 'connected' && provider.details.account && (
-                  <div className="border-t border-border pt-4 mt-4">
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Server className="w-4 h-4 text-primary" />
-                        <div className="text-sm font-medium">Account Details</div>
-                      </div>
-                      <div className="text-xs text-text-quaternary">Connection information and configuration</div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-muted rounded-lg">
-                        <div className="text-xs text-text-tertiary mb-1">Account ID</div>
-                        <div className="text-sm font-mono font-medium">{provider.details.account}</div>
-                        <div className="text-xs text-text-muted mt-1">Unique identifier</div>
-                      </div>
-
-                      <div className="p-3 bg-muted rounded-lg">
-                        <div className="text-xs text-text-tertiary mb-1">Region</div>
-                        <div className="text-sm font-medium">{provider.details.region || 'N/A'}</div>
-                        <div className="text-xs text-text-muted mt-1">Default region</div>
-                      </div>
-
-                      {provider.details.profile && (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <div className="text-xs text-text-tertiary mb-1">Profile</div>
-                          <div className="text-sm font-medium">{provider.details.profile}</div>
-                          <div className="text-xs text-text-muted mt-1">AWS CLI profile name</div>
-                        </div>
-                      )}
-
-                      {provider.details.user && (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <div className="text-xs text-text-tertiary mb-1">Identity</div>
-                          <div className="text-sm font-mono text-xs truncate" title={provider.details.user}>
-                            {provider.details.user}
-                          </div>
-                          <div className="text-xs text-text-muted mt-1">Authenticated user/role</div>
-                        </div>
-                      )}
-
-                      <div className="p-3 bg-muted rounded-lg">
-                        <div className="text-xs text-text-tertiary mb-1">Connection Status</div>
-                        <div className="text-sm font-medium text-green-500 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Connected
-                        </div>
-                        <div className="text-xs text-text-muted mt-1">
-                          Last verified: {provider.details.lastChecked ?
-                            new Date(provider.details.lastChecked).toLocaleString() : 'Never'}
-                        </div>
-                      </div>
-
-                      {provider.details.lastChecked && (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <div className="text-xs text-text-tertiary mb-1">Last Verified</div>
-                          <div className="text-sm font-medium">{provider.details.lastChecked}</div>
-                          <div className="text-xs text-text-muted mt-1">Connection test timestamp</div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-3 p-2 bg-muted rounded-lg text-xs text-text-quaternary">
-                      Account connection secured with OS keychain encryption. Last verified: {provider.details.lastChecked || 'Never'}
-                    </div>
-
-                    {/* NEW: Permissions section */}
-                    <div className="mt-4 border-t border-border pt-4">
-                      <PermissionDisplay
-                        accountId={accounts.find(acc => acc.platform === provider.id)?.id || 0}
-                        permissionData={permissionData[accounts.find(acc => acc.platform === provider.id)?.id || 0]}
-                        loading={permissionLoading[accounts.find(acc => acc.platform === provider.id)?.id || 0] || false}
-                        onRefresh={() => {
-                          const accountId = accounts.find(acc => acc.platform === provider.id)?.id;
-                          if (accountId) fetchPermissions(accountId);
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* GCP Tab - Placeholder */}
-        <TabsContent value="gcp" className="mt-6">
-          <div className="space-y-4">
-            {updatedProviders.filter(p => p.id === 'gcp').map((provider) => (
-              <Card key={provider.id} className="bg-card border-border p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl">{provider.icon}</div>
-                    <div>
-                      <h3 className="text-lg mb-1">{provider.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-blue-500" />
-                        <span className="text-sm text-blue-500">Coming Soon</span>
-                      </div>
-                    </div>
-                  </div>
+                    {testingConnection ? 'Testing...' : 'Test'}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled
-                    className="opacity-50 cursor-not-allowed"
+                    className="border-input hover:bg-accent"
+                    onClick={() => handleDisconnect(awsProvider.id)}
+                    disabled={disconnectingAccount}
                   >
-                    <Key className="w-4 h-4 mr-2" />
-                    Coming Soon
+                    {disconnectingAccount ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Disconnecting...
+                      </>
+                    ) : (
+                      'Disconnect'
+                    )}
                   </Button>
-                </div>
-
-                <div className="border-t border-border pt-4 mt-4">
-                  <div className="text-center py-8">
-                     <div className="mb-4 flex justify-center"><GCPLogo className="w-12 h-12" /></div>
-                    <h4 className="text-lg font-semibold mb-2">Google Cloud Platform</h4>
-                    <p className="text-text-secondary mb-4">
-                      GCP integration is coming soon with support for:
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-left max-w-lg mx-auto">
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">• Service Accounts</div>
-                        <div className="text-text-tertiary">JSON keys & Workload Identity</div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">• gcloud CLI</div>
-                        <div className="text-text-tertiary">Existing configurations</div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">• Multi-Project</div>
-                        <div className="text-text-tertiary">Organization hierarchy</div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">• Compute & GKE</div>
-                        <div className="text-text-tertiary">VMs & Kubernetes</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => handleSetupProvider(awsProvider.id)}
+                >
+                  <Key className="w-4 h-4 mr-2" />
+                  Configure
+                </Button>
+              )}
+            </div>
           </div>
-        </TabsContent>
 
-        {/* Azure Tab - Placeholder */}
-        <TabsContent value="azure" className="mt-6">
-          <div className="space-y-4">
-            {updatedProviders.filter(p => p.id === 'azure').map((provider) => (
-              <Card key={provider.id} className="bg-card border-border p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl">{provider.icon}</div>
-                    <div>
-                      <h3 className="text-lg mb-1">{provider.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-blue-500" />
-                        <span className="text-sm text-blue-500">Coming Soon</span>
-                      </div>
+          {/* Provider Details */}
+          {Object.keys(awsProvider.details).length > 0 && (
+            <div className="border-t border-border pt-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                {awsProvider.details.account && (
+                  <div>
+                    <div className="text-xs text-text-tertiary mb-1">Account ID</div>
+                    <div className="text-sm font-mono">{awsProvider.details.account}</div>
+                  </div>
+                )}
+                {awsProvider.details.profile && (
+                  <div>
+                    <div className="text-xs text-text-tertiary mb-1">Profile</div>
+                    <div className="text-sm">{awsProvider.details.profile}</div>
+                  </div>
+                )}
+                {awsProvider.details.region && (
+                  <div>
+                    <div className="text-xs text-text-tertiary mb-1">Default Region</div>
+                    <div className="text-sm">{awsProvider.details.region}</div>
+                  </div>
+                )}
+                {awsProvider.details.user && (
+                  <div>
+                    <div className="text-xs text-text-tertiary mb-1">User/Identity</div>
+                    <div className="text-sm font-mono text-xs truncate" title={awsProvider.details.user}>
+                      {awsProvider.details.user}
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled
-                    className="opacity-50 cursor-not-allowed"
-                  >
-                    <Key className="w-4 h-4 mr-2" />
-                    Coming Soon
-                  </Button>
+                )}
+                {awsProvider.details.lastChecked && (
+                  <div className="col-span-2">
+                    <div className="text-xs text-text-tertiary mb-1">Last Checked</div>
+                    <div className="text-sm">{awsProvider.details.lastChecked}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Account Details - Show when connected */}
+          {awsProvider.status === 'connected' && awsProvider.details.account && (
+            <div className="border-t border-border pt-4 mt-4">
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Server className="w-4 h-4 text-primary" />
+                  <div className="text-sm font-medium">Account Details</div>
+                  {permissionLoading[accounts.find(acc => acc.platform === 'aws')?.id || 0] && (
+                    <div className="flex items-center gap-1 text-xs text-text-tertiary">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Loading permissions...</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-text-quaternary">Connection information and configuration</div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-xs text-text-tertiary mb-1">Account ID</div>
+                  <div className="text-sm font-mono font-medium">{awsProvider.details.account}</div>
+                  <div className="text-xs text-text-muted mt-1">Unique AWS identifier</div>
                 </div>
 
-                <div className="border-t border-border pt-4 mt-4">
-                  <div className="text-center py-8">
-                     <div className="mb-4 flex justify-center"><AzureLogo className="w-12 h-12" /></div>
-                    <h4 className="text-lg font-semibold mb-2">Microsoft Azure</h4>
-                    <p className="text-text-secondary mb-4">
-                      Azure integration is coming soon with support for:
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-left max-w-lg mx-auto">
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">• Service Principals</div>
-                        <div className="text-text-tertiary">Client ID/Secret & Managed Identity</div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">• Azure CLI</div>
-                        <div className="text-text-tertiary">Existing az configurations</div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">• Multi-Subscription</div>
-                        <div className="text-text-tertiary">Tenant hierarchy</div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">• VMs & AKS</div>
-                        <div className="text-text-tertiary">Virtual Machines & Kubernetes</div>
-                      </div>
-                    </div>
+                {awsAccount?.accountAlias && (
+                  <div className="p-3 bg-muted rounded-lg">
+                    <div className="text-xs text-text-tertiary mb-1">Account Alias</div>
+                    <div className="text-sm font-medium">{awsAccount.accountAlias}</div>
+                    <div className="text-xs text-text-muted mt-1">Friendly account name</div>
+                  </div>
+                )}
+
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-xs text-text-tertiary mb-1">Region</div>
+                  <div className="text-sm font-medium">{awsProvider.details.region || 'N/A'}</div>
+                  <div className="text-xs text-text-muted mt-1">Default region</div>
+                </div>
+
+                {awsProvider.details.profile && (
+                  <div className="p-3 bg-muted rounded-lg">
+                    <div className="text-xs text-text-tertiary mb-1">Profile</div>
+                    <div className="text-sm font-medium">{awsProvider.details.profile}</div>
+                    <div className="text-xs text-text-muted mt-1">AWS CLI profile name</div>
+                  </div>
+                )}
+
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-xs text-text-tertiary mb-1">Account Type</div>
+                  <div className="text-sm font-medium">AWS Account</div>
+                  <div className="text-xs text-text-muted mt-1">Cloud provider type</div>
+                </div>
+
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-xs text-text-tertiary mb-1">Connection Status</div>
+                  <div className="text-sm font-medium text-green-500 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Connected
+                  </div>
+                  <div className="text-xs text-text-muted mt-1">
+                    Active session
                   </div>
                 </div>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-xs text-text-tertiary mb-1">Created</div>
+                  <div className="text-sm font-medium">
+                    {awsAccount?.created ? new Date(awsAccount.created).toLocaleDateString() : 'N/A'}
+                  </div>
+                  <div className="text-xs text-text-muted mt-1">Account creation date</div>
+                </div>
+
+                {awsProvider.details.lastChecked && (
+                  <div className="p-3 bg-muted rounded-lg">
+                    <div className="text-xs text-text-tertiary mb-1">Last Verified</div>
+                    <div className="text-sm font-medium">
+                      {new Date(awsProvider.details.lastChecked).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-text-muted mt-1">Last connection check</div>
+                  </div>
+                )}
+
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-xs text-text-tertiary mb-1">Credentials</div>
+                  <div className="text-sm font-medium text-green-600 flex items-center gap-1">
+                    <Shield className="w-3 h-3" />
+                    Secure
+                  </div>
+                  <div className="text-xs text-text-muted mt-1">Stored in keychain</div>
+                </div>
+              </div>
+
+              <div className="mt-3 p-2 bg-muted rounded-lg text-xs text-text-quaternary">
+                Session-based connection. Credentials stored temporarily for this session only.
+              </div>
+
+              {/* Permissions section */}
+              <div className="mt-4 border-t border-border pt-4">
+                {permissionLoading[accounts.find(acc => acc.platform === 'aws')?.id || 0] ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-3" />
+                      <p className="text-sm text-text-tertiary">Checking AWS permissions...</p>
+                      <p className="text-xs text-text-quaternary mt-1">This may take a moment</p>
+                    </div>
+                  </div>
+                ) : (
+                  <PermissionDisplay
+                    accountId={accounts.find(acc => acc.platform === 'aws')?.id || 0}
+                    permissionData={permissionData[accounts.find(acc => acc.platform === 'aws')?.id || 0]}
+                    loading={false}
+                    onRefresh={() => {
+                      const account = accounts.find(acc => acc.platform === 'aws');
+                      if (account?.id) fetchPermissions(account.id);
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* Setup Wizard Dialog */}
       <CreationWizard
@@ -1398,10 +1353,10 @@ export function Accounts() {
         }}
         nextLabel={
           selectedProvider === 'aws'
-            ? (wizardStep < 2 ? 'Next' : 'Complete Setup')
+            ? (wizardStep < 2 ? 'Next' : (creatingAccount ? 'Creating Account...' : 'Complete Setup'))
             : 'Close'
         }
-        nextDisabled={selectedProvider === 'aws' && !canProceedToNextStep()}
+        nextDisabled={(selectedProvider === 'aws' && !canProceedToNextStep()) || creatingAccount}
         size="md"
       >
         {renderWizardContent()}

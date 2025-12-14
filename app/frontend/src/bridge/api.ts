@@ -159,9 +159,9 @@ class BridgeAPI {
     return JSON.parse(result);
   }
 
-  async getAwsProfileCredentials(profileName: string): Promise<{ access_key?: string; secret_key?: string }> {
+  async validateAwsProfile(profileName: string, region: string): Promise<{ success: boolean; accountId?: string; profile?: string; region?: string; error?: string }> {
     const bridge = getBridge();
-    const result = await bridge.get_aws_profile_credentials(profileName);
+    const result = await bridge.validate_aws_profile(profileName, region);
     return JSON.parse(result);
   }
 

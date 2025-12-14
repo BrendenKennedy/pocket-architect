@@ -55,34 +55,13 @@ function AppContent() {
   const [gcpConnected, setGcpConnected] = useState(false);
   const [azureConnected, setAzureConnected] = useState(false);
 
-  // Fetch account connection status
+  // For session-based auth, accounts are managed locally in the Accounts component
+  // No need for global account status polling since accounts don't persist across sessions
   useEffect(() => {
-    const fetchAccountStatus = async () => {
-      try {
-        const accounts = await bridgeApi.listAccounts() || [];
-
-        // Check each platform
-        const awsAccount = accounts.find(acc => acc.platform === 'aws');
-        const gcpAccount = accounts.find(acc => acc.platform === 'gcp');
-        const azureAccount = accounts.find(acc => acc.platform === 'azure');
-
-        setAwsConnected(awsAccount?.status === 'connected');
-        setGcpConnected(gcpAccount?.status === 'connected');
-        setAzureConnected(azureAccount?.status === 'connected');
-      } catch (error) {
-        console.error('Failed to fetch account status:', error);
-        // Default to disconnected on error
-        setAwsConnected(false);
-        setGcpConnected(false);
-        setAzureConnected(false);
-      }
-    };
-
-    fetchAccountStatus();
-
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchAccountStatus, 30000);
-    return () => clearInterval(interval);
+    // Initialize with disconnected state
+    setAwsConnected(false);
+    setGcpConnected(false);
+    setAzureConnected(false);
   }, []);
 
   // Save active page to config when it changes

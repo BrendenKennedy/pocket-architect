@@ -267,11 +267,12 @@ export interface Account {
 
 export interface CreateAccountRequest {
   name: string;
-  platform: Platform;
+  platform: string;
   accountId: string;
   region: string;
   accessKey: string;
   secretKey: string;
+  profile?: string;
   isDefault?: boolean;
 }
 

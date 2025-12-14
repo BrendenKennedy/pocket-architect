@@ -35,6 +35,8 @@ logger = setup_logger(__name__)
 class AccountService:
     """Service for managing cloud provider accounts."""
 
+    _startup_cleared = False
+
     def __init__(self, db_session: Session):
         """
         Initialize account service.
@@ -45,21 +47,101 @@ class AccountService:
         self.db = db_session
         self.config = get_config()
 
+        # Clear accounts on first AccountService instantiation (startup)
+        if not AccountService._startup_cleared:
+            self._clear_all_accounts_on_startup()
+            AccountService._startup_cleared = True
+
+    def _clear_all_accounts_on_startup(self) -> None:
+        """Clear all accounts once on application startup for session-based auth."""
+        try:
+            accounts_db = self.db.query(AccountDB).all()
+            if len(accounts_db) > 0:
+                logger.info(
+                    f"Session-based auth: clearing {len(accounts_db)} accounts from previous session"
+                )
+                for account_db in accounts_db:
+                    if not self._remove_credentials_secure(account_db):
+                        logger.warning(
+                            f"Failed to remove credentials for account {account_db.id}"
+                        )
+
+                deleted_count = self.db.query(AccountDB).delete()
+                self.db.commit()
+                logger.info(
+                    f"Session-based auth: cleared {deleted_count} accounts on startup"
+                )
+            else:
+                logger.info("Session-based auth: no accounts to clear on startup")
+        except Exception as e:
+            logger.error(f"Failed to clear accounts on startup: {e}")
+            self.db.rollback()
+
     def list_accounts(self) -> List[Account]:
         """
         List all accounts from local database.
+        For session-based auth, return current session accounts.
 
         Returns:
-            List of Account models
+            List of current session accounts
         """
-        accounts_db = self.db.query(AccountDB).all()
-        logger.info(f"Found {len(accounts_db)} accounts in database")
+        try:
+            accounts_db = self.db.query(AccountDB).all()
+            logger.info(
+                f"list_accounts: found {len(accounts_db)} accounts in current session"
+            )
 
-        accounts = []
-        for account_db in accounts_db:
-            accounts.append(self._db_to_model(account_db))
+            accounts = []
+            for account_db in accounts_db:
+                accounts.append(self._db_to_model(account_db))
 
-        return accounts
+            return accounts
+        except Exception as e:
+            logger.error(f"Error in list_accounts: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Error in list_accounts: {e}")
+            return []
+
+            # Return current session accounts
+            logger.info(f"Session-based auth: returning {len(accounts_db)} accounts")
+
+            accounts = []
+            for account_db in accounts_db:
+                logger.info(
+                    f"Account: {account_db.id} - {account_db.name} - {account_db.status}"
+                )
+                accounts.append(self._db_to_model(account_db))
+
+            return accounts
+        except Exception as e:
+            logger.error(f"Error in list_accounts: {e}")
+            return []
+
+    def _clear_all_accounts(self) -> None:
+        """
+        Clear all accounts and their credentials for session-based auth.
+        """
+        try:
+            accounts_db = self.db.query(AccountDB).all()
+            logger.info(f"Clearing {len(accounts_db)} accounts from database")
+            for account_db in accounts_db:
+                logger.info(f"Clearing account: {account_db.id} - {account_db.name}")
+                # Remove credentials securely
+                if not self._remove_credentials_secure(account_db):
+                    logger.warning(
+                        f"Failed to remove credentials for account {account_db.id}"
+                    )
+
+            # Delete all accounts
+            deleted_count = self.db.query(AccountDB).delete()
+            self.db.commit()
+            logger.info(
+                f"Successfully cleared {deleted_count} accounts for session-based auth"
+            )
+        except Exception as e:
+            logger.error(f"Failed to clear accounts: {e}")
+            self.db.rollback()
 
     def get_account(self, account_id: int) -> Account:
         """
@@ -119,8 +201,15 @@ class AccountService:
             raise ValidationError(f"Account {request.accountId} already exists")
 
         # Store credentials securely
-        if not self._store_credentials_secure(request):
-            raise ValidationError("Failed to store credentials securely")
+        if request.profile:
+            # For profile-based auth, store the profile name as the "access key"
+            # The actual credentials will be retrieved from AWS CLI when needed
+            if not self._store_profile_credentials_secure(request):
+                raise ValidationError("Failed to store profile credentials securely")
+        else:
+            # For direct credential auth
+            if not self._store_credentials_secure(request):
+                raise ValidationError("Failed to store credentials securely")
 
         # Create database record
         now = datetime.utcnow()
@@ -137,7 +226,12 @@ class AccountService:
 
         # Set platform-specific fields
         if request.platform == "aws":
-            account_db.aws_profile = request.accountId  # Use account ID as keychain key
+            if request.profile:
+                account_db.aws_profile = request.profile  # Store profile name
+            else:
+                account_db.aws_profile = (
+                    request.accountId
+                )  # Use account ID as keychain key
         elif request.platform == "gcp":
             # For GCP, we might store service account email if provided
             pass
@@ -154,7 +248,7 @@ class AccountService:
 
     def test_connection(self, account_id: int) -> bool:
         """
-        Test connection to account.
+        Test connection to account. Auto-disconnects on failure.
 
         Args:
             account_id: Account ID to test
@@ -171,17 +265,57 @@ class AccountService:
         )
 
         try:
+            success = False
             if account.platform == "aws":
-                return self._test_aws_connection(account)
+                success = self._test_aws_connection(account)
             elif account.platform == "gcp":
-                return self._test_gcp_connection(account)
+                success = self._test_gcp_connection(account)
             elif account.platform == "azure":
-                return self._test_azure_connection(account)
+                success = self._test_azure_connection(account)
             else:
                 raise ValidationError(f"Unsupported platform: {account.platform}")
+
+            if success:
+                # Update last synced timestamp
+                account_db = (
+                    self.db.query(AccountDB).filter(AccountDB.id == account_id).first()
+                )
+                if account_db:
+                    account_db.last_synced = datetime.utcnow()
+                    account_db.status = "connected"
+                    self.db.commit()
+                return True
+            else:
+                # Auto-disconnect on failure
+                self.disconnect_account(account_id)
+                return False
+
         except Exception as e:
             logger.error(f"Connection test failed for account {account_id}: {e}")
+            # Auto-disconnect on exception
+            self.disconnect_account(account_id)
             return False
+
+    def disconnect_account(self, account_id: int) -> None:
+        """
+        Mark account as disconnected without removing credentials.
+        Allows for quick reconnection using same profile.
+
+        Args:
+            account_id: Account ID to disconnect
+
+        Raises:
+            ResourceNotFoundError: If account not found
+        """
+        account_db = self.db.query(AccountDB).filter(AccountDB.id == account_id).first()
+        if not account_db:
+            raise ResourceNotFoundError(f"Account {account_id} not found")
+
+        # Mark as disconnected but keep credentials
+        account_db.status = "disconnected"
+        self.db.commit()
+
+        logger.info(f"Account marked as disconnected: {account_id}")
 
     def delete_account(self, account_id: int) -> None:
         """
@@ -228,9 +362,24 @@ class AccountService:
         logger.info(f"Checking permissions for AWS account: {account.name}")
 
         # Get AWS session for the account
-        session = self.config.get_aws_session(
-            profile=account.accountId, region=account.region
-        )
+        # Check if this is a profile-based account
+        account_db = self.db.query(AccountDB).filter(AccountDB.id == account_id).first()
+        if (
+            account_db
+            and account_db.aws_profile
+            and account_db.aws_profile != account.accountId
+        ):
+            # This is a profile-based account, use AWS CLI profile
+            import boto3
+
+            session = boto3.Session(
+                profile_name=account_db.aws_profile, region_name=account.region
+            )
+        else:
+            # Use keychain-based credentials
+            session = self.config.get_aws_session(
+                profile=account.accountId, region=account.region
+            )
 
         # Use PermissionService to check permissions
         permission_service = PermissionService()
@@ -282,6 +431,27 @@ class AccountService:
 
         return SecureCredentialStore.store_aws_credentials(
             request.accountId, request.accessKey, request.secretKey
+        )
+
+    def _store_profile_credentials_secure(self, request: CreateAccountRequest) -> bool:
+        """
+        Store profile-based credentials securely.
+        For profiles, we store a placeholder since credentials come from AWS CLI.
+
+        Args:
+            request: Account creation request
+
+        Returns:
+            True if successful
+        """
+        if not request.profile:
+            logger.error("Profile name is required for profile-based auth")
+            return False
+
+        # Store profile name as both access key and secret key for identification
+        # Actual credentials will be retrieved from AWS CLI when needed
+        return SecureCredentialStore.store_aws_credentials(
+            request.accountId, request.profile, "profile-based-auth"
         )
 
     def _store_gcp_credentials_secure(self, request: CreateAccountRequest) -> bool:
@@ -359,9 +529,27 @@ class AccountService:
     def _test_aws_connection(self, account: Account) -> bool:
         """Test AWS connection."""
         try:
-            session = self.config.get_aws_session(
-                profile=account.accountId, region=account.region
+            # Check if this is a profile-based account
+            account_db = (
+                self.db.query(AccountDB).filter(AccountDB.id == account.id).first()
             )
+            if (
+                account_db
+                and account_db.aws_profile
+                and account_db.aws_profile != account.accountId
+            ):
+                # This is a profile-based account, use AWS CLI profile
+                import boto3
+
+                session = boto3.Session(
+                    profile_name=account_db.aws_profile, region_name=account.region
+                )
+            else:
+                # Use keychain-based credentials
+                session = self.config.get_aws_session(
+                    profile=account.accountId, region=account.region
+                )
+
             sts = session.client("sts")
             identity = sts.get_caller_identity()
             logger.info(f"AWS connection successful: {identity['Account']}")
@@ -419,6 +607,22 @@ class AccountService:
             images=0,
         )
 
+        # Try to get account alias for AWS accounts
+        account_alias = None
+        if account_db.platform == "aws" and account_db.last_synced:
+            try:
+                # Get account alias using existing session
+                session = self.config.get_aws_session(
+                    profile=account_db.account_id, region=account_db.region
+                )
+                iam_client = session.client("iam")
+                aliases = iam_client.list_account_aliases()
+                if aliases.get("AccountAliases"):
+                    account_alias = aliases["AccountAliases"][0]
+            except Exception as e:
+                logger.debug(f"Could not fetch account alias: {e}")
+                account_alias = None
+
         return Account(
             id=account_db.id,
             name=account_db.name,
@@ -433,4 +637,5 @@ class AccountService:
             if account_db.last_synced
             else "",
             resourceCount=resource_count,
+            accountAlias=account_alias,  # Add account alias
         )

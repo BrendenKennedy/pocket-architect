@@ -25,6 +25,44 @@ from pocket_architect.utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 
+def redact_sensitive_data(data: dict) -> dict:
+    """
+    Redact sensitive information from data for safe logging.
+
+    Args:
+        data: Dictionary that may contain sensitive information
+
+    Returns:
+        Dictionary with sensitive fields redacted
+    """
+    if not isinstance(data, dict):
+        return data
+
+    redacted = data.copy()
+    sensitive_fields = [
+        "accessKey",
+        "secretKey",
+        "password",
+        "token",
+        "key",
+        "secret",
+        "credentials",
+        "auth",
+        "apikey",
+        "api_key",
+    ]
+
+    for field in sensitive_fields:
+        if field in redacted:
+            if isinstance(redacted[field], str) and len(redacted[field]) > 4:
+                # Show first 4 and last 4 characters with *** in between
+                redacted[field] = redacted[field][:4] + "***" + redacted[field][-4:]
+            else:
+                redacted[field] = "***REDACTED***"
+
+    return redacted
+
+
 class BackendBridge(QObject):
     """Bridge object exposed to JavaScript via QWebChannel."""
 
@@ -119,7 +157,9 @@ class BackendBridge(QObject):
         """Create new project."""
         try:
             data = json.loads(project_data)
-            logger.info(f"create_project called with data={data}")
+            logger.info(
+                f"create_project called with data={redact_sensitive_data(data)}"
+            )
 
             # Get region from data or use default
             region = data.get("region", "us-east-1")
@@ -191,26 +231,70 @@ class BackendBridge(QObject):
             logger.error(f"Failed to list AWS profiles: {e}")
             return json.dumps([])
 
-    @Slot(str, result=str)
-    def get_aws_profile_credentials(self, profile_name: str) -> str:
-        """Get AWS credentials for a specific profile."""
+    @Slot(str, str, result=str)
+    def validate_aws_profile(self, profile_name: str, region: str) -> str:
+        """Validate AWS CLI profile and return account information."""
         try:
             import boto3
+            from botocore.exceptions import (
+                NoCredentialsError,
+                PartialCredentialsError,
+                ClientError,
+            )
+
+            logger.info(f"Validating AWS profile: {profile_name}")
 
             session = boto3.Session(profile_name=profile_name)
             credentials = session.get_credentials()
-            if credentials:
+            if not credentials:
+                return json.dumps(
+                    {"success": False, "error": "No credentials found for profile"}
+                )
+
+            # Test the credentials by making a call
+            sts_client = session.client("sts", region_name=region)
+            response = sts_client.get_caller_identity()
+            account_id = response["Account"]
+
+            # Return account info without exposing credentials
+            return json.dumps(
+                {
+                    "success": True,
+                    "accountId": account_id,
+                    "profile": profile_name,
+                    "region": region,
+                }
+            )
+
+        except (NoCredentialsError, PartialCredentialsError) as e:
+            logger.error(f"Invalid credentials for profile {profile_name}: {e}")
+            return json.dumps({"success": False, "error": "Invalid AWS credentials"})
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "InvalidClientTokenId":
                 return json.dumps(
                     {
-                        "access_key": credentials.access_key,
-                        "secret_key": credentials.secret_key,
+                        "success": False,
+                        "error": "AWS credentials are invalid or expired",
+                    }
+                )
+            elif error_code == "UnauthorizedOperation":
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": "Insufficient permissions - need sts:GetCallerIdentity",
                     }
                 )
             else:
-                return json.dumps({})
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": f"AWS API error: {e.response['Error']['Message']}",
+                    }
+                )
         except Exception as e:
-            logger.error(f"Failed to get credentials for profile {profile_name}: {e}")
-            return json.dumps({})
+            logger.error(f"Failed to validate profile {profile_name}: {e}")
+            return json.dumps({"success": False, "error": str(e)})
 
     @Slot(str, str, str, result=str)
     def validate_aws_credentials(
@@ -367,7 +451,9 @@ class BackendBridge(QObject):
         """Create new instance."""
         try:
             data = json.loads(instance_data)
-            logger.info(f"create_instance called with data={data}")
+            logger.info(
+                f"create_instance called with data={redact_sensitive_data(data)}"
+            )
 
             # Get region from data or use default
             region = data.get("region", "us-east-1")
@@ -500,7 +586,9 @@ class BackendBridge(QObject):
         """Create new account."""
         try:
             data = json.loads(account_data)
-            logger.info(f"create_account called with data={data}")
+            logger.info(
+                f"create_account called with data={redact_sensitive_data(data)}"
+            )
 
             # Get region from data or use default
             region = data.get("region", "us-east-1")
@@ -517,6 +605,25 @@ class BackendBridge(QObject):
         except Exception as e:
             logger.error(f"Failed to create account: {e}")
             self.error_occurred.emit("create_account", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(int, result=str)
+    def disconnect_account(self, account_id: int) -> str:
+        """Mark account as disconnected."""
+        try:
+            logger.info(f"disconnect_account called with id={account_id}")
+            manager = self._get_manager()
+            manager.disconnect_account(account_id)
+
+            # Emit signal to update frontend
+            self.data_updated.emit("accounts", "disconnected")
+
+            return json.dumps(
+                {"success": True, "message": "Account disconnected successfully"}
+            )
+        except Exception as e:
+            logger.error(f"Failed to disconnect account {account_id}: {e}")
+            self.error_occurred.emit("disconnect_account", str(e))
             return json.dumps({"success": False, "error": str(e)})
 
     @Slot(int, result=str)
