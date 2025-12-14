@@ -255,7 +255,7 @@ class BridgeAPI {
   // QUOTAS
   // ========================================================================
 
-  async getQuotas(): Promise<{ categories: any[] }> {
+  async getQuotas(): Promise<any[]> {
     const bridge = getBridge();
     const result = await bridge.get_quotas();
     return JSON.parse(result);

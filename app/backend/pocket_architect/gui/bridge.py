@@ -678,16 +678,31 @@ class BackendBridge(QObject):
     # ========================================================================
 
     @Slot(result=str)
-    def list_key_pairs(self) -> str:
-        """List all key pairs."""
+    def get_quotas(self) -> str:
+        """Get AWS quotas."""
+        logger.info("get_quotas method called")
         try:
-            logger.info("list_key_pairs called")
+            logger.info("get_quotas called - getting manager")
             manager = self._get_manager()
-            key_pairs = manager.list_key_pairs()
-            return json.dumps(key_pairs)
+            logger.info("Manager obtained, importing quota service")
+            from pocket_architect.services.quota_service import QuotaService
+
+            logger.info("Creating quota service")
+            quota_service = QuotaService(manager)
+            logger.info("Calling get_quotas")
+            quotas = quota_service.get_quotas("aws")
+            logger.info(f"Returning {len(quotas)} quota categories")
+            for cat in quotas[:2]:  # Log first 2 categories
+                logger.info(
+                    f"Category: {cat.get('category', 'unknown')} with {len(cat.get('quotas', []))} quotas"
+                )
+            return json.dumps(quotas)
         except Exception as e:
-            logger.error(f"Failed to list key pairs: {e}")
-            self.error_occurred.emit("list_key_pairs", str(e))
+            logger.error(f"Failed to get quotas: {e}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            self.error_occurred.emit("get_quotas", str(e))
             return json.dumps([])
 
     @Slot(str, result=str)
@@ -886,10 +901,10 @@ class BackendBridge(QObject):
         """Get AWS quotas."""
         try:
             logger.info("get_quotas called")
-            manager = self._get_manager()
-            # This would need to be implemented in the manager
-            # For now, return mock data
-            return json.dumps([])
+            from pocket_architect.lib.quotas import generate_flat_quota_data
+
+            quotas = generate_flat_quota_data("aws")
+            return json.dumps(quotas)
         except Exception as e:
             logger.error(f"Failed to get quotas: {e}")
             self.error_occurred.emit("get_quotas", str(e))

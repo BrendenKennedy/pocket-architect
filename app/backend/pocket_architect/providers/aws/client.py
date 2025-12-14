@@ -69,6 +69,7 @@ class AWSClient:
         self._sts = None
         self._iam = None
         self._acm = None  # Certificate Manager
+        self._servicequotas = None  # Service Quotas
 
         logger.info(f"AWSClient initialized for region: {region}")
 
@@ -113,6 +114,14 @@ class AWSClient:
             self._acm = self.session.client("acm")
             logger.debug("ACM client initialized")
         return self._acm
+
+    @property
+    def servicequotas(self):
+        """Get Service Quotas client (lazy initialization)."""
+        if self._servicequotas is None:
+            self._servicequotas = self.session.client("servicequotas")
+            logger.debug("Service Quotas client initialized")
+        return self._servicequotas
 
     def get_client(self, service_name: str, region: Optional[str] = None):
         """

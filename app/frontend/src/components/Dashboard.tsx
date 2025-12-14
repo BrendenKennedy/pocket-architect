@@ -1,4 +1,5 @@
 import { RefreshCw, Server, Box, Key, Activity, Play, AlertCircle, CheckCircle2, XCircle, Clock, Terminal, Cpu, HardDrive, Network, Wifi, WifiOff, Zap, Database, Globe, AlertTriangle, Info, DollarSign, Eye, Settings } from 'lucide-react';
+import { RefreshCw, Server, Box, Key, Activity, Play, AlertCircle, CheckCircle2, XCircle, Clock, Terminal, Cpu, HardDrive, Network, Wifi, WifiOff, Zap, Database, Globe, AlertTriangle, Info, DollarSign, Eye, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { LayoutDashboard } from 'lucide-react';
 import { Card } from './ui/card';
@@ -15,7 +16,7 @@ import { BudgetBar } from './BudgetBar';
 import { CircularProgress } from './ui/circular-progress';
 import { NeonDot, StatusNeonDot } from './ui/neon-dot';
 import { StatusBadge } from './ui/status-badge';
-import { type QuotaCategory } from '../lib/quotas';
+import { type FlatQuotaCategory } from '../lib/quotas';
 import { Checkbox } from './ui/checkbox';
 import { bridgeApi } from '../bridge/api';
 import { getResourceColor, getQuotaStatus, getProjectColor } from '../lib/colors';
@@ -71,7 +72,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
   const [initialQuotaSelections, setInitialQuotaSelections] = useState<Record<string, string[]>>({});
 
   // Quota data state
-  const [allAvailableQuotas, setAllAvailableQuotas] = useState<QuotaCategory[]>([]);
+  const [allAvailableQuotas, setAllAvailableQuotas] = useState<FlatQuotaCategory[]>([]);
   const [quotasLoading, setQuotasLoading] = useState(true);
 
   // Load config on mount
@@ -91,6 +92,23 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
     loadDashboardConfig();
   }, []);
 
+  // Load quotas on mount
+  useEffect(() => {
+    const loadQuotas = async () => {
+      try {
+        setQuotasLoading(true);
+        const quotaData = await bridgeApi.getQuotas();
+        setAllAvailableQuotas(quotaData);
+      } catch (error) {
+        console.error('Failed to load quotas:', error);
+        setAllAvailableQuotas([]);
+      } finally {
+        setQuotasLoading(false);
+      }
+    };
+    loadQuotas();
+  }, []);
+
   // Initialize with all quotas selected if no saved selections exist
   useEffect(() => {
     if (allAvailableQuotas.length > 0 && !quotasLoading && Object.keys(selectedQuotaCategories).length === 0) {
@@ -106,7 +124,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
   const filteredQuotas = useMemo(() => {
     return allAvailableQuotas.map(category => ({
       ...category,
-      quotas: category.quotas.filter(quota => 
+      quotas: category.quotas.filter(quota =>
         selectedQuotaCategories[category.category]?.includes(quota.name)
       )
     })).filter(category => category.quotas.length > 0);
@@ -116,7 +134,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
     setSelectedQuotaCategories(prev => {
       const categoryQuotas = prev[categoryName] || [];
       const isSelected = categoryQuotas.includes(quotaName);
-      
+
       return {
         ...prev,
         [categoryName]: isSelected
@@ -129,10 +147,10 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
   const handleToggleCategory = (categoryName: string) => {
     const category = allAvailableQuotas.find(c => c.category === categoryName);
     if (!category) return;
-    
+
     const categoryQuotas = selectedQuotaCategories[categoryName] || [];
     const allSelected = categoryQuotas.length === category.quotas.length;
-    
+
     setSelectedQuotaCategories(prev => ({
       ...prev,
       [categoryName]: allSelected ? [] : category.quotas.map(q => q.name)
@@ -216,13 +234,13 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <h3 className="text-lg text-text-primary">
-              Service Quotas & Limits 
+              Service Quotas & Limits
               <span className="text-sm text-muted-foreground ml-2">
                 ({selectedPlatform.toUpperCase()})
               </span>
             </h3>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setQuotaSelectorOpen(true)}
               className="h-7"
@@ -240,7 +258,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             {quotasLoading ? 'Loading...' : quotaCritical > 0 ? `${quotaCritical} Critical` : quotaWarnings > 0 ? `${quotaWarnings} Warning` : 'All Normal'}
           </Badge>
         </div>
-        
+
         {/* Peg Board Rows */}
         <div className="space-y-3">
           {quotasLoading ? (
@@ -258,34 +276,34 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
               {category.quotas.map((quota, index) => {
                 const status = getQuotaStatus(quota.used, quota.limit);
                 const percentage = (quota.used / quota.limit) * 100;
-                
+
                 // Create an array of "pegs" representing each resource unit
                 const pegs = [];
-                
+
                 // First, add filled pegs for each project
                 for (const usage of quota.usedBy) {
                   for (let i = 0; i < usage.count; i++) {
                     pegs.push({ color: usage.color, filled: true, project: usage.project });
                   }
                 }
-                
+
                 // Then add empty pegs for available resources
                 const available = quota.limit - quota.used;
                 for (let i = 0; i < available; i++) {
                   pegs.push({ color: '#3F3F46', filled: false, project: null });
                 }
-                
+
                 return (
                   <div key={index} className="flex items-center gap-4 py-2 px-3 bg-background/50 rounded-lg border border-border hover:bg-accent/30 transition-colors">
                     {/* Quota Name and Status Indicator */}
                     <div className="flex items-center gap-2 min-w-[200px] flex-shrink-0">
-                      <StatusNeonDot 
+                      <StatusNeonDot
                         status={percentage >= 90 ? 'error' : percentage >= 70 ? 'warning' : 'success'}
                         size="md"
                       />
                       <span className="text-sm font-medium">{quota.name}</span>
                     </div>
-                    
+
                     {/* Peg Board - Single Row */}
                     <div className="flex-1 flex flex-wrap items-center gap-1.5">
                       {pegs.map((peg, i) => (
@@ -299,7 +317,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                         />
                       ))}
                     </div>
-                    
+
                     {/* Stats */}
                     <div className="flex items-center gap-3 text-xs flex-shrink-0 min-w-[160px] justify-end">
                       <span style={{ color: status.color }}>
@@ -327,9 +345,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             </div>
             <StatusBadge status="operational" label="Live" size="sm" />
           </div>
-           <div className="text-muted-foreground mb-1">Running Instances</div>
-           <div className="text-4xl mb-2">{loading ? '...' : runningInstances}</div>
-           <div className="text-xs text-muted-foreground">{loading ? 'Loading...' : `${stoppedInstances} stopped • ${launchingInstances} launching`}</div>
+            <div className="text-muted-foreground mb-1">Running Instances</div>
+            <div className="text-4xl mb-2">{loading ? '...' : runningInstances}</div>
+            <div className="text-xs text-muted-foreground">{loading ? 'Loading...' : `${stoppedInstances} stopped • ${launchingInstances} launching`}</div>
         </Card>
 
         <Card className="bg-card border-border p-6">
@@ -339,9 +357,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             </div>
             <StatusBadge status="active" label="Active" size="sm" />
           </div>
-           <div className="text-muted-foreground mb-1">SSH Sessions</div>
-           <div className="text-4xl mb-2">0</div>
-           <div className="text-xs text-muted-foreground">No active sessions</div>
+            <div className="text-muted-foreground mb-1">SSH Sessions</div>
+            <div className="text-4xl mb-2">0</div>
+            <div className="text-xs text-muted-foreground">No active sessions</div>
         </Card>
 
         <Card className="bg-card border-border p-6">
@@ -351,9 +369,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             </div>
             <StatusBadge status="success" label="OK" size="sm" />
           </div>
-           <div className="text-muted-foreground mb-1">Health Checks</div>
-           <div className="text-4xl mb-2">{loading ? '...' : `${healthyInstances}/${totalInstances}`}</div>
-           <div className="text-xs text-muted-foreground">{loading ? 'Loading...' : `${degradedInstances} degraded • ${errorInstances} failing`}</div>
+            <div className="text-muted-foreground mb-1">Health Checks</div>
+            <div className="text-4xl mb-2">{loading ? '...' : `${healthyInstances}/${totalInstances}`}</div>
+            <div className="text-xs text-muted-foreground">{loading ? 'Loading...' : `${degradedInstances} degraded • ${errorInstances} failing`}</div>
         </Card>
 
         <Card className="bg-card border-border p-6">
@@ -363,9 +381,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             </div>
             <StatusBadge status="connected" label="Connected" size="sm" />
           </div>
-          <div className="text-muted-foreground mb-1">Regions Online</div>
-          <div className="text-4xl mb-2">4/4</div>
-          <div className="text-xs text-muted-foreground">All operational</div>
+           <div className="text-muted-foreground mb-1">Regions Online</div>
+           <div className="text-4xl mb-2">4/4</div>
+           <div className="text-xs text-muted-foreground">All operational</div>
         </Card>
       </div>
 
@@ -397,8 +415,8 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                     }
                     <span className="text-sm font-medium">{network.region}</span>
                   </div>
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className={`text-xs ${
                       network.status === 'operational'
                         ? 'border-success/50 text-success'
@@ -557,6 +575,107 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
         </div>
       </Card>
 
+      {/* Quota Selector Wizard */}
+      <CreationWizard
+        open={quotaSelectorOpen}
+        onOpenChange={setQuotaSelectorOpen}
+        title="Select Quotas to Track"
+        description="Choose which resource quotas you want to monitor on your dashboard"
+        icon={Eye}
+        onNext={handleSaveQuotaSelection}
+        onCancel={() => setQuotaSelectorOpen(false)}
+        nextLabel="Save Selection"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <div className="text-sm">
+              <span className="font-medium">{Object.values(selectedQuotaCategories).flat().length}</span>
+              <span className="text-muted-foreground ml-1">of</span>
+              <span className="font-medium ml-1">{allAvailableQuotas.flatMap(c => c.quotas).length}</span>
+              <span className="text-muted-foreground ml-1">quotas selected</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const allSelected = Object.values(selectedQuotaCategories).flat().length === allAvailableQuotas.flatMap(c => c.quotas).length;
+                if (allSelected) {
+                  // Deselect all
+                  setSelectedQuotaCategories({});
+                } else {
+                  // Select all
+                  const allSelections: Record<string, string[]> = {};
+                  allAvailableQuotas.forEach(category => {
+                    allSelections[category.category] = category.quotas.map(q => q.name);
+                  });
+                  setSelectedQuotaCategories(allSelections);
+                }
+              }}
+            >
+              {Object.values(selectedQuotaCategories).flat().length === allAvailableQuotas.flatMap(c => c.quotas).length ? 'Deselect All' : 'Select All'}
+            </Button>
+          </div>
+
+          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+            {allAvailableQuotas.map((category) => {
+              const categoryQuotas = selectedQuotaCategories[category.category] || [];
+              const allCategorySelected = categoryQuotas.length === category.quotas.length;
+              const someCategorySelected = categoryQuotas.length > 0 && !allCategorySelected;
+
+              return (
+                <Card key={category.category} className="bg-muted border-border p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Checkbox
+                      checked={allCategorySelected}
+                      onCheckedChange={() => handleToggleCategory(category.category)}
+                      className={someCategorySelected ? 'data-[state=checked]:bg-primary/50' : ''}
+                    />
+                    <div className="flex-1">
+                      <h4 className="font-medium">{category.category}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {categoryQuotas.length} of {category.quotas.length} selected
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 ml-7">
+                    {category.quotas.map((quota) => {
+                      const isSelected = categoryQuotas.includes(quota.name);
+                      const percentage = (quota.used / quota.limit) * 100;
+
+                      return (
+                        <div
+                          key={quota.name}
+                          className="flex items-center gap-3 p-2 rounded hover:bg-background/50 transition-colors"
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => handleToggleQuota(category.category, quota.name)}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <StatusNeonDot
+                                status={percentage >= 90 ? 'error' : percentage >= 70 ? 'warning' : 'success'}
+                                size="sm"
+                              />
+                              <span className="text-sm">{quota.name}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground whitespace-nowrap">
+                            {quota.used}/{quota.limit}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </CreationWizard>
+
       {/* Project Detail Wizard */}
       {detailProject && (
         <CreationWizard
@@ -618,10 +737,10 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                         ${detailProject.currentCost.toFixed(2)} / ${detailProject.limit.toFixed(2)}
                       </span>
                     </div>
-                    <Progress 
-                      value={Math.min((detailProject.currentCost / detailProject.limit) * 100, 100)} 
-                      className="h-3" 
-                      indicatorClassName={getProgressColor(detailProject.currentCost / detailProject.limit)} 
+                    <Progress
+                      value={Math.min((detailProject.currentCost / detailProject.limit) * 100, 100)}
+                      className="h-3"
+                      indicatorClassName={getProgressColor(detailProject.currentCost / detailProject.limit)}
                     />
                     <div className="flex justify-between text-xs text-text-muted mt-1">
                       <span>$0</span>
@@ -657,7 +776,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                     <div className="text-3xl mb-1">
                       {detailProject.hourlyRate > 0 && (detailProject.limit - detailProject.currentCost) > 0
                         ? `${Math.floor((detailProject.limit - detailProject.currentCost) / detailProject.hourlyRate)}h ${Math.floor((((detailProject.limit - detailProject.currentCost) / detailProject.hourlyRate) % 1) * 60)}m`
-                        : detailProject.hourlyRate > 0 
+                        : detailProject.hourlyRate > 0
                         ? 'Limit Exceeded'
                         : '∞'
                       }
@@ -755,7 +874,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                   <div className="text-sm text-warning">
                     <div className="font-semibold mb-1">Important</div>
                     <div>
-                      Automated actions like "Stop Resources" and "Teardown Project" will execute immediately when the limit is reached. 
+                      Automated actions like "Stop Resources" and "Teardown Project" will execute immediately when the limit is reached.
                       Make sure your limit is set appropriately to avoid unexpected interruptions.
                     </div>
                   </div>
@@ -765,107 +884,6 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
           </Tabs>
         </CreationWizard>
       )}
-
-      {/* Quota Selector Wizard */}
-      <CreationWizard
-        open={quotaSelectorOpen}
-        onOpenChange={setQuotaSelectorOpen}
-        title="Select Quotas to Track"
-        description="Choose which resource quotas you want to monitor on your dashboard"
-        icon={Eye}
-        onNext={handleSaveQuotaSelection}
-        onCancel={() => setQuotaSelectorOpen(false)}
-        nextLabel="Save Selection"
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-            <div className="text-sm">
-              <span className="font-medium">{Object.values(selectedQuotaCategories).flat().length}</span>
-              <span className="text-muted-foreground ml-1">of</span>
-              <span className="font-medium ml-1">{allAvailableQuotas.flatMap(c => c.quotas).length}</span>
-              <span className="text-muted-foreground ml-1">quotas selected</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const allSelected = Object.values(selectedQuotaCategories).flat().length === allAvailableQuotas.flatMap(c => c.quotas).length;
-                if (allSelected) {
-                  // Deselect all
-                  setSelectedQuotaCategories({});
-                } else {
-                  // Select all
-                  const allSelections: Record<string, string[]> = {};
-                  allAvailableQuotas.forEach(category => {
-                    allSelections[category.category] = category.quotas.map(q => q.name);
-                  });
-                  setSelectedQuotaCategories(allSelections);
-                }
-              }}
-            >
-              {Object.values(selectedQuotaCategories).flat().length === allAvailableQuotas.flatMap(c => c.quotas).length ? 'Deselect All' : 'Select All'}
-            </Button>
-          </div>
-
-          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-            {allAvailableQuotas.map((category) => {
-              const categoryQuotas = selectedQuotaCategories[category.category] || [];
-              const allCategorySelected = categoryQuotas.length === category.quotas.length;
-              const someCategorySelected = categoryQuotas.length > 0 && !allCategorySelected;
-              
-              return (
-                <Card key={category.category} className="bg-muted border-border p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Checkbox
-                      checked={allCategorySelected}
-                      onCheckedChange={() => handleToggleCategory(category.category)}
-                      className={someCategorySelected ? 'data-[state=checked]:bg-primary/50' : ''}
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium">{category.category}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {categoryQuotas.length} of {category.quotas.length} selected
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2 ml-7">
-                    {category.quotas.map((quota) => {
-                      const isSelected = categoryQuotas.includes(quota.name);
-                      const percentage = (quota.used / quota.limit) * 100;
-                      
-                      return (
-                        <div 
-                          key={quota.name}
-                          className="flex items-center gap-3 p-2 rounded hover:bg-background/50 transition-colors"
-                        >
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => handleToggleQuota(category.category, quota.name)}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <StatusNeonDot 
-                                status={percentage >= 90 ? 'error' : percentage >= 70 ? 'warning' : 'success'}
-                                size="sm"
-                              />
-                              <span className="text-sm">{quota.name}</span>
-                            </div>
-                          </div>
-                          <div className="text-xs text-muted-foreground whitespace-nowrap">
-                            {quota.used}/{quota.limit}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </CreationWizard>
     </div>
   );
 }
