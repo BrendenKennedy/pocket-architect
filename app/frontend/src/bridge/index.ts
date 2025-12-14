@@ -171,7 +171,7 @@ function createMockBridge(): BackendBridge {
     start_dashboard_service: () => Promise.resolve(JSON.stringify({ success: true })),
     stop_dashboard_service: () => Promise.resolve(JSON.stringify({ success: true })),
     get_dashboard_data: () => mockResponse({}),
-    refresh_dashboard_data: () => Promise.resolve(JSON.stringify({ success: true })),
+    refresh_dashboard_data: () => Promise.resolve(JSON.stringify({ success: true, message: "Data refreshed" })),
     get_dashboard_status: () => mockResponse({}),
 
     // SSH methods

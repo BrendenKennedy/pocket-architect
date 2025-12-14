@@ -284,6 +284,10 @@ class AccountService:
                     account_db.last_synced = datetime.utcnow()
                     account_db.status = "connected"
                     self.db.commit()
+
+                    # Trigger quota data refresh for the newly connected account
+                    self._trigger_quota_refresh(account_id)
+
                 return True
             else:
                 # Auto-disconnect on failure
@@ -295,6 +299,51 @@ class AccountService:
             # Auto-disconnect on exception
             self.disconnect_account(account_id)
             return False
+
+    def _trigger_quota_refresh(self, account_id: int) -> None:
+        """
+        Trigger quota data refresh for a newly connected account.
+
+        Args:
+            account_id: The account ID that was successfully connected
+        """
+        try:
+            logger.info(f"Triggering quota data refresh for account {account_id}")
+
+            # Import here to avoid circular imports
+            from pocket_architect.services.dashboard_refresh_service import (
+                DashboardRefreshService,
+            )
+            from pocket_architect.core.manager import ResourceManager
+            from pocket_architect.db.session import get_db
+
+            # Get account details
+            account = self.get_account(account_id)
+
+            # Create manager with account credentials
+            manager = ResourceManager(
+                region=account.region, profile=getattr(account, "profile_name", None)
+            )
+
+            # Create dashboard service instance
+            db_session = get_db()
+            dashboard_service = DashboardRefreshService(
+                aws_client=manager.aws.client,
+                db_session=db_session,
+                account_id=account_id,
+                region=account.region,
+            )
+
+            # Trigger quota refresh
+            dashboard_service._refresh_quotas()
+
+            logger.info(f"Quota data refresh completed for account {account_id}")
+
+        except Exception as e:
+            logger.error(
+                f"Failed to trigger quota refresh for account {account_id}: {e}"
+            )
+            # Don't fail the connection test if quota refresh fails
 
     def disconnect_account(self, account_id: int) -> None:
         """

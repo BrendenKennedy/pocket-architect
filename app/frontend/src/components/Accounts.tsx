@@ -326,6 +326,15 @@ export function Accounts() {
       if (result.success && result.connected) {
         toast.success('✅ Connection successful!');
         await fetchAccounts(); // Refresh last synced timestamp
+
+        // Trigger quota data refresh for the newly connected account
+        try {
+          await bridgeApi.refreshDashboardData('quotas');
+          toast.info('🔄 Refreshing quota data...');
+        } catch (error) {
+          console.warn('Failed to trigger quota refresh:', error);
+          // Don't show error toast as this is not critical
+        }
       } else {
         // Auto-disconnect on failure
         await handleDisconnect(providerId);
