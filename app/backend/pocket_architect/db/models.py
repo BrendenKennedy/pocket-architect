@@ -129,6 +129,17 @@ class AccountDB(Base):
     azure_subscription_id = Column(String(255))
     azure_tenant_id = Column(String(255))
 
+    # Relationships
+    dashboard_cache = relationship(
+        "DashboardCache", back_populates="account", cascade="all, delete-orphan"
+    )
+    activity_logs = relationship(
+        "ActivityLog", back_populates="account", cascade="all, delete-orphan"
+    )
+    ssh_sessions = relationship(
+        "SSHSession", back_populates="account", cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return (
             f"<Account(id={self.id}, name='{self.name}', platform='{self.platform}')>"
@@ -280,3 +291,81 @@ class CertificateDB(Base):
 
     def __repr__(self):
         return f"<Certificate(id={self.id}, domain='{self.domain}')>"
+
+
+class DashboardCache(Base):
+    """Dashboard data cache for expensive AWS API calls."""
+
+    __tablename__ = "dashboard_cache"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    data_type = Column(
+        String(50), nullable=False, index=True
+    )  # 'instances', 'quotas', 'costs', 'health', 'ssh_sessions'
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False, index=True)
+    region = Column(String(50), nullable=False, index=True)
+    data = Column(JSON, nullable=False)  # Cached data as JSON
+    data_hash = Column(String(64), nullable=False)  # SHA256 hash for change detection
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+    expires_at = Column(DateTime, nullable=False)  # TTL expiration time
+
+    # Relationships
+    account = relationship("AccountDB", back_populates="dashboard_cache")
+
+    def __repr__(self):
+        return f"<DashboardCache(id={self.id}, type='{self.data_type}', account={self.account_id}, region='{self.region}')>"
+
+
+class ActivityLog(Base):
+    """Activity log for recent dashboard activity."""
+
+    __tablename__ = "activity_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False, index=True)
+    activity_type = Column(
+        String(50), nullable=False
+    )  # 'instance_start', 'instance_stop', 'cost_alert', etc.
+    resource_type = Column(
+        String(50), nullable=False
+    )  # 'instance', 'project', 'cost', etc.
+    resource_id = Column(String(100), nullable=False)  # AWS resource ID or local ID
+    description = Column(Text, nullable=False)
+    extra_data = Column(JSON, default=dict)  # Additional context data
+    severity = Column(
+        String(20), default="info"
+    )  # 'info', 'warning', 'error', 'success'
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Relationships
+    account = relationship("AccountDB", back_populates="activity_logs")
+
+    def __repr__(self):
+        return f"<ActivityLog(id={self.id}, type='{self.activity_type}', resource='{self.resource_id}')>"
+
+
+class SSHSession(Base):
+    """SSH session tracking for active connections."""
+
+    __tablename__ = "ssh_sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False, index=True)
+    instance_id = Column(String(100), nullable=False, index=True)
+    user = Column(String(100), nullable=False)
+    remote_ip = Column(String(45), nullable=False)  # IPv4/IPv6
+    local_port = Column(Integer, nullable=False)
+    remote_port = Column(Integer, nullable=False)
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    ended_at = Column(DateTime, nullable=True)
+    status = Column(String(20), default="active")  # 'active', 'ended', 'error'
+    session_id = Column(String(100), nullable=True)  # SSH session identifier
+
+    # Relationships
+    account = relationship("AccountDB", back_populates="ssh_sessions")
+
+    def __repr__(self):
+        return f"<SSHSession(id={self.id}, instance='{self.instance_id}', user='{self.user}', status='{self.status}')>"

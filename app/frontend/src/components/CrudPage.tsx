@@ -129,24 +129,43 @@ export function CrudPage<T extends Record<string, any>>({
   const data = isMultiTab ? tabData[activeTab] || [] : (tabData[activeTab] || []);
   const loading = isMultiTab ? tabLoading[activeTab] || false : (tabLoading[activeTab] || false);
 
-  // Per-tab filter hooks
-  const tabFilters = useMemo(() => {
-    const filters: Record<string, ReturnType<typeof useDataFilters>> = {};
-    tabConfigs.forEach(tab => {
-      filters[tab.key] = useDataFilters({
-        data: tabData[tab.key] || [],
-        searchFields: tab.filters?.searchFields || [],
-        filterFn: tab.filters?.filterOptions ? (item, filter) => {
-          // Apply filters based on config
-          return true; // TODO: Implement filter logic
-        } : undefined,
-      });
-    });
-    return filters;
-  }, [tabConfigs, tabData]);
+  // Create filter hooks for each tab - must be called unconditionally
+  const instancesFilter = useDataFilters({
+    data: tabData['instances'] || [],
+    searchFields: ['instanceId', 'name', 'state'],
+  });
+
+  const keyPairsFilter = useDataFilters({
+    data: tabData['keyPairs'] || [],
+    searchFields: ['keyName', 'keyFingerprint'],
+  });
+
+  const securityGroupsFilter = useDataFilters({
+    data: tabData['securityGroups'] || [],
+    searchFields: ['groupName', 'groupId', 'description'],
+  });
+
+  const iamRolesFilter = useDataFilters({
+    data: tabData['iamRoles'] || [],
+    searchFields: ['roleName', 'arn', 'description'],
+  });
+
+  const certificatesFilter = useDataFilters({
+    data: tabData['certificates'] || [],
+    searchFields: ['domainName', 'certificateArn', 'status'],
+  });
+
+  // Map tab keys to their filter hooks
+  const tabFilters = {
+    instances: instancesFilter,
+    keyPairs: keyPairsFilter,
+    securityGroups: securityGroupsFilter,
+    iamRoles: iamRolesFilter,
+    certificates: certificatesFilter,
+  };
 
   // Current tab's filter hook
-  const { searchQuery, setSearchQuery, filterValue, setFilterValue, filteredData } = tabFilters[activeTab] || {
+  const { searchQuery, setSearchQuery, filterValue, setFilterValue, filteredData } = tabFilters[activeTab as keyof typeof tabFilters] || {
     searchQuery: '',
     setSearchQuery: () => {},
     filterValue: '',
@@ -154,48 +173,131 @@ export function CrudPage<T extends Record<string, any>>({
     filteredData: []
   };
 
-  // Per-tab wizard hooks
-  const tabWizards = useMemo(() => {
-    const wizards: Record<string, ReturnType<typeof useWizard>> = {};
-    tabConfigs.forEach(tab => {
-      wizards[tab.key] = useWizard({
-        totalSteps: tab.wizard?.steps?.length || 0,
-        onComplete: async () => {
-          try {
-            const result = await tab.api.create(wizardData);
-            setTabData(prev => ({
-              ...prev,
-              [activeTab]: [...(prev[activeTab] || []), result]
-            }));
-            toast.success(`${tab.label} created successfully!`);
-            resetWizard();
-          } catch (error) {
-            toast.error(`Failed to create ${tab.label.toLowerCase()}`);
-            console.error('Create error:', error);
-          }
-        },
-        onCancel: () => {
-          resetWizard();
-          tab.wizard.onCancel?.();
-        },
-      });
-    });
-    return wizards;
-  }, [tabConfigs, activeTab]);
+  // Create wizard hooks for each tab - must be called unconditionally
+  const instancesWizard = useWizard({
+    totalSteps: 3, // Default steps
+    onComplete: async () => {
+      try {
+        const tab = tabConfigs.find(t => t.key === 'instances');
+        if (tab?.api?.create) {
+          const result = await tab.api.create(instancesWizard.wizardData);
+          setTabData(prev => ({
+            ...prev,
+            instances: [...(prev.instances || []), result]
+          }));
+          toast.success('Instance created successfully!');
+          instancesWizard.resetWizard();
+        }
+      } catch (error) {
+        toast.error('Failed to create instance');
+        console.error('Create error:', error);
+      }
+    },
+  });
 
-  // Current tab's wizard hook - provide safe fallback
-  const createWizard = tabWizards[activeTab] || {
-    isOpen: false,
-    setIsOpen: () => {},
-    currentStep: 1,
-    isFirstStep: true,
-    isLastStep: false,
+  const keyPairsWizard = useWizard({
+    totalSteps: 2,
+    onComplete: async () => {
+      try {
+        const tab = tabConfigs.find(t => t.key === 'keyPairs');
+        if (tab?.api?.create) {
+          const result = await tab.api.create(keyPairsWizard.wizardData);
+          setTabData(prev => ({
+            ...prev,
+            keyPairs: [...(prev.keyPairs || []), result]
+          }));
+          toast.success('Key pair created successfully!');
+          keyPairsWizard.resetWizard();
+        }
+      } catch (error) {
+        toast.error('Failed to create key pair');
+        console.error('Create error:', error);
+      }
+    },
+  });
+
+  const securityGroupsWizard = useWizard({
+    totalSteps: 3,
+    onComplete: async () => {
+      try {
+        const tab = tabConfigs.find(t => t.key === 'securityGroups');
+        if (tab?.api?.create) {
+          const result = await tab.api.create(securityGroupsWizard.wizardData);
+          setTabData(prev => ({
+            ...prev,
+            securityGroups: [...(prev.securityGroups || []), result]
+          }));
+          toast.success('Security group created successfully!');
+          securityGroupsWizard.resetWizard();
+        }
+      } catch (error) {
+        toast.error('Failed to create security group');
+        console.error('Create error:', error);
+      }
+    },
+  });
+
+  const iamRolesWizard = useWizard({
+    totalSteps: 3,
+    onComplete: async () => {
+      try {
+        const tab = tabConfigs.find(t => t.key === 'iamRoles');
+        if (tab?.api?.create) {
+          const result = await tab.api.create(iamRolesWizard.wizardData);
+          setTabData(prev => ({
+            ...prev,
+            iamRoles: [...(prev.iamRoles || []), result]
+          }));
+          toast.success('IAM role created successfully!');
+          iamRolesWizard.resetWizard();
+        }
+      } catch (error) {
+        toast.error('Failed to create IAM role');
+        console.error('Create error:', error);
+      }
+    },
+  });
+
+  const certificatesWizard = useWizard({
+    totalSteps: 2,
+    onComplete: async () => {
+      try {
+        const tab = tabConfigs.find(t => t.key === 'certificates');
+        if (tab?.api?.create) {
+          const result = await tab.api.create(certificatesWizard.wizardData);
+          setTabData(prev => ({
+            ...prev,
+            certificates: [...(prev.certificates || []), result]
+          }));
+          toast.success('Certificate created successfully!');
+          certificatesWizard.resetWizard();
+        }
+      } catch (error) {
+        toast.error('Failed to create certificate');
+        console.error('Create error:', error);
+      }
+    },
+  });
+
+  // Map tab keys to their wizard hooks
+  const tabWizards = {
+    instances: instancesWizard,
+    keyPairs: keyPairsWizard,
+    securityGroups: securityGroupsWizard,
+    iamRoles: iamRolesWizard,
+    certificates: certificatesWizard,
+  };
+
+  // Current tab's wizard hook
+  const { currentStep, nextStep, prevStep, resetWizard, isFirstStep, isLastStep, wizardData, setWizardData } = tabWizards[activeTab as keyof typeof tabWizards] || {
+    currentStep: 0,
     nextStep: () => {},
-    previousStep: () => {},
-    goToStep: () => {},
-    reset: () => {},
-    open: () => {},
-    cancel: () => {},
+    prevStep: () => {},
+    resetWizard: () => {},
+    isFirstStep: true,
+    isLastStep: true,
+    wizardData: {},
+    setWizardData: () => {},
   };
 
 
@@ -224,18 +326,15 @@ export function CrudPage<T extends Record<string, any>>({
     }
   };
 
-  const resetWizard = () => {
-    const currentData = currentTabConfig?.wizard.initialData || {};
-    setTabWizardData(prev => ({ ...prev, [activeTab]: currentData }));
-    createWizard.reset();
-  };
-
-  // Get current wizard data
-  const wizardData = tabWizardData[activeTab] || currentTabConfig?.wizard.initialData || {};
+  // Wizard data and functions are now provided by the tabWizards
 
   const handleCreate = () => {
     resetWizard();
-    createWizard.open();
+    // Open the current tab's wizard
+    const currentWizard = tabWizards[activeTab as keyof typeof tabWizards];
+    if (currentWizard) {
+      currentWizard.open();
+    }
   };
 
   const handleEdit = (item: T) => {
@@ -266,7 +365,7 @@ export function CrudPage<T extends Record<string, any>>({
 
   // Render wizard step content
   const renderWizardStep = () => {
-    const step = currentTabConfig?.wizard.steps[createWizard.currentStep - 1];
+    const step = currentTabConfig?.wizard.steps[currentStep - 1];
     if (!step) return null;
 
     return (
@@ -380,17 +479,27 @@ export function CrudPage<T extends Record<string, any>>({
         {/* Create Wizard */}
         {currentTabConfig && (
           <CreationWizard
-            open={createWizard.isOpen}
-            onOpenChange={createWizard.setIsOpen}
-            title={currentTabConfig?.wizard.title || config.wizard?.title || 'Create New Item'}
-            description={`Create a new ${currentTabConfig?.label?.slice(0, -1)?.toLowerCase() || config.title?.slice(0, -1)?.toLowerCase() || 'item'}`}
-            icon={currentTabConfig?.icon || config.icon}
-            currentStep={createWizard.currentStep}
-            totalSteps={currentTabConfig?.wizard.steps.length || config.wizard?.steps.length || 0}
-            onNext={createWizard.nextStep}
-            onPrevious={!createWizard.isFirstStep ? createWizard.previousStep : undefined}
-            onCancel={createWizard.cancel}
-            nextLabel={createWizard.isLastStep ? 'Create' : 'Next'}
+            open={tabWizards[activeTab as keyof typeof tabWizards]?.isOpen || false}
+            onOpenChange={(open) => {
+              const currentWizard = tabWizards[activeTab as keyof typeof tabWizards];
+              if (currentWizard) {
+                if (open) {
+                  currentWizard.open();
+                } else {
+                  currentWizard.close();
+                }
+              }
+            }}
+            currentStep={currentStep}
+            onNext={nextStep}
+            onPrevious={!isFirstStep ? prevStep : undefined}
+            onCancel={() => {
+              const currentWizard = tabWizards[activeTab as keyof typeof tabWizards];
+              if (currentWizard) {
+                currentWizard.cancel();
+              }
+            }}
+            nextLabel={isLastStep ? 'Create' : 'Next'}
             nextDisabled={false} // TODO: Add validation
             size="md"
           >

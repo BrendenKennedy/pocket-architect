@@ -53,6 +53,7 @@
       target: 'esnext',
       outDir: '../backend/pocket_architect/resources/frontend',
       emptyOutDir: true,
+      minify: false, // Disable minification for debugging
     },
     base: './',
     server: {

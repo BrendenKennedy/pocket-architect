@@ -73,6 +73,7 @@ class BackendBridge(QObject):
     def __init__(self):
         super().__init__()
         self._manager: Optional[ResourceManager] = None
+        self._dashboard_service = None
         logger.info("BackendBridge initialized")
 
     def _get_manager(self, region: str = "us-east-1") -> ResourceManager:
@@ -228,8 +229,224 @@ class BackendBridge(QObject):
             profiles = boto3.Session().available_profiles
             return json.dumps(profiles)
         except Exception as e:
-            logger.error(f"Failed to list AWS profiles: {e}")
+            logger.error(f"Failed to get quotas: {e}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            self.error_occurred.emit("get_quotas", str(e))
             return json.dumps([])
+
+    # ========================================================================
+    # DASHBOARD DATA MANAGEMENT
+    # ========================================================================
+
+    @Slot(str, result=str)
+    def start_dashboard_service(self, account_id: str = "") -> str:
+        """Start the dashboard refresh service."""
+        try:
+            logger.info("Starting dashboard refresh service")
+            from pocket_architect.db.session import get_db
+            from pocket_architect.services.dashboard_refresh_service import (
+                DashboardRefreshService,
+            )
+
+            db_session = get_db()
+
+            # If account_id is provided, get the account details
+            if account_id:
+                manager = self._get_manager()
+                account = manager.get_account(int(account_id))
+                # Create manager with the account's profile/region
+                manager = ResourceManager(
+                    region=account.region,
+                    profile=account.profile_name
+                    if hasattr(account, "profile_name")
+                    else None,
+                )
+            else:
+                manager = self._get_manager()
+
+            # Get account ID from AWS if not provided
+            try:
+                aws_account_id = manager.aws.client.get_caller_identity().get(
+                    "Account", "1"
+                )
+                account_id_num = int(account_id) if account_id else int(aws_account_id)
+            except Exception:
+                # Fallback if AWS call fails
+                account_id_num = 1
+
+            self._dashboard_service = DashboardRefreshService(
+                aws_client=manager.aws.client,
+                db_session=db_session,
+                account_id=account_id_num,
+                region=manager.region,
+            )
+            self._dashboard_service.start()
+
+            return json.dumps({"success": True, "message": "Dashboard service started"})
+        except Exception as e:
+            logger.error(f"Failed to start dashboard service: {e}")
+            self.error_occurred.emit("start_dashboard_service", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(result=str)
+    def stop_dashboard_service(self) -> str:
+        """Stop the dashboard refresh service."""
+        try:
+            logger.info("Stopping dashboard refresh service")
+            if self._dashboard_service:
+                self._dashboard_service.stop()
+                self._dashboard_service = None
+
+            return json.dumps({"success": True, "message": "Dashboard service stopped"})
+        except Exception as e:
+            logger.error(f"Failed to stop dashboard service: {e}")
+            self.error_occurred.emit("stop_dashboard_service", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def get_dashboard_data(self, data_type: str) -> str:
+        """
+        Get cached dashboard data.
+
+        Args:
+            data_type: Type of data ('instances', 'quotas', 'costs', 'health', 'ssh_sessions')
+        """
+        try:
+            logger.info(f"Getting dashboard data: {data_type}")
+
+            if not self._dashboard_service:
+                # Try to get cached data even if service isn't running
+                manager = self._get_manager()
+                from pocket_architect.db.session import get_db
+                from pocket_architect.services.dashboard_refresh_service import (
+                    DashboardRefreshService,
+                )
+
+                db_session = get_db()
+                account_id = manager.aws.client.get_caller_identity().get(
+                    "Account", "1"
+                )
+                temp_service = DashboardRefreshService(
+                    aws_client=manager.aws.client,
+                    db_session=db_session,
+                    account_id=int(account_id),
+                    region=manager.region,
+                )
+                data = temp_service.get_cached_data(data_type)
+            else:
+                data = self._dashboard_service.get_cached_data(data_type)
+
+            if data:
+                return json.dumps({"success": True, "data": data})
+            else:
+                return json.dumps(
+                    {"success": False, "error": "No cached data available"}
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to get dashboard data {data_type}: {e}")
+            self.error_occurred.emit("get_dashboard_data", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def refresh_dashboard_data(self, data_type: str) -> str:
+        """
+        Manually refresh specific dashboard data.
+
+        Args:
+            data_type: Type of data to refresh ('instances', 'quotas', 'costs', 'health', 'ssh_sessions')
+        """
+        try:
+            logger.info(f"Manually refreshing dashboard data: {data_type}")
+
+            if not self._dashboard_service:
+                return json.dumps(
+                    {"success": False, "error": "Dashboard service not running"}
+                )
+
+            # Trigger manual refresh based on data type
+            if data_type == "instances":
+                self._dashboard_service._refresh_instances()
+            elif data_type == "quotas":
+                self._dashboard_service._refresh_quotas()
+            elif data_type == "costs":
+                self._dashboard_service._refresh_costs()
+            elif data_type == "health":
+                self._dashboard_service._refresh_health()
+            elif data_type == "ssh_sessions":
+                self._dashboard_service._refresh_ssh_sessions()
+            else:
+                return json.dumps(
+                    {"success": False, "error": f"Unknown data type: {data_type}"}
+                )
+
+            return json.dumps(
+                {"success": True, "message": f"Refreshed {data_type} data"}
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to refresh dashboard data {data_type}: {e}")
+            self.error_occurred.emit("refresh_dashboard_data", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(result=str)
+    def get_dashboard_status(self) -> str:
+        """Get status of dashboard refresh service."""
+        try:
+            status = {
+                "service_running": self._dashboard_service is not None,
+                "cache_status": {},
+            }
+
+            if self._dashboard_service:
+                # Get cache status for each data type
+                from pocket_architect.db.session import get_db
+                from pocket_architect.db.models import DashboardCache
+                from datetime import datetime
+
+                db_session = get_db()
+                manager = self._get_manager()
+
+                for data_type in [
+                    "instances",
+                    "quotas",
+                    "costs",
+                    "health",
+                    "ssh_sessions",
+                ]:
+                    cache_entry = (
+                        db_session.query(DashboardCache)
+                        .filter(
+                            DashboardCache.data_type == data_type,
+                            DashboardCache.account_id
+                            == self._dashboard_service.account_id,
+                            DashboardCache.region == self._dashboard_service.region,
+                        )
+                        .first()
+                    )
+
+                    if cache_entry:
+                        is_expired = cache_entry.expires_at <= datetime.utcnow()
+                        status["cache_status"][data_type] = {
+                            "has_data": True,
+                            "expired": is_expired,
+                            "last_updated": cache_entry.updated_at.isoformat(),
+                            "expires_at": cache_entry.expires_at.isoformat(),
+                        }
+                    else:
+                        status["cache_status"][data_type] = {
+                            "has_data": False,
+                            "expired": True,
+                        }
+
+            return json.dumps({"success": True, "status": status})
+
+        except Exception as e:
+            logger.error(f"Failed to get dashboard status: {e}")
+            self.error_occurred.emit("get_dashboard_status", str(e))
+            return json.dumps({"success": False, "error": str(e)})
 
     @Slot(str, str, result=str)
     def validate_aws_profile(self, profile_name: str, region: str) -> str:
@@ -923,3 +1140,176 @@ class BackendBridge(QObject):
         except Exception as e:
             logger.error(f"Ping failed: {e}")
             return json.dumps({"status": "error", "message": str(e)})
+
+    # ========================================================================
+    # SSH SESSION MANAGEMENT
+    # ========================================================================
+
+    @Slot(str, str, str, str, result=str)
+    def start_ssh_session(
+        self, instance_id: str, user: str, remote_ip: str, session_id: str = ""
+    ) -> str:
+        """
+        Record the start of an SSH session.
+
+        Args:
+            instance_id: EC2 instance ID
+            user: SSH username
+            remote_ip: Client IP address
+            session_id: Optional session identifier
+
+        Returns:
+            Success status
+        """
+        try:
+            logger.info(f"Starting SSH session: {user}@{instance_id} from {remote_ip}")
+
+            manager = self._get_manager()
+            from pocket_architect.db.session import get_db
+            from pocket_architect.db.models import SSHSession
+
+            db_session = get_db()
+
+            # Create SSH session record
+            ssh_session = SSHSession(
+                account_id=manager.account_id,
+                instance_id=instance_id,
+                user=user,
+                remote_ip=remote_ip,
+                session_id=session_id
+                or f"{user}@{instance_id}_{datetime.utcnow().timestamp()}",
+                status="active",
+            )
+
+            db_session.add(ssh_session)
+            db_session.commit()
+
+            return json.dumps(
+                {
+                    "success": True,
+                    "session_id": ssh_session.session_id,
+                    "message": "SSH session started",
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to start SSH session: {e}")
+            self.error_occurred.emit("start_ssh_session", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(str, result=str)
+    def end_ssh_session(self, session_id: str) -> str:
+        """
+        Record the end of an SSH session.
+
+        Args:
+            session_id: SSH session identifier
+
+        Returns:
+            Success status
+        """
+        try:
+            logger.info(f"Ending SSH session: {session_id}")
+
+            from pocket_architect.db.session import get_db
+            from pocket_architect.db.models import SSHSession
+
+            db_session = get_db()
+
+            # Find and update the session
+            session = (
+                db_session.query(SSHSession)
+                .filter(SSHSession.session_id == session_id)
+                .first()
+            )
+
+            if session:
+                session.ended_at = datetime.utcnow()
+                session.status = "ended"
+                db_session.commit()
+
+                return json.dumps({"success": True, "message": "SSH session ended"})
+            else:
+                return json.dumps({"success": False, "error": "Session not found"})
+
+        except Exception as e:
+            logger.error(f"Failed to end SSH session: {e}")
+            self.error_occurred.emit("end_ssh_session", str(e))
+            return json.dumps({"success": False, "error": str(e)})
+
+    @Slot(result=str)
+    def get_ssh_sessions(self) -> str:
+        """
+        Get current SSH session status.
+
+        Returns:
+            SSH session data
+        """
+        try:
+            logger.info("Getting SSH sessions")
+
+            manager = self._get_manager()
+            from pocket_architect.db.session import get_db
+            from pocket_architect.db.models import SSHSession
+
+            db_session = get_db()
+
+            # Get active sessions
+            active_sessions = (
+                db_session.query(SSHSession)
+                .filter(
+                    SSHSession.status == "active",
+                    SSHSession.account_id == manager.account_id,
+                )
+                .all()
+            )
+
+            # Get recent sessions (last 24 hours)
+            recent_cutoff = datetime.utcnow() - timedelta(hours=24)
+            recent_sessions = (
+                db_session.query(SSHSession)
+                .filter(
+                    SSHSession.started_at >= recent_cutoff,
+                    SSHSession.account_id == manager.account_id,
+                )
+                .order_by(SSHSession.started_at.desc())
+                .limit(10)
+                .all()
+            )
+
+            session_data = {
+                "active_sessions": len(active_sessions),
+                "total_sessions_24h": len(recent_sessions),
+                "sessions": [
+                    {
+                        "id": s.id,
+                        "session_id": s.session_id,
+                        "instance_id": s.instance_id,
+                        "user": s.user,
+                        "remote_ip": s.remote_ip,
+                        "started_at": s.started_at.isoformat()
+                        if s.started_at
+                        else None,
+                        "status": s.status,
+                    }
+                    for s in active_sessions
+                ],
+                "recent_sessions": [
+                    {
+                        "instance_id": s.instance_id,
+                        "user": s.user,
+                        "started_at": s.started_at.isoformat()
+                        if s.started_at
+                        else None,
+                        "status": s.status,
+                    }
+                    for s in recent_sessions
+                ],
+            }
+
+            return json.dumps({"success": True, "data": session_data})
+
+        except Exception as e:
+            logger.error(f"Failed to get SSH sessions: {e}")
+            self.error_occurred.emit("get_ssh_sessions", str(e))
+            return json.dumps({"success": False, "error": str(e)})

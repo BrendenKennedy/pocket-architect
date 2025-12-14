@@ -32,22 +32,32 @@ function AppContent() {
 
   // Load config on mount
   useEffect(() => {
+    console.log('App: Loading config...');
     const loadAppConfig = async () => {
       try {
+        console.log('App: Calling loadConfig...');
         const config = await loadConfig();
-        setActivePage(config.ui.lastActivePage as Page || 'dashboard');
+        console.log('App: Config loaded successfully:', config);
+        const activePageValue = config.ui.lastActivePage as Page || 'dashboard';
+        console.log('App: Setting active page to:', activePageValue);
+        setActivePage(activePageValue);
         setSelectedPlatform(config.platform.selected as Platform || 'aws');
         setSelectedRegion(
           config.platform.defaultRegion[config.platform.selected as Platform] ||
           getDefaultRegion(config.platform.selected as Platform)
         );
+        console.log('App: Setting configLoaded to true');
         setConfigLoaded(true);
       } catch (error) {
-        console.error('Failed to load app config:', error);
+        console.error('App: Failed to load app config:', error);
+        console.log('App: Setting configLoaded to true with defaults due to error');
         setConfigLoaded(true); // Continue with defaults
       }
     };
-    loadAppConfig();
+    // For testing, just set configLoaded immediately
+    console.log('App: Setting configLoaded to true immediately for testing');
+    setConfigLoaded(true);
+    // loadAppConfig(); // Comment out for testing
   }, []);
 
   // Connection status for each provider
@@ -95,8 +105,10 @@ function AppContent() {
   };
 
   const renderPage = () => {
+    console.log('App: renderPage called, activePage:', activePage, 'configLoaded:', configLoaded);
     switch (activePage) {
       case 'dashboard':
+        console.log('App: Rendering Dashboard component');
         return <Dashboard selectedPlatform={selectedPlatform} />;
       case 'projects':
         return <Projects />;
@@ -117,6 +129,7 @@ function AppContent() {
       case 'learning':
         return <Learning />;
       default:
+        console.log('App: Rendering default Dashboard component');
         return <Dashboard />;
     }
   };

@@ -119,7 +119,7 @@ class AWSClient:
     def servicequotas(self):
         """Get Service Quotas client (lazy initialization)."""
         if self._servicequotas is None:
-            self._servicequotas = self.session.client("servicequotas")
+            self._servicequotas = self.session.client("service-quotas")
             logger.debug("Service Quotas client initialized")
         return self._servicequotas
 

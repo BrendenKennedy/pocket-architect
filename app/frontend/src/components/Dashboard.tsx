@@ -1,5 +1,4 @@
 import { RefreshCw, Server, Box, Key, Activity, Play, AlertCircle, CheckCircle2, XCircle, Clock, Terminal, Cpu, HardDrive, Network, Wifi, WifiOff, Zap, Database, Globe, AlertTriangle, Info, DollarSign, Eye, Settings } from 'lucide-react';
-import { RefreshCw, Server, Box, Key, Activity, Play, AlertCircle, CheckCircle2, XCircle, Clock, Terminal, Cpu, HardDrive, Network, Wifi, WifiOff, Zap, Database, Globe, AlertTriangle, Info, DollarSign, Eye, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { LayoutDashboard } from 'lucide-react';
 import { Card } from './ui/card';
@@ -51,14 +50,40 @@ interface DashboardProps {
 }
 
 export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
-  // Dashboard state - will be populated with real data from APIs
+  // Dashboard state - populated with live data from backend
   const [recentActivity, setRecentActivity] = useState([]);
   const [activeConnections, setActiveConnections] = useState([]);
   const [healthChecks, setHealthChecks] = useState([]);
   const [networkStatus, setNetworkStatus] = useState([]);
-  const [projectBudgets, setProjectBudgets] = useState([]);
   const [instances, setInstances] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Live data from backend cache
+  const [dashboardData, setDashboardData] = useState({
+    instances: { instances: [], total_count: 0, running_count: 0, stopped_count: 0, healthy_count: 0, unhealthy_count: 0 },
+    quotas: { quotas: [], categories_count: 0, total_quotas: 0 },
+    costs: { cost_summary: {}, project_costs: { projects: {} }, total_monthly_cost: 0 },
+    health: { instances: [], instance_health: {}, summary: { healthy_count: 0, warning_count: 0, error_count: 0, total_instances: 0 }, alarms: { summary: { OK: 0, ALARM: 0, INSUFFICIENT_DATA: 0 }, alarms: [] } },
+    ssh_sessions: { active_sessions: 0, total_sessions_24h: 0, sessions: [], recent_sessions: [] }
+  });
+
+  // Project budgets derived from live cost data
+  const projectBudgets = useMemo(() => {
+    const costData = dashboardData.costs;
+    if (!costData?.project_costs?.projects) return [];
+
+    const projectCosts = costData.project_costs.projects;
+
+    return Object.entries(projectCosts).map(([projectName, projectData]: [string, any], index) => ({
+      id: index + 1,
+      project: projectName,
+      currentCost: projectData.monthly_cost || 0,
+      limit: (projectData.monthly_cost || 0) * 1.2, // Estimate limit as 20% above current
+      instances: 0, // We don't have this data yet
+      hourlyRate: 0, // We don't have this data yet
+      action: 'warn_only'
+    }));
+  }, [dashboardData.costs]);
 
   const [detailWizardOpen, setDetailWizardOpen] = useState(false);
   const [detailProject, setDetailProject] = useState<ProjectBudget | null>(null);
@@ -92,43 +117,87 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
     loadDashboardConfig();
   }, []);
 
-  // Load quotas on mount
+  // Start dashboard service and load initial data
   useEffect(() => {
-    const loadQuotas = async () => {
+    console.log('Dashboard: Initializing...');
+    const initializeDashboard = async () => {
       try {
-        setQuotasLoading(true);
-        const quotaData = await bridgeApi.getQuotas();
-        setAllAvailableQuotas(quotaData);
+        console.log('Dashboard: Starting service...');
+        // Start the dashboard refresh service
+        await bridgeApi.startDashboardService();
+        console.log('Dashboard: Service started');
+
+        // Load initial data for all types
+        await loadAllDashboardData();
+        console.log('Dashboard: Data loaded');
+
+        setLoading(false);
       } catch (error) {
-        console.error('Failed to load quotas:', error);
-        setAllAvailableQuotas([]);
-      } finally {
-        setQuotasLoading(false);
+        console.error('Failed to initialize dashboard:', error);
+        setLoading(false);
       }
     };
-    loadQuotas();
+
+    initializeDashboard();
+
+    // Cleanup: stop dashboard service on unmount
+    return () => {
+      bridgeApi.stopDashboardService().catch(console.error);
+    };
   }, []);
+
+  // Load all dashboard data types
+  const loadAllDashboardData = async () => {
+    console.log('Dashboard: Loading all data...');
+    const dataTypes = ['instances', 'quotas', 'costs', 'health', 'ssh_sessions'];
+
+    for (const dataType of dataTypes) {
+      try {
+        console.log(`Dashboard: Loading ${dataType}...`);
+        const result = await bridgeApi.getDashboardData(dataType);
+        console.log(`Dashboard: ${dataType} result:`, result);
+        if (result && typeof result === 'object' && result.success && result.data && typeof result.data === 'object') {
+          setDashboardData(prev => ({
+            ...prev,
+            [dataType]: result.data
+          }));
+        } else {
+          console.log(`Dashboard: No valid data available for ${dataType}, keeping defaults. Result:`, result);
+        }
+      } catch (error) {
+        console.error(`Failed to load ${dataType} data:`, error);
+      }
+    }
+    console.log('Dashboard: All data loaded');
+  };
+
+  // Quotas are now loaded as part of dashboard data
 
   // Initialize with all quotas selected if no saved selections exist
   useEffect(() => {
-    if (allAvailableQuotas.length > 0 && !quotasLoading && Object.keys(selectedQuotaCategories).length === 0) {
+    const quotaData = dashboardData.quotas;
+    if (quotaData?.quotas && quotaData.quotas.length > 0 && Object.keys(selectedQuotaCategories).length === 0) {
       const initialSelections: Record<string, string[]> = {};
-      allAvailableQuotas.forEach(category => {
+      quotaData.quotas.forEach(category => {
         initialSelections[category.category] = category.quotas.map(q => q.name);
       });
       setSelectedQuotaCategories(initialSelections);
     }
-  }, [allAvailableQuotas, quotasLoading, selectedQuotaCategories]);
+  }, [dashboardData.quotas, selectedQuotaCategories]);
 
   // Filter quotas based on selection
   const filteredQuotas = useMemo(() => {
-    return allAvailableQuotas.map(category => ({
+    const quotaData = dashboardData.quotas;
+    const quotasArray = Array.isArray(quotaData?.quotas) ? quotaData.quotas : [];
+    if (quotasArray.length === 0) return [];
+
+    return quotasArray.map(category => ({
       ...category,
-      quotas: category.quotas.filter(quota =>
-        selectedQuotaCategories[category.category]?.includes(quota.name)
+      quotas: (Array.isArray(category.quotas) ? category.quotas : []).filter(quota =>
+        (selectedQuotaCategories[category.category] || []).includes(quota.name)
       )
-    })).filter(category => category.quotas.length > 0);
-  }, [allAvailableQuotas, selectedQuotaCategories]);
+    })).filter(category => category.quotas && category.quotas.length > 0);
+  }, [dashboardData.quotas, selectedQuotaCategories]);
 
   const handleToggleQuota = (categoryName: string, quotaName: string) => {
     setSelectedQuotaCategories(prev => {
@@ -145,8 +214,9 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
   };
 
   const handleToggleCategory = (categoryName: string) => {
-    const category = allAvailableQuotas.find(c => c.category === categoryName);
-    if (!category) return;
+    const quotaData = dashboardData.quotas;
+    const category = quotaData?.quotas?.find(c => c.category === categoryName);
+    if (!category || !Array.isArray(category.quotas)) return;
 
     const categoryQuotas = selectedQuotaCategories[categoryName] || [];
     const allSelected = categoryQuotas.length === category.quotas.length;
@@ -178,41 +248,54 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
     setDetailProject(null);
   };
 
-  // Calculate total costs and prepare budget bar data
-  const totalBudget = projectBudgets.reduce((sum, p) => sum + p.limit, 0);
-  const totalCost = projectBudgets.reduce((sum, p) => sum + p.currentCost, 0);
-  const remaining = totalBudget - totalCost;
+  // Calculate total costs from live data
+  const costData = dashboardData.costs;
+  const projectCosts = costData?.project_costs?.projects || {};
+  const totalMonthlyCost = costData?.total_monthly_cost || 0;
 
+  // Create budget segments from live cost data
   const budgetSegments = [
-    ...projectBudgets.map((budget, index) => ({
-      id: budget.id,
-      name: budget.project,
-      value: budget.currentCost,
+    ...Object.entries(projectCosts).map(([projectName, projectData]: [string, any], index) => ({
+      id: projectName,
+      name: projectName,
+      value: projectData?.monthly_cost || 0,
       color: resolveColor(getProjectColor(index)),
-      onClick: () => handleOpenDetailWizard(budget),
+      onClick: () => {
+        // Create a mock budget object for the wizard
+        const mockBudget = {
+          id: index + 1,
+          project: projectName,
+          currentCost: projectData?.monthly_cost || 0,
+          limit: (projectData?.monthly_cost || 0) * 1.2, // Estimate limit as 20% above current
+          instances: 0, // We don't have this data yet
+          hourlyRate: 0, // We don't have this data yet
+          action: 'warn_only'
+        };
+        handleOpenDetailWizard(mockBudget);
+      },
     })),
     {
       id: 'remaining',
-      name: 'Budget Remaining',
-      value: Math.max(0, remaining),
+      name: 'Other Costs',
+      value: Math.max(0, totalMonthlyCost - Object.values(projectCosts).reduce((sum: number, p: any) => sum + (p?.monthly_cost || 0), 0)),
       color: '#3F3F46',
       isRemaining: true,
     },
   ];
 
-  // Calculate dashboard metrics from real instance data
-  const runningInstances = instances.filter(inst => inst.status === 'healthy').length;
-  const stoppedInstances = instances.filter(inst => inst.status === 'stopped').length;
-  const launchingInstances = instances.filter(inst => inst.status === 'degraded').length;
-  const errorInstances = instances.filter(inst => inst.status === 'error').length;
-  const totalInstances = instances.length;
-  const healthyInstances = runningInstances;
-  const degradedInstances = launchingInstances;
+  // Calculate dashboard metrics from live instance data
+  const instanceData = dashboardData.instances;
+  const runningInstances = instanceData?.running_count || 0;
+  const stoppedInstances = instanceData?.stopped_count || 0;
+  const totalInstances = instanceData?.total_count || 0;
+  const healthyInstances = instanceData?.healthy_count || 0;
+  const degradedInstances = instanceData?.unhealthy_count || 0;
+  const launchingInstances = degradedInstances;
 
   // Calculate overall quota status from all categories
-  const allQuotas = filteredQuotas.flatMap(category => category.quotas);
-  const quotaWarnings = quotasLoading ? 0 : allQuotas.filter(q => (q.used / q.limit) >= 0.7 && (q.used / q.limit) < 0.9).length;
-  const quotaCritical = quotasLoading ? 0 : allQuotas.filter(q => (q.used / q.limit) >= 0.9).length;
+  const allQuotas = filteredQuotas.flatMap(category => Array.isArray(category.quotas) ? category.quotas : []);
+  const quotaWarnings = quotasLoading ? 0 : allQuotas.filter(q => q && (q.used / q.limit) >= 0.7 && (q.used / q.limit) < 0.9).length;
+  const quotaCritical = quotasLoading ? 0 : allQuotas.filter(q => q && (q.used / q.limit) >= 0.9).length;
 
   return (
     <div className="p-8">
@@ -244,6 +327,7 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
               size="sm"
               onClick={() => setQuotaSelectorOpen(true)}
               className="h-7"
+              disabled={!dashboardData.quotas?.quotas}
             >
               <Settings className="w-3.5 h-3.5 mr-1.5" />
               Select Quotas
@@ -281,14 +365,18 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                 const pegs = [];
 
                 // First, add filled pegs for each project
-                for (const usage of quota.usedBy) {
-                  for (let i = 0; i < usage.count; i++) {
-                    pegs.push({ color: usage.color, filled: true, project: usage.project });
+                if (quota.usedBy && Array.isArray(quota.usedBy)) {
+                  for (const usage of quota.usedBy) {
+                    if (usage && typeof usage.count === 'number') {
+                      for (let i = 0; i < usage.count; i++) {
+                        pegs.push({ color: usage.color || '#3F3F46', filled: true, project: usage.project });
+                      }
+                    }
                   }
                 }
 
                 // Then add empty pegs for available resources
-                const available = quota.limit - quota.used;
+                const available = Math.max(0, (quota.limit || 0) - (quota.used || 0));
                 for (let i = 0; i < available; i++) {
                   pegs.push({ color: '#3F3F46', filled: false, project: null });
                 }
@@ -358,8 +446,10 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             <StatusBadge status="active" label="Active" size="sm" />
           </div>
             <div className="text-muted-foreground mb-1">SSH Sessions</div>
-            <div className="text-4xl mb-2">0</div>
-            <div className="text-xs text-muted-foreground">No active sessions</div>
+            <div className="text-4xl mb-2">{dashboardData.ssh_sessions?.active_sessions || 0}</div>
+            <div className="text-xs text-muted-foreground">
+              {dashboardData.ssh_sessions?.active_sessions ? 'Active sessions' : 'No active sessions'}
+            </div>
         </Card>
 
         <Card className="bg-card border-border p-6">
@@ -370,8 +460,17 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             <StatusBadge status="success" label="OK" size="sm" />
           </div>
             <div className="text-muted-foreground mb-1">Health Checks</div>
-            <div className="text-4xl mb-2">{loading ? '...' : `${healthyInstances}/${totalInstances}`}</div>
-            <div className="text-xs text-muted-foreground">{loading ? 'Loading...' : `${degradedInstances} degraded • ${errorInstances} failing`}</div>
+            <div className="text-4xl mb-2">
+              {loading ? '...' : `${dashboardData.health?.summary?.healthy_count || 0}/${dashboardData.health?.summary?.total_instances || 0}`}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {loading ? 'Loading...' : (() => {
+                const health = dashboardData.health?.summary;
+                const alarms = dashboardData.health?.alarms?.summary;
+                const issues = (health?.warning_count || 0) + (health?.error_count || 0) + (alarms?.ALARM || 0);
+                return issues > 0 ? `${issues} issues detected` : 'All systems healthy';
+              })()}
+            </div>
         </Card>
 
         <Card className="bg-card border-border p-6">
@@ -382,8 +481,8 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             <StatusBadge status="connected" label="Connected" size="sm" />
           </div>
            <div className="text-muted-foreground mb-1">Regions Online</div>
-           <div className="text-4xl mb-2">4/4</div>
-           <div className="text-xs text-muted-foreground">All operational</div>
+           <div className="text-4xl mb-2">1/1</div>
+           <div className="text-xs text-muted-foreground">Current region operational</div>
         </Card>
       </div>
 
@@ -441,45 +540,81 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             <Badge variant="secondary" className="text-xs">By Project</Badge>
           </div>
           <div className="space-y-3">
-            {healthChecks.length === 0 ? (
-              <div className="text-center py-8">
-                <CheckCircle2 className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-sm text-muted-foreground">No health checks configured</p>
-                <p className="text-xs text-muted-foreground mt-1">Health checks will appear here</p>
-              </div>
-            ) : (
-              healthChecks.map((check, index) => (
-                <div key={index} className="p-3 bg-background/50 rounded-lg border border-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium truncate">{check.project}</span>
-                    <Badge variant="outline" className="text-xs border-success/50 text-success">
-                      {check.healthy}/{check.instances}
-                    </Badge>
+            {(() => {
+              const alarms = dashboardData.health?.alarms;
+              const hasAlarms = alarms && (alarms.summary.ALARM > 0 || alarms.summary.INSUFFICIENT_DATA > 0);
+
+              if (!hasAlarms) {
+                return (
+                  <div className="text-center py-8">
+                    <CheckCircle2 className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                    <p className="text-sm text-muted-foreground">All systems healthy</p>
+                    <p className="text-xs text-muted-foreground mt-1">No alarms or issues detected</p>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <CheckCircle2 className="w-3 h-3 text-success" />
-                    <span>{check.healthy} healthy</span>
-                    {check.degraded > 0 && (
-                      <>
-                        <span>•</span>
-                        <AlertTriangle className="w-3 h-3 text-warning" />
-                        <span className="text-warning">{check.degraded} degraded</span>
-                      </>
-                    )}
-                    {check.failing > 0 && (
-                      <>
-                        <span>•</span>
-                        <XCircle className="w-3 h-3 text-error" />
-                        <span className="text-error">{check.failing} failing</span>
-                      </>
-                    )}
+                );
+              }
+
+              return (
+                <div className="space-y-3">
+                  {/* Alarm Summary */}
+                  <div className="p-3 bg-background/50 rounded-lg border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">CloudWatch Alarms</span>
+                      <div className="flex gap-2">
+                        {alarms.summary.ALARM > 0 && (
+                          <Badge variant="outline" className="text-xs border-error/50 text-error">
+                            {alarms.summary.ALARM} in alarm
+                          </Badge>
+                        )}
+                        {alarms.summary.INSUFFICIENT_DATA > 0 && (
+                          <Badge variant="outline" className="text-xs border-warning/50 text-warning">
+                            {alarms.summary.INSUFFICIENT_DATA} insufficient data
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {alarms.summary.OK} alarms OK
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Last: {check.lastCheck}
-                  </div>
+
+                   {/* Individual Alarms */}
+                   {(alarms.alarms || []).slice(0, 3).map((alarm, index) => (
+                    <div key={index} className="p-3 bg-background/50 rounded-lg border border-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium truncate">{alarm.name}</span>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${
+                            alarm.state === 'ALARM'
+                              ? 'border-error/50 text-error'
+                              : alarm.state === 'INSUFFICIENT_DATA'
+                              ? 'border-warning/50 text-warning'
+                              : 'border-success/50 text-success'
+                          }`}
+                        >
+                          {alarm.state}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {alarm.metric} • {alarm.namespace}
+                      </div>
+                      {alarm.description && (
+                        <div className="text-xs text-muted-foreground mt-1 truncate">
+                          {alarm.description}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {(alarms.alarms || []).length > 3 && (
+                    <div className="text-center text-xs text-muted-foreground">
+                      +{(alarms.alarms || []).length - 3} more alarms
+                    </div>
+                  )}
                 </div>
-              ))
-            )}
+              );
+            })()}
           </div>
         </Card>
 
@@ -592,35 +727,45 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
             <div className="text-sm">
               <span className="font-medium">{Object.values(selectedQuotaCategories).flat().length}</span>
               <span className="text-muted-foreground ml-1">of</span>
-              <span className="font-medium ml-1">{allAvailableQuotas.flatMap(c => c.quotas).length}</span>
+              <span className="font-medium ml-1">{dashboardData.quotas?.total_quotas || 0}</span>
               <span className="text-muted-foreground ml-1">quotas selected</span>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                const allSelected = Object.values(selectedQuotaCategories).flat().length === allAvailableQuotas.flatMap(c => c.quotas).length;
+                const quotaData = dashboardData.quotas;
+                const totalSelected = Object.values(selectedQuotaCategories).flat().length;
+                const totalAvailable = quotaData?.total_quotas || 0;
+                const allSelected = totalSelected === totalAvailable;
+
                 if (allSelected) {
                   // Deselect all
                   setSelectedQuotaCategories({});
                 } else {
                   // Select all
                   const allSelections: Record<string, string[]> = {};
-                  allAvailableQuotas.forEach(category => {
+                  quotaData?.quotas?.forEach(category => {
                     allSelections[category.category] = category.quotas.map(q => q.name);
                   });
                   setSelectedQuotaCategories(allSelections);
                 }
               }}
             >
-              {Object.values(selectedQuotaCategories).flat().length === allAvailableQuotas.flatMap(c => c.quotas).length ? 'Deselect All' : 'Select All'}
+              {(() => {
+                const quotaData = dashboardData.quotas;
+                const totalSelected = Object.values(selectedQuotaCategories).flat().length;
+                const totalAvailable = (quotaData?.quotas || []).flatMap(c => c?.quotas || []).length;
+                return totalSelected === totalAvailable ? 'Deselect All' : 'Select All';
+              })()}
             </Button>
           </div>
 
           <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-            {allAvailableQuotas.map((category) => {
+            {(Array.isArray(dashboardData.quotas?.quotas) ? dashboardData.quotas.quotas : []).map((category) => {
               const categoryQuotas = selectedQuotaCategories[category.category] || [];
-              const allCategorySelected = categoryQuotas.length === category.quotas.length;
+              const categoryQuotasList = category.quotas || [];
+              const allCategorySelected = categoryQuotas.length === categoryQuotasList.length;
               const someCategorySelected = categoryQuotas.length > 0 && !allCategorySelected;
 
               return (
@@ -629,18 +774,19 @@ export function Dashboard({ selectedPlatform = 'aws' }: DashboardProps) {
                     <Checkbox
                       checked={allCategorySelected}
                       onCheckedChange={() => handleToggleCategory(category.category)}
+                      disabled={!categoryQuotasList.length}
                       className={someCategorySelected ? 'data-[state=checked]:bg-primary/50' : ''}
                     />
                     <div className="flex-1">
                       <h4 className="font-medium">{category.category}</h4>
                       <p className="text-xs text-muted-foreground">
-                        {categoryQuotas.length} of {category.quotas.length} selected
+                        {categoryQuotas.length} of {categoryQuotasList.length} selected
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-2 ml-7">
-                    {category.quotas.map((quota) => {
+                    {categoryQuotasList.map((quota) => {
                       const isSelected = categoryQuotas.includes(quota.name);
                       const percentage = (quota.used / quota.limit) * 100;
 

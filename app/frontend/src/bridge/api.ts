@@ -262,6 +262,67 @@ class BridgeAPI {
   }
 
   // ========================================================================
+  // DASHBOARD DATA MANAGEMENT
+  // ========================================================================
+
+  async startDashboardService(accountId?: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.start_dashboard_service(accountId || "");
+    return JSON.parse(result);
+  }
+
+  async stopDashboardService(): Promise<{ success: boolean; message?: string; error?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.stop_dashboard_service();
+    return JSON.parse(result);
+  }
+
+  async getDashboardData(dataType: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    const bridge = getBridge();
+    try {
+      const result = await bridge.get_dashboard_data(dataType);
+      return JSON.parse(result);
+    } catch (error) {
+      console.error(`Failed to parse dashboard data for ${dataType}:`, error);
+      return { success: false, error: `Parse error: ${error}` };
+    }
+  }
+
+  async refreshDashboardData(dataType: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.refresh_dashboard_data(dataType);
+    return JSON.parse(result);
+  }
+
+  async getDashboardStatus(): Promise<{ success: boolean; status?: any; error?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.get_dashboard_status();
+    return JSON.parse(result);
+  }
+
+  // ========================================================================
+  // SSH SESSION MANAGEMENT
+  // ========================================================================
+
+  async startSSHSession(instanceId: string, user: string, remoteIp: string, sessionId?: string): Promise<{ success: boolean; session_id?: string; message?: string; error?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.start_ssh_session(instanceId, user, remoteIp, sessionId || "");
+    return JSON.parse(result);
+  }
+
+  async endSSHSession(sessionId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.end_ssh_session(sessionId);
+    return JSON.parse(result);
+  }
+
+  async getSSHSessions(): Promise<{ success: boolean; data?: any; error?: string }> {
+    const bridge = getBridge();
+    const result = await bridge.get_ssh_sessions();
+    return JSON.parse(result);
+  }
+
+  // ========================================================================
   // UTILITY
   // ========================================================================
 

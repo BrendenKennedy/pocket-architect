@@ -88,6 +88,11 @@ class ResourceManager:
         return self._aws_provider
 
     @property
+    def client(self):
+        """Convenience property to access AWS client."""
+        return self.aws.client
+
+    @property
     def projects(self):
         """Lazy-loaded project service."""
         if self._projects is None:
