@@ -1,0 +1,55 @@
+[package]
+name = "app"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+[features]
+default = []
+aws-sdk = ["dep:aws-config", "dep:aws-sdk-ec2", "dep:aws-sdk-s3", "dep:aws-sdk-iam", "dep:aws-sdk-sts", "dep:aws-sdk-rds", "dep:aws-sdk-lambda", "dep:aws-credential-types", "aws-config/rustls", "aws-sdk-ec2/rustls", "aws-sdk-s3/rustls", "aws-sdk-iam/rustls", "aws-sdk-sts/rustls", "aws-sdk-rds/rustls", "aws-sdk-lambda/rustls"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "app"
+path = "src/main.rs"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.3", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.9.5", features = [] }
+tauri-plugin-log = "2"
+tokio = { version = "1", features = ["full"] }
+axum = "0.7"
+tower-http = { version = "0.5", features = ["cors"] }
+sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-native-tls", "macros", "migrate"] }
+anyhow = "1.0"
+thiserror = "1.0"
+# AWS SDK - Optional feature for real AWS operations
+# Enabled via: cargo build --features aws-sdk
+aws-config = { version = "1.8", optional = true }
+aws-sdk-ec2 = { version = "1.199", optional = true }
+aws-sdk-s3 = { version = "1.118", optional = true }
+aws-sdk-iam = { version = "1.101", optional = true }
+aws-sdk-sts = { version = "1.95", optional = true }
+aws-sdk-rds = { version = "1.130", optional = true }
+aws-sdk-lambda = { version = "1.118", optional = true }
+aws-credential-types = { version = "1.2", optional = true }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+toml = "0.8"
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+keyring = "2.0"

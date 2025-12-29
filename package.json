@@ -1,0 +1,33 @@
+{
+  "name": "pocket-architect",
+  "version": "0.1.0",
+  "description": "A modern desktop application for AWS resource management",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run tauri:dev",
+    "build": "npm run tauri:build",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd src && npm test",
+    "test:backend": "cd src-tauri && cargo test",
+    "lint": "cd src && npm run lint",
+    "lint:fix": "cd src && npm run lint:fix",
+    "clean": "cd src-tauri && cargo clean",
+    "frontend:dev": "cd src && npm run dev",
+    "frontend:build": "cd src && npm run build",
+    "tauri": "cd src-tauri && cargo tauri",
+    "tauri:dev": "cd src-tauri && cargo tauri dev",
+    "tauri:build": "cd src-tauri && cargo tauri build",
+    "ci": "./scripts/build-tauri.sh release aws-sdk"
+  },
+  "workspaces": [
+    "src"
+  ],
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.9.5"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
