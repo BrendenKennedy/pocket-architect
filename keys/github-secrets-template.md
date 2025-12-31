@@ -5,7 +5,7 @@ Add these secrets to your GitHub repository settings:
 ## Required Secrets
 
 ### Updater Signing (Required)
-- `TAURI_PRIVATE_KEY`: Contents of `keys/privateKey.pem`
+- `TAURI_PRIVATE_KEY`: Contents of `signing-keys/privateKey.pem`
 - `TAURI_KEY_PASSWORD`: Password you set when generating keys (leave empty if none)
 
 ### Windows Code Signing (Optional)

@@ -16,24 +16,21 @@ if not exist "src-tauri\tauri.conf.json" (
 
 echo Setting up code signing and auto-updater...
 
-REM Create keys directory
-if not exist keys mkdir keys
-
 REM Check if keys already exist
 if exist "signing-keys\privateKey.enc" if exist "signing-keys\publicKey.pem" (
     echo ⚠️  Signing keys already exist. Skipping generation.
     echo    If you need new keys, delete signing-keys\ and run this script again.
 ) else (
-    echo ❌ Signing keys not found. Please follow docs/setup/KEY_SETUP.md to set up keys.
+    echo ❌ Signing keys not found. Please follow signing-keys/README.md to set up keys.
     echo    Skipping signing setup for now.
 )
 
 REM Update tauri.conf.json with public key
 echo Updating tauri.conf.json with public key...
-if exist "keys\publicKey.pem" (
+if exist "signing-keys\publicKey.pem" (
     REM Use PowerShell to replace
     powershell -Command "
-    $content = Get-Content 'keys\publicKey.pem' -Raw
+    $content = Get-Content 'signing-keys\publicKey.pem' -Raw
     $content = $content -replace '\n', '' -replace '\r', ''
     (Get-Content 'src-tauri\tauri.conf.json') -replace 'YOUR_UPDATER_PUBLIC_KEY_HERE', $content | Set-Content 'src-tauri\tauri.conf.json'
     "
@@ -44,10 +41,10 @@ if exist "keys\publicKey.pem" (
 
 REM Create .gitignore entry for private key
 echo Updating .gitignore...
-findstr /c:"keys/privateKey.pem" .gitignore >nul 2>nul
+findstr /c:"signing-keys/privateKey.pem" .gitignore >nul 2>nul
 if %errorlevel% neq 0 (
     echo # Updater private key - NEVER COMMIT >> .gitignore
-    echo keys/privateKey.pem >> .gitignore
+    echo signing-keys/privateKey.pem >> .gitignore
     echo ✅ .gitignore updated
 ) else (
     echo ℹ️  .gitignore already configured
@@ -109,13 +106,13 @@ echo.
 echo ✅ Setup complete!
 echo.
 echo Next steps:
-echo 1. 🔑 Review and secure your keys in the 'keys' directory
-echo 2. 📝 Follow docs/setup/KEY_SETUP.md to set up GitHub secrets (boss only)
+echo 1. 🔑 Review and secure your keys in the 'signing-keys' directory
+echo 2. 📝 Follow signing-keys/README.md to set up GitHub secrets (boss only)
 echo 3. 🏗️  Push to GitHub to test the CI/CD pipeline
 echo 4. 📋 Optionally set up code signing certificates
 echo.
 echo ⚠️  Remember:
-echo    - Never commit keys/privateKey.pem
+echo    - Never commit signing-keys/privateKey.pem
 echo    - Keep certificates secure
 echo    - Test signing in a staging environment first
 echo.
