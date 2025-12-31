@@ -1,5 +1,5 @@
 # Updater private key - NEVER COMMIT
-keys/privateKey.pem
+crypto/signing-keys/privateKey.pem
 
 # AWS Credentials - NEVER COMMIT
 config/aws-credentials.env

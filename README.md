@@ -104,8 +104,8 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 - **Security Role Split**: In this open source project, the "boss" role is whoever manages the private keys for a branch (typically the branch maintainer or lead developer). Team members receive encrypted keys for local development.
 - **What you get as a team member**: Encrypted private key file + passphrase from the boss
 - **Setup for team members**:
-  1. Receive `signing-keys/privateKey.enc` and passphrase from the boss
-  2. Place the file in `signing-keys/privateKey.enc`
+  1. Receive `crypto/signing-keys/privateKey.enc` and passphrase from the boss
+  2. Place the file in `crypto/signing-keys/privateKey.enc`
   3. The public key is already configured in `src-tauri/tauri.conf.json`
 - **Why:** Enables secure auto-updates and app integrity
 - **For security best practices**: Have a designated "boss" act as gatekeeper - they generate keys, manage GitHub secrets, and distribute encrypted keys to team members. This ensures private keys never touch team member machines in plain text.
@@ -163,7 +163,10 @@ This starts the full desktop app with hot reloading.
 - `src-tauri/` - Rust backend (AWS integration, database, Tauri config) + code signing docs
 - `scripts/` - Build and utility scripts (organized by bash/, powershell/, node/)
 - `config/` - Configuration files + AWS credentials setup
-- `signing-keys/` - Key management + setup guide
+- `crypto/` - Security and cryptographic materials
+  - `crypto/signing-keys/` - Key management + setup guide
+  - `crypto/certificates/` - Code signing certificates
+  - `crypto/keys/` - GitHub secrets templates
 - `.github/` - CI/CD workflows + pipeline documentation
 
 **Key Files to Know:**
@@ -228,7 +231,7 @@ node scripts\validate-setup.js
 ## Getting Help
 
 ### Documentation
-- `signing-keys/README.md` - Detailed key setup guide
+- `crypto/signing-keys/README.md` - Detailed key setup guide
 - `config/README.md` - AWS credential management
 - `src-tauri/README.md` - Code signing for releases
 - `.github/README.md` - CI/CD pipeline details
@@ -334,10 +337,12 @@ pocket-architect/
 │   ├── powershell/       # PowerShell/batch scripts
 │   └── node/             # Node.js scripts
 ├── config/                # Configuration files + AWS setup docs
-├── signing-keys/          # Key management + setup guide
+├── crypto/                # Security and cryptographic materials
+│   ├── signing-keys/     # Key management + setup guide
+│   ├── certificates/     # Code signing certificates
+│   └── keys/             # GitHub secrets templates
 ├── .github/               # CI/CD workflows + pipeline docs
 │   └── workflows/
-└── certificates/          # Code signing certificates
 ```
 
 ## Testing

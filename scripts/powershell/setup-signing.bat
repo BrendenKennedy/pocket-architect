@@ -17,20 +17,20 @@ if not exist "src-tauri\tauri.conf.json" (
 echo Setting up code signing and auto-updater...
 
 REM Check if keys already exist
-if exist "signing-keys\privateKey.enc" if exist "signing-keys\publicKey.pem" (
+if exist "crypto\signing-keys\privateKey.enc" if exist "crypto\signing-keys\publicKey.pem" (
     echo ⚠️  Signing keys already exist. Skipping generation.
-    echo    If you need new keys, delete signing-keys\ and run this script again.
+    echo    If you need new keys, delete crypto\signing-keys\ and run this script again.
 ) else (
-    echo ❌ Signing keys not found. Please follow signing-keys/README.md to set up keys.
+    echo ❌ Signing keys not found. Please follow crypto\signing-keys\README.md to set up keys.
     echo    Skipping signing setup for now.
 )
 
 REM Update tauri.conf.json with public key
 echo Updating tauri.conf.json with public key...
-if exist "signing-keys\publicKey.pem" (
+if exist "crypto\signing-keys\publicKey.pem" (
     REM Use PowerShell to replace
     powershell -Command "
-    $content = Get-Content 'signing-keys\publicKey.pem' -Raw
+    $content = Get-Content 'crypto\signing-keys\publicKey.pem' -Raw
     $content = $content -replace '\n', '' -replace '\r', ''
     (Get-Content 'src-tauri\tauri.conf.json') -replace 'YOUR_UPDATER_PUBLIC_KEY_HERE', $content | Set-Content 'src-tauri\tauri.conf.json'
     "
@@ -41,10 +41,10 @@ if exist "signing-keys\publicKey.pem" (
 
 REM Create .gitignore entry for private key
 echo Updating .gitignore...
-findstr /c:"signing-keys/privateKey.pem" .gitignore >nul 2>nul
+findstr /c:"crypto/signing-keys/privateKey.pem" .gitignore >nul 2>nul
 if %errorlevel% neq 0 (
     echo # Updater private key - NEVER COMMIT >> .gitignore
-    echo signing-keys/privateKey.pem >> .gitignore
+    echo crypto/signing-keys/privateKey.pem >> .gitignore
     echo ✅ .gitignore updated
 ) else (
     echo ℹ️  .gitignore already configured
@@ -59,9 +59,9 @@ if not exist scripts\setup-windows-signing.bat (
     echo echo Setting up Windows code signing certificate... >> scripts\setup-windows-signing.bat
     echo. >> scripts\setup-windows-signing.bat
     echo REM Check if certificate exists >> scripts\setup-windows-signing.bat
-    echo if not exist "certificates\windows-cert.pfx" ( >> scripts\setup-windows-signing.bat
-    echo     echo Error: Certificate not found at certificates\windows-cert.pfx >> scripts\setup-windows-signing.bat
-    echo     echo Please place your .pfx certificate file in the certificates directory >> scripts\setup-windows-signing.bat
+    echo if not exist "crypto\certificates\windows-cert.pfx" ( >> scripts\setup-windows-signing.bat
+    echo     echo Error: Certificate not found at crypto\certificates\windows-cert.pfx >> scripts\setup-windows-signing.bat
+    echo     echo Please place your .pfx certificate file in the crypto\certificates directory >> scripts\setup-windows-signing.bat
     echo     pause >> scripts\setup-windows-signing.bat
     echo     exit /b 1 >> scripts\setup-windows-signing.bat
     echo ) >> scripts\setup-windows-signing.bat
@@ -69,7 +69,7 @@ if not exist scripts\setup-windows-signing.bat (
     echo echo Certificate found. Ready for CI/CD use. >> scripts\setup-windows-signing.bat
     echo echo. >> scripts\setup-windows-signing.bat
     echo echo Next steps: >> scripts\setup-windows-signing.bat
-    echo echo 1. Base64 encode your certificate: certutil -encode certificates\windows-cert.pfx certificates\windows-cert-base64.txt >> scripts\setup-windows-signing.bat
+    echo echo 1. Base64 encode your certificate: certutil -encode crypto\certificates\windows-cert.pfx crypto\certificates\windows-cert-base64.txt >> scripts\setup-windows-signing.bat
     echo echo 2. Add the contents of windows-cert-base64.txt as WINDOWS_CERTIFICATE secret in GitHub >> scripts\setup-windows-signing.bat
     echo echo 3. Add your certificate password as WINDOWS_CERTIFICATE_PASSWORD secret >> scripts\setup-windows-signing.bat
     echo pause >> scripts\setup-windows-signing.bat
@@ -106,13 +106,13 @@ echo.
 echo ✅ Setup complete!
 echo.
 echo Next steps:
-echo 1. 🔑 Review and secure your keys in the 'signing-keys' directory
-echo 2. 📝 Follow signing-keys/README.md to set up GitHub secrets (boss only)
+echo 1. 🔑 Review and secure your keys in the 'crypto\signing-keys' directory
+echo 2. 📝 Follow crypto\signing-keys\README.md to set up GitHub secrets (boss only)
 echo 3. 🏗️  Push to GitHub to test the CI/CD pipeline
 echo 4. 📋 Optionally set up code signing certificates
 echo.
 echo ⚠️  Remember:
-echo    - Never commit signing-keys/privateKey.pem
+echo    - Never commit crypto/signing-keys/privateKey.pem
 echo    - Keep certificates secure
 echo    - Test signing in a staging environment first
 echo.
