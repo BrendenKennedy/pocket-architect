@@ -46,6 +46,15 @@ if ! command -v cargo &> /dev/null; then
     exit 1
 fi
 
+# Check OpenSSL
+if ! command -v openssl &> /dev/null; then
+    echo -e "${YELLOW}⚠️  OpenSSL not found. Required for key encryption/decryption.${NC}"
+    echo -e "${YELLOW}   Install via: apt install openssl (Ubuntu/Debian) or brew install openssl (macOS)${NC}"
+    echo -e "${YELLOW}   Continuing setup, but key operations may fail...${NC}"
+else
+    echo -e "${GREEN}✅ OpenSSL found: $(openssl version | head -n1)${NC}"
+fi
+
 echo -e "${GREEN}✅ Prerequisites OK${NC}"
 echo
 

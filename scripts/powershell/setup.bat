@@ -60,6 +60,19 @@ if %errorlevel% neq 0 (
 for /f "tokens=*" %%i in ('git --version') do set GIT_VERSION=%%i
 echo   [OK] %GIT_VERSION%
 
+REM Check OpenSSL
+echo [SSL] OpenSSL:
+set "OPENSSL_FOUND="
+where openssl >nul 2>nul && set "OPENSSL_FOUND=1"
+if defined OPENSSL_FOUND (
+    echo   [OK] OpenSSL available
+) else (
+    echo   [WARNING] OpenSSL not found. Required for key encryption/decryption.
+    echo   [INFO] Install via: choco install openssl (or scoop install openssl)
+    echo   [INFO] Or download from: https://slproweb.com/products/Win32OpenSSL.html
+    echo   [INFO] Continuing setup, but key operations may fail...
+)
+
 echo.
 echo [SUCCESS] Prerequisites OK
 echo.

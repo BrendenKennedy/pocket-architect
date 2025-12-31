@@ -43,6 +43,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 1. **Install prerequisites:**
    - Download and install Node.js 20+ from https://nodejs.org/
    - Install Rust from https://rustup.rs/
+   - Install OpenSSL: `choco install openssl` (or download from https://slproweb.com/products/Win32OpenSSL.html)
    - (Optional) Enable WSL for better development experience
 
 2. **Clone the repository:**
@@ -65,6 +66,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
    - Install Homebrew: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
    - Install Node.js: `brew install node`
    - Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+   - Install OpenSSL: `brew install openssl` (usually pre-installed)
 
 2. **Clone the repository:**
    ```bash
@@ -81,6 +83,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 1. **Install prerequisites:**
    - Install Node.js 20+ (using your package manager, e.g., for Ubuntu: `curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs`)
    - Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+   - Install OpenSSL: `sudo apt install openssl` (Ubuntu/Debian) or `sudo dnf install openssl` (Fedora)
 
 2. **Clone the repository:**
    ```bash
@@ -427,6 +430,7 @@ node scripts\validate-setup.js
 - Node.js 20+
 - Rust 1.77+
 - Git
+- OpenSSL (for key encryption/decryption)
 
 ### Installation
 
