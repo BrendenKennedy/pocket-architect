@@ -16,8 +16,8 @@
 # - When regenerating updater keys
 #
 # Key locations:
-# - Public key: keys/publicKey.pem (safe to commit)
-# - Private key: keys/privateKey.enc (encrypted, for GitHub secrets)
+# - Public key: crypto/signing-keys/publicKey.pem (safe to commit)
+# - Private key: crypto/signing-keys/privateKey.enc (encrypted, for GitHub secrets)
 #
 # Security: Only the "boss" should generate keys and set up GitHub secrets
 # ============================================================================
@@ -43,12 +43,12 @@ fi
 echo -e "${BLUE}Setting up code signing and auto-updater...${NC}\n"
 
 # Create keys directory
-mkdir -p keys
+mkdir -p crypto/signing-keys
 
 # Check if keys already exist
-if [ -f "signing-keys/privateKey.enc" ] && [ -f "signing-keys/publicKey.pem" ]; then
+if [ -f "crypto/signing-keys/privateKey.enc" ] && [ -f "crypto/signing-keys/publicKey.pem" ]; then
     echo -e "${YELLOW}⚠️  Signing keys already exist. Skipping generation.${NC}"
-    echo -e "${YELLOW}   If you need new keys, delete signing-keys/ and run this script again.${NC}\n"
+    echo -e "${YELLOW}   If you need new keys, delete crypto/signing-keys/ and run this script again.${NC}\n"
 else
     echo -e "${RED}❌ Signing keys not found. Please follow docs/setup/KEY_SETUP.md to set up keys.${NC}"
     echo -e "${YELLOW}   Skipping signing setup for now.${NC}\n"
@@ -57,9 +57,9 @@ fi
 
 # Update tauri.conf.json with public key
 echo -e "${BLUE}Updating tauri.conf.json with public key...${NC}"
-if [ -f "keys/publicKey.pem" ]; then
+if [ -f "crypto/signing-keys/publicKey.pem" ]; then
     # Use sed to replace the placeholder
-    sed -i.bak "s/YOUR_UPDATER_PUBLIC_KEY_HERE/$(cat keys/publicKey.pem | tr -d '\n')/g" src-tauri/tauri.conf.json
+    sed -i.bak "s/YOUR_UPDATER_PUBLIC_KEY_HERE/$(cat crypto/signing-keys/publicKey.pem | tr -d '\n')/g" src-tauri/tauri.conf.json
     echo -e "${GREEN}✅ tauri.conf.json updated${NC}"
 else
     echo -e "${RED}❌ Public key file not found${NC}"
@@ -67,9 +67,9 @@ fi
 
 # Create .gitignore entry for private key
 echo -e "${BLUE}Updating .gitignore...${NC}"
-if ! grep -q "keys/privateKey.pem" .gitignore 2>/dev/null; then
+if ! grep -q "crypto/signing-keys/privateKey.pem" .gitignore 2>/dev/null; then
     echo "# Updater private key - NEVER COMMIT" >> .gitignore
-    echo "keys/privateKey.pem" >> .gitignore
+    echo "crypto/signing-keys/privateKey.pem" >> .gitignore
     echo -e "${GREEN}✅ .gitignore updated${NC}"
 else
     echo -e "${BLUE}ℹ️  .gitignore already configured${NC}"
@@ -139,7 +139,7 @@ echo "3. 🏗️  Push to GitHub to test the CI/CD pipeline"
 echo "4. 📋 Optionally set up code signing certificates"
 echo
 echo -e "${YELLOW}⚠️  Remember:${NC}"
-echo "   - Never commit keys/privateKey.pem"
+echo "   - Never commit crypto/signing-keys/privateKey.pem"
 echo "   - Keep certificates secure"
 echo "   - Test signing in a staging environment first"
 echo

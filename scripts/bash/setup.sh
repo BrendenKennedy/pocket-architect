@@ -60,7 +60,7 @@ echo
 
 # Setup directories
 echo -e "${BLUE}Setting up project structure...${NC}"
-mkdir -p signing-keys certificates
+mkdir -p crypto/signing-keys certificates
 
 # Install root dependencies
 echo -e "${BLUE}Installing root dependencies...${NC}"
@@ -94,7 +94,7 @@ echo
 echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo
 echo -e "${BLUE}Next steps:${NC}"
-echo "1. 🔑 Review the generated keys in the 'signing-keys' directory"
+echo "1. 🔑 Review the generated keys in the 'crypto/signing-keys' directory"
 echo "2. 📝 Follow docs/setup/KEY_SETUP.md to set up GitHub secrets (boss only)"
 echo "3. 📖 Read docs/welcome/WELCOME_TO_TEAM.md for complete team onboarding"
 echo "4. 🏗️  Test the build locally: npm run tauri:dev"
