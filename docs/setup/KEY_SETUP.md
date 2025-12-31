@@ -26,17 +26,17 @@ This guide explains how to set up signing keys for Pocket Architect. The "boss" 
      On Windows: `certutil -encode signing-keys/privateKey.enc tmp.b64 && type tmp.b64`
      Copy the output as the secret value.
    - Add `TAURI_KEY_PASSWORD`: The passphrase used to encrypt the private key (e.g., "yourpassphrase").
-4. Distribute:
+4. Configure the public key in `src-tauri/tauri.conf.json`:
+   - Replace `YOUR_UPDATER_PUBLIC_KEY_HERE` with the contents of `signing-keys/publicKey.pem`.
+5. Distribute:
    - Send `signing-keys/privateKey.enc` and the passphrase to team members via secure channel (e.g., encrypted email).
-   - Keep `signing-keys/publicKey.pem` for app config.
+   - The public key is already configured in the project.
 
 ## For Team Members (Local Setup)
 1. Receive the encrypted private key and passphrase from the boss.
 2. Place `privateKey.enc` in `signing-keys/privateKey.enc`.
-3. Place `publicKey.pem` in `signing-keys/publicKey.pem`.
-4. Add the public key to `src-tauri/tauri.conf.json`:
-   - Replace `YOUR_UPDATER_PUBLIC_KEY_HERE` with the contents of `publicKey.pem`.
-5. For local builds, set env vars:
+3. The public key is already configured in the project - no additional setup needed.
+4. For local builds, set env vars:
    ```
    export TAURI_PRIVATE_KEY=signing-keys/privateKey.pem
    export TAURI_KEY_PASSWORD=yourpassphrase
