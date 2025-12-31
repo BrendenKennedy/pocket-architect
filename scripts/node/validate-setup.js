@@ -93,16 +93,14 @@ test('Dependabot config exists', fileExists('.github/dependabot.yml'));
 test('Dependabot config is valid YAML', validateYaml('.github/dependabot.yml'));
 
 console.log('\n📜 Build Scripts:');
-test('Build script exists', fileExists('scripts/build-tauri.sh'));
-
-// Check script permissions (Linux/macOS/WSL)
-try {
-  const stats = fs.statSync('scripts/build-tauri.sh');
-  const isExecutable = !!(stats.mode & parseInt('111', 8));
-  test('Build script is executable', isExecutable);
-} catch {
-  test('Build script is executable', false);
-}
+test('Tauri CLI is available', () => {
+  try {
+    const result = execSync('npx tauri --version', { encoding: 'utf8' });
+    return result.includes('tauri');
+  } catch {
+    return false;
+  }
+});
 
 console.log('\n📚 Documentation:');
 test('README exists', fileExists('README.md'));

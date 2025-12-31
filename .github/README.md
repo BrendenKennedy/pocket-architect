@@ -61,11 +61,11 @@ Pocket Architect uses an optimized CI/CD pipeline that leverages Tauri's built-i
 - **Window Configuration**: Responsive sizing with constraints
 - **Updater Ready**: Configured for future auto-updates
 
-### Build Scripts
-- **`build-tauri.sh`**: Cross-platform optimized build script
-- **`build-tauri.bat`**: Windows-specific build script
-- **Feature Flags**: Support for conditional AWS SDK builds
-- **Timing & Size Reports**: Build performance monitoring
+### Build Process
+- **Standard Tauri Commands**: Uses `npm run tauri:build` with feature flags
+- **Cross-Platform**: Automated builds for Windows, macOS, and Linux
+- **AWS SDK Integration**: Conditional builds with `--features aws-sdk`
+- **CI/CD Optimized**: Leverages GitHub Actions and Tauri CLI
 
 ## Usage
 
@@ -77,8 +77,8 @@ npm run tauri dev
 # Production build for current platform
 npm run tauri build
 
-# Optimized build script
-./scripts/bash/build-tauri.sh release aws-sdk
+# CI build with AWS features
+npm run ci
 ```
 
 ### CI/CD Triggers

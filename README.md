@@ -53,7 +53,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 
 3. **Run the automated setup:**
    ```powershell
-   .\setup.bat
+   .\scripts\powershell\setup.bat
    ```
    Or if using WSL:
    ```bash
@@ -284,7 +284,7 @@ cd pocket-architect
 2. Run the automated setup (see Onboarding section above for platform-specific instructions):
 ```bash
 # Windows
-.\setup.bat
+.\scripts\powershell\setup.bat
 
 # macOS/Linux
 ./scripts/bash/setup.sh

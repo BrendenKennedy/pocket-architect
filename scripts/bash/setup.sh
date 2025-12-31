@@ -72,7 +72,6 @@ chmod +x scripts/setup-signing.sh
 
 # Make scripts executable
 echo -e "${BLUE}Making scripts executable...${NC}"
-chmod +x scripts/build-tauri.sh
 chmod +x scripts/setup-macos-signing.sh
 chmod +x scripts/validate-setup.js
 
@@ -101,7 +100,6 @@ echo "  "
 echo "  # Building"
 echo "  npm run build            # Build frontend"
 echo "  npm run tauri:build      # Build Tauri app"
-echo "  ./scripts/build-tauri.sh # Optimized build script"
 echo "  "
 echo "  # Testing"
 echo "  npm test                 # Frontend tests"
