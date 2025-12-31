@@ -221,7 +221,9 @@ node scripts\validate-setup.js
 ### Common Issues
 - **App won't start:** Check if signing keys are set up
 - **No AWS data:** Ensure credentials are decrypted and sourced
-- **Build fails:** Run `wsl ./scripts/welcome.sh` to validate setup
+- **Build fails:** Run the validation command for your platform:
+  - Windows: `node scripts\validate-setup.js`
+  - macOS/Linux: `node scripts/validate-setup.js`
 
 ### Who to Contact
 - **Technical issues:** Check existing issues or create new ones
