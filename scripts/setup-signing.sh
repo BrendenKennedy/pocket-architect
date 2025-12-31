@@ -28,28 +28,15 @@ echo -e "${BLUE}Setting up code signing and auto-updater...${NC}\n"
 # Create keys directory
 mkdir -p keys
 
-# Generate updater keys
-echo -e "${BLUE}Generating updater keys...${NC}"
-if command -v npx &> /dev/null; then
-    npx @tauri-apps/cli signer generate \
-        --private-key-path keys/privateKey.pem \
-        --public-key-path keys/publicKey.pem
-
-    echo -e "${GREEN}✅ Updater keys generated${NC}"
-
-    # Extract public key for configuration
-    PUBLIC_KEY=$(cat keys/publicKey.pem)
-    echo -e "${BLUE}Public key:${NC} $PUBLIC_KEY"
-    echo "$PUBLIC_KEY" > keys/public_key.txt
-
-    echo -e "${YELLOW}⚠️  IMPORTANT: Keep keys/privateKey.pem secure and never commit it!${NC}"
-    echo -e "${YELLOW}   Only commit keys/publicKey.pem and add private key to GitHub secrets.${NC}\n"
+# Check if keys already exist
+if [ -f "signing-keys/privateKey.enc" ] && [ -f "signing-keys/publicKey.pem" ]; then
+    echo -e "${YELLOW}⚠️  Signing keys already exist. Skipping generation.${NC}"
+    echo -e "${YELLOW}   If you need new keys, delete signing-keys/ and run this script again.${NC}\n"
 else
-    echo -e "${RED}❌ npx not found. Please install Node.js and run:${NC}"
-    echo "npm install -g @tauri-apps/cli"
-    echo "npx @tauri-apps/cli signer generate --private-key-path keys/privateKey.pem --public-key-path keys/publicKey.pem"
-    exit 1
+    echo -e "${RED}❌ Signing keys not found. Please follow docs/setup/KEY_SETUP.md to set up keys.${NC}"
+    echo -e "${YELLOW}   Skipping signing setup for now.${NC}\n"
 fi
+
 
 # Update tauri.conf.json with public key
 echo -e "${BLUE}Updating tauri.conf.json with public key...${NC}"
@@ -70,51 +57,6 @@ if ! grep -q "keys/privateKey.pem" .gitignore 2>/dev/null; then
 else
     echo -e "${BLUE}ℹ️  .gitignore already configured${NC}"
 fi
-
-# Create GitHub secrets template
-echo -e "${BLUE}Creating GitHub secrets template...${NC}"
-cat > keys/github-secrets-template.md << 'EOF'
-# GitHub Secrets Template
-
-Add these secrets to your GitHub repository settings:
-
-## Required Secrets
-
-### Updater Signing (Required)
-- `TAURI_PRIVATE_KEY`: Contents of `keys/privateKey.pem`
-- `TAURI_KEY_PASSWORD`: Password you set when generating keys (leave empty if none)
-
-### Windows Code Signing (Optional)
-- `WINDOWS_CERTIFICATE`: Base64 encoded .pfx certificate file
-- `WINDOWS_CERTIFICATE_PASSWORD`: Certificate password
-
-### macOS Code Signing (Optional)
-- `MACOS_CERTIFICATE`: Base64 encoded .p12 certificate file
-- `MACOS_CERTIFICATE_PASSWORD`: Certificate password
-- `KEYCHAIN_PASSWORD`: Random password for temporary keychain
-- `MACOS_CERTIFICATE_NAME`: Name of certificate in keychain
-
-## How to Add Secrets
-
-1. Go to your GitHub repository
-2. Navigate to Settings → Secrets and variables → Actions
-3. Click "New repository secret"
-4. Add each secret listed above
-
-## Base64 Encoding (for certificates)
-
-```bash
-# Windows
-certutil -encode your-cert.pfx base64-cert.txt
-
-# macOS/Linux
-base64 -i your-cert.p12 -o base64-cert.txt
-```
-
-Then copy the contents of base64-cert.txt as the secret value.
-EOF
-
-echo -e "${GREEN}✅ GitHub secrets template created: keys/github-secrets-template.md${NC}"
 
 # Create certificate setup scripts
 echo -e "${BLUE}Creating certificate setup scripts...${NC}"
@@ -175,7 +117,7 @@ echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo
 echo -e "${BLUE}Next steps:${NC}"
 echo "1. 🔑 Review and secure your keys in the 'keys' directory"
-echo "2. 📝 Follow the GitHub secrets template in keys/github-secrets-template.md"
+echo "2. 📝 Follow docs/setup/KEY_SETUP.md to set up GitHub secrets (boss only)"
 echo "3. 🏗️  Push to GitHub to test the CI/CD pipeline"
 echo "4. 📋 Optionally set up code signing certificates"
 echo

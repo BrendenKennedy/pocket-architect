@@ -9,7 +9,36 @@ This file provides instructions for setting up test AWS credentials for developm
 
 ## Setting Up Test Credentials
 
-### Method 1: Environment Variables (Recommended)
+### Method 1: Encrypted Environment Variables (Most Secure)
+
+For maximum security, encrypt your credentials:
+
+1. **Create plain text credentials file**:
+   ```bash
+   # Create config/aws-credentials.env
+   AWS_ACCESS_KEY_ID=your_real_access_key
+   AWS_SECRET_ACCESS_KEY=your_real_secret_key
+   AWS_DEFAULT_REGION=us-east-1
+   ```
+
+2. **Encrypt the credentials** (run in WSL):
+   ```bash
+   wsl ./scripts/encrypt-aws-creds.sh
+   ```
+   Or if already in WSL terminal:
+   ```bash
+   ./scripts/encrypt-aws-creds.sh
+   ```
+   This creates `config/aws-credentials.env.enc`
+
+3. **Decrypt when needed** (run in WSL):
+   ```bash
+   wsl ./scripts/decrypt-aws-creds.sh
+   source config/aws-credentials.env
+   rm config/aws-credentials.env  # Clean up immediately
+   ```
+
+### Method 2: Environment Variables (Recommended for Development)
 
 Set these environment variables in your shell or `.env` file:
 
@@ -25,7 +54,7 @@ POCKET_ARCHITECT_TEST_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 POCKET_ARCHITECT_TEST_REGION=us-east-1
 ```
 
-### Method 2: AWS CLI Configuration
+### Method 3: AWS CLI Configuration
 
 If you have AWS CLI installed:
 
@@ -37,7 +66,7 @@ aws configure --profile pocket-architect-test
 export AWS_PROFILE=pocket-architect-test
 ```
 
-### Method 3: Test Credentials File (For CI/CD)
+### Method 4: Test Credentials File (For CI/CD)
 
 Create a `config/test-credentials.env` file (add to .gitignore):
 
@@ -96,11 +125,14 @@ The application automatically detects which mode to use:
 
 ## Security Best Practices
 
-1. **Never commit credentials** to version control
-2. **Use IAM users** with minimal required permissions
-3. **Rotate credentials** regularly
-4. **Use different credentials** for different environments
-5. **Monitor usage** of test credentials
+1. **Encrypt sensitive credentials** using the provided scripts
+2. **Never commit real credentials** to version control
+3. **Use IAM users** with minimal required permissions
+4. **Rotate credentials** regularly (every 90 days)
+5. **Use different credentials** for different environments
+6. **Monitor usage** of credentials in AWS CloudTrail
+7. **Delete decrypted files** immediately after use
+8. **Use strong passphrases** for encryption (12+ characters, mixed case, symbols)
 
 ## Test Credentials Status
 

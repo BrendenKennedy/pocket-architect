@@ -5,8 +5,8 @@
 // Validates the CI/CD pipeline configuration and setup
 // ============================================================================
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 console.log('🚀 Pocket Architect - CI/CD Configuration Validator');
 console.log('====================================================\n');
@@ -106,7 +106,7 @@ try {
 
 console.log('\n📚 Documentation:');
 test('README exists', fileExists('README.md'));
-test('CI/CD docs exist', fileExists('docs/CI-CD.md'));
+test('CI/CD docs exist', fileExists('docs/cicd/CI-CD.md'));
 
 console.log('\n🔧 Tauri Configuration:');
 

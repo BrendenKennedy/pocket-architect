@@ -51,7 +51,7 @@ echo
 
 # Setup directories
 echo -e "${BLUE}Setting up project structure...${NC}"
-mkdir -p keys certificates scripts docs
+mkdir -p signing-keys certificates
 
 # Install root dependencies
 echo -e "${BLUE}Installing root dependencies...${NC}"
@@ -86,11 +86,12 @@ echo
 echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo
 echo -e "${BLUE}Next steps:${NC}"
-echo "1. 🔑 Review the generated keys in the 'keys' directory"
-echo "2. 📝 Follow keys/github-secrets-template.md to set up GitHub secrets"
-echo "3. 🏗️  Test the build locally: npm run tauri:dev"
-echo "4. 🚀 Push to GitHub to trigger the CI/CD pipeline"
-echo "5. 📦 Optionally set up code signing certificates"
+echo "1. 🔑 Review the generated keys in the 'signing-keys' directory"
+echo "2. 📝 Follow docs/setup/KEY_SETUP.md to set up GitHub secrets (boss only)"
+echo "3. 📖 Read docs/welcome/WELCOME_TO_TEAM.md for complete team onboarding"
+echo "4. 🏗️  Test the build locally: npm run tauri:dev"
+echo "5. 🚀 Push to GitHub to trigger the CI/CD pipeline"
+echo "6. 📦 Optionally set up code signing certificates"
 echo
 echo -e "${YELLOW}Useful commands:${NC}"
 echo "  # Development"
@@ -111,7 +112,7 @@ echo "  node scripts/validate-setup.js  # Validate configuration"
 echo
 echo -e "${BLUE}Documentation:${NC}"
 echo "  📖 README.md              # Project overview"
-echo "  📋 docs/CI-CD.md         # CI/CD pipeline docs"
-echo "  🔐 docs/CODE_SIGNING.md  # Code signing setup"
+echo "  📋 docs/cicd/CI-CD.md         # CI/CD pipeline docs"
+echo "  🔐 docs/cicd/CODE_SIGNING.md  # Code signing setup"
 echo
 echo -e "${GREEN}Happy coding! 🎉${NC}"

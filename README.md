@@ -19,6 +19,11 @@ A modern desktop application for AWS resource management and infrastructure orch
 
 ## Quick Start
 
+### For New Team Members
+If you're new to the team, start here:
+- 📖 **[Welcome to the Team](docs/welcome/WELCOME_TO_TEAM.md)** - Complete onboarding guide
+- 🚀 Run `wsl ./scripts/welcome.sh` to set up your environment
+
 ### Prerequisites
 
 - Node.js 18+
@@ -167,8 +172,8 @@ npm run tauri:dev
 
 ### 📚 **Documentation**
 
-- **[CI/CD Pipeline](docs/CI-CD.md)** - Build and deployment details
-- **[Code Signing](docs/CODE_SIGNING.md)** - Security setup guide
+- **[CI/CD Pipeline](docs/cicd/CI-CD.md)** - Build and deployment details
+- **[Code Signing](docs/cicd/CODE_SIGNING.md)** - Security setup guide
 - **Setup Scripts**: Automated configuration and validation
 
 ---

@@ -66,10 +66,17 @@ jobs:
         draft: false
         prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
 
+    - name: Decrypt private key
+      run: |
+        echo "${{ secrets.TAURI_PRIVATE_KEY }}" | base64 -d > signing-keys/privateKey.enc
+        openssl enc -d -aes-256-cbc -in signing-keys/privateKey.enc -out signing-keys/privateKey.pem -k ${{ secrets.TAURI_KEY_PASSWORD }}
+
     - name: Build and release
       uses: tauri-apps/tauri-action@v0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAURI_PRIVATE_KEY: signing-keys/privateKey.pem
+        TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
       with:
         projectPath: src-tauri
         tauriScript: npm run tauri

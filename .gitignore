@@ -1,0 +1,30 @@
+# Updater private key - NEVER COMMIT
+keys/privateKey.pem
+
+# AWS Credentials - NEVER COMMIT
+config/aws-credentials.env
+config/test-credentials.env
+
+# Allow encrypted credentials
+!config/aws-credentials.env.enc
+
+# Dependencies
+node_modules/
+
+# Build outputs
+src-tauri/target/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
