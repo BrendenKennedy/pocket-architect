@@ -134,11 +134,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 ### Step 3: Run the Application
 
 **Development Mode:**
-```bash
-npm run tauri:dev
-```
-On Windows (if not using WSL):
-```powershell
+```bash/powershell
 npm run tauri:dev
 ```
 
@@ -373,4 +369,5 @@ MIT License - see LICENSE file for details.
 
 
 **Built with ❤️ using Tauri, React, and Rust - Production Ready! 🚀**
+
 
