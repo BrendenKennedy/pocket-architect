@@ -11,14 +11,10 @@
             "id": "39008fbc2178136a",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "welcome/WELCOME_TO_TEAM.md",
-                "mode": "preview",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "WELCOME_TO_TEAM"
+              "title": "New tab"
             }
           }
         ]
@@ -95,7 +91,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "welcome/WELCOME_TO_TEAM.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -105,7 +100,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for WELCOME_TO_TEAM"
+              "title": "Backlinks"
             }
           },
           {
@@ -114,12 +109,11 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "welcome/WELCOME_TO_TEAM.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from WELCOME_TO_TEAM"
+              "title": "Outgoing links"
             }
           },
           {
@@ -157,13 +151,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "welcome/WELCOME_TO_TEAM.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of WELCOME_TO_TEAM"
+              "title": "Outline"
             }
           }
         ],
@@ -186,5 +179,7 @@
     }
   },
   "active": "39008fbc2178136a",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "welcome/WELCOME_TO_TEAM.md"
+  ]
 }

@@ -51,6 +51,6 @@ This guide explains how to set up signing keys for Pocket Architect. The "boss" 
 ## Important Notes
 - Never commit private keys or passphrases to the repo.
 - Rotate keys periodically for security.
-- For code signing certificates, follow `docs/cicd/CODE_SIGNING.md` (separate from updater keys).
+- For code signing certificates, follow `../src-tauri/README.md` (separate from updater keys).
 - Only the boss should add/modify GitHub secrets.
 - If keys need rotation, generate new ones, update secrets, and redistribute to team members.

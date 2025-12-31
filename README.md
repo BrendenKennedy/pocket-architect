@@ -160,9 +160,11 @@ This starts the full desktop app with hot reloading.
 
 **Code Structure:**
 - `src/` - React frontend (components, pages, styles)
-- `src-tauri/` - Rust backend (AWS integration, database, Tauri config)
+- `src-tauri/` - Rust backend (AWS integration, database, Tauri config) + code signing docs
 - `scripts/` - Build and utility scripts
-- `docs/` - Detailed documentation
+- `config/` - Configuration files + AWS credentials setup
+- `signing-keys/` - Key management + setup guide
+- `.github/` - CI/CD workflows + pipeline documentation
 
 **Key Files to Know:**
 - `src-tauri/tauri.conf.json` - App configuration
@@ -226,10 +228,10 @@ node scripts\validate-setup.js
 ## Getting Help
 
 ### Documentation
-- `docs/setup/KEY_SETUP.md` - Detailed key setup guide
-- `docs/security/AWS_TEST_CREDENTIALS.md` - AWS credential management
-- `docs/cicd/CODE_SIGNING.md` - Code signing for releases
-- `docs/cicd/CI-CD.md` - CI/CD pipeline details
+- `signing-keys/README.md` - Detailed key setup guide
+- `config/README.md` - AWS credential management
+- `src-tauri/README.md` - Code signing for releases
+- `.github/README.md` - CI/CD pipeline details
 
 ### Common Issues
 - **App won't start:** Check if signing keys are set up
@@ -328,8 +330,11 @@ pocket-architect/
 │   ├── Cargo.toml
 │   └── tauri.conf.json
 ├── scripts/               # Build and deployment scripts
-├── docs/                  # Documentation
-└── config/                # Configuration files
+├── config/                # Configuration files + AWS setup docs
+├── signing-keys/          # Key management + setup guide
+├── .github/               # CI/CD workflows + pipeline docs
+│   └── workflows/
+└── certificates/          # Code signing certificates
 ```
 
 ## Testing
