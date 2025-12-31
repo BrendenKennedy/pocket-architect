@@ -116,14 +116,14 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 - **Setup for team members**:
   ```bash
   # When you need AWS access:
-  ./scripts/decrypt-aws-creds.sh
+  ./scripts/bash/decrypt-aws-creds.sh
   source config/aws-credentials.env
   # Run your app/tests
   rm config/aws-credentials.env  # Clean up immediately
   ```
   On Windows (PowerShell):
   ```powershell
-  .\scripts\decrypt-aws-creds.bat
+  .\scripts\powershell\decrypt-aws-creds.bat
   . .\config\aws-credentials.env
   # Run your app/tests
   Remove-Item .\config\aws-credentials.env  # Clean up immediately
@@ -161,7 +161,7 @@ This starts the full desktop app with hot reloading.
 **Code Structure:**
 - `src/` - React frontend (components, pages, styles)
 - `src-tauri/` - Rust backend (AWS integration, database, Tauri config) + code signing docs
-- `scripts/` - Build and utility scripts
+- `scripts/` - Build and utility scripts (organized by bash/, powershell/, node/)
 - `config/` - Configuration files + AWS credentials setup
 - `signing-keys/` - Key management + setup guide
 - `.github/` - CI/CD workflows + pipeline documentation
@@ -183,7 +183,7 @@ npm test
 cargo test
 
 # Full validation
-node scripts/validate-setup.js
+node scripts/node/validate-setup.js
 ```
 On Windows:
 ```powershell
@@ -237,8 +237,8 @@ node scripts\validate-setup.js
 - **App won't start:** Check if signing keys are set up
 - **No AWS data:** Ensure credentials are decrypted and sourced
 - **Build fails:** Run the validation command for your platform:
-  - Windows: `node scripts\validate-setup.js`
-  - macOS/Linux: `node scripts/validate-setup.js`
+  - Windows: `node scripts\node\validate-setup.js`
+  - macOS/Linux: `node scripts\node\validate-setup.js`
 
 ### Who to Contact
 - **Technical issues:** Check existing issues or create new ones
@@ -330,6 +330,9 @@ pocket-architect/
 │   ├── Cargo.toml
 │   └── tauri.conf.json
 ├── scripts/               # Build and deployment scripts
+│   ├── bash/             # Bash scripts
+│   ├── powershell/       # PowerShell/batch scripts
+│   └── node/             # Node.js scripts
 ├── config/                # Configuration files + AWS setup docs
 ├── signing-keys/          # Key management + setup guide
 ├── .github/               # CI/CD workflows + pipeline docs

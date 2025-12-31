@@ -78,7 +78,7 @@ npm run tauri dev
 npm run tauri build
 
 # Optimized build script
-./scripts/build-tauri.sh release aws-sdk
+./scripts/bash/build-tauri.sh release aws-sdk
 ```
 
 ### CI/CD Triggers

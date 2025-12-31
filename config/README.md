@@ -23,17 +23,17 @@ For maximum security, encrypt your credentials:
 
 2. **Encrypt the credentials** (run in WSL):
    ```bash
-   wsl ./scripts/encrypt-aws-creds.sh
+   wsl ./scripts/bash/encrypt-aws-creds.sh
    ```
    Or if already in WSL terminal:
    ```bash
-   ./scripts/encrypt-aws-creds.sh
+   ./scripts/bash/encrypt-aws-creds.sh
    ```
    This creates `config/aws-credentials.env.enc`
 
 3. **Decrypt when needed** (run in WSL):
    ```bash
-   wsl ./scripts/decrypt-aws-creds.sh
+   wsl ./scripts/bash/decrypt-aws-creds.sh
    source config/aws-credentials.env
    rm config/aws-credentials.env  # Clean up immediately
    ```
