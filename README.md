@@ -110,7 +110,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 - **Why:** Enables secure auto-updates and app integrity
 - **For security best practices**: Have a designated "boss" act as gatekeeper - they generate keys, manage GitHub secrets, and distribute encrypted keys to team members. This ensures private keys never touch team member machines in plain text.
 
-#### B. AWS Credentials (Optional, for live data)
+#### B. AWS Credentials (Required, for live data)
 - **Security Role Split**: Similar to signing keys - the boss manages encrypted AWS credentials and shares decryption access with team members as needed.
 - **What you get as a team member**: Encrypted AWS credentials file + passphrase from the boss
 - **Setup for team members**:
@@ -373,3 +373,4 @@ MIT License - see LICENSE file for details.
 
 
 **Built with ❤️ using Tauri, React, and Rust - Production Ready! 🚀**
+
