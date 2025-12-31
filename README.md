@@ -57,7 +57,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
    ```
    Or if using WSL:
    ```bash
-   wsl ./setup.sh
+   wsl ./scripts/bash/setup.sh
    ```
 
 #### macOS
@@ -74,7 +74,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 
 3. **Run the automated setup:**
    ```bash
-   ./setup.sh
+   ./scripts/bash/setup.sh
    ```
 
 #### Linux
@@ -90,7 +90,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 
 3. **Run the automated setup:**
    ```bash
-   ./setup.sh
+   ./scripts/bash/setup.sh
    ```
 
 4. **Verify setup:**
@@ -284,7 +284,7 @@ cd pocket-architect
 .\setup.bat
 
 # macOS/Linux
-./setup.sh
+./scripts/bash/setup.sh
 ```
 
 3. Run the application:
