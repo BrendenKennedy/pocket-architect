@@ -62,16 +62,28 @@ echo   [OK] %GIT_VERSION%
 
 REM Check OpenSSL
 echo [SSL] OpenSSL:
-set "OPENSSL_FOUND="
-where openssl >nul 2>nul && set "OPENSSL_FOUND=1"
-if defined OPENSSL_FOUND (
+REM First try direct openssl command
+openssl version >nul 2>nul
+if %errorlevel% equ 0 (
     echo   [OK] OpenSSL available
-) else (
-    echo   [WARNING] OpenSSL not found. Required for key encryption/decryption.
-    echo   [INFO] Install via: choco install openssl (or scoop install openssl)
-    echo   [INFO] Or download from: https://slproweb.com/products/Win32OpenSSL.html
-    echo   [INFO] Continuing setup, but key operations may fail...
+    goto :openssl_done
 )
+
+REM If not found, try Git for Windows OpenSSL
+if exist "C:\Program Files\Git\usr\bin\openssl.exe" (
+    set "PATH=C:\Program Files\Git\usr\bin;%PATH%"
+    echo   [OK] OpenSSL found in Git for Windows
+    goto :openssl_done
+)
+
+REM If still not found, show warning
+echo   [WARNING] OpenSSL not found. Required for key encryption/decryption.
+echo   [INFO] Install via: choco install openssl (run as Administrator)
+echo   [INFO] Or download from: https://slproweb.com/products/Win32OpenSSL.html
+echo   [INFO] Git for Windows includes OpenSSL - ensure it's in PATH
+echo   [INFO] Continuing setup, but key operations may fail...
+
+:openssl_done
 
 echo.
 echo [SUCCESS] Prerequisites OK
