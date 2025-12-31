@@ -101,35 +101,195 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 **You need two types of credentials:**
 
 #### A. Signing Keys (Required for the app to run)
-- **Security Role Split**: In this open source project, the "boss" role is whoever manages the private keys for a branch (typically the branch maintainer or lead developer). Team members receive encrypted keys for local development.
-- **What you get as a team member**: Encrypted private key file + passphrase from the boss
-- **Setup for team members**:
-  1. Receive `crypto/signing-keys/privateKey.enc` and passphrase from the boss
-  2. Place the file in `crypto/signing-keys/privateKey.enc`
-  3. The public key is already configured in `src-tauri/tauri.conf.json`
-- **Why:** Enables secure auto-updates and app integrity
-- **For security best practices**: Have a designated "boss" act as gatekeeper - they generate keys, manage GitHub secrets, and distribute encrypted keys to team members. This ensures private keys never touch team member machines in plain text.
+
+**Security Role Split**: In this open source project, the "boss" role is whoever manages the private keys for a branch (typically the branch maintainer or lead developer). Team members receive encrypted keys for local development.
+
+**What you get as a team member**: Encrypted private key file + passphrase from the boss
+
+**Why:** Enables secure auto-updates and app integrity
+
+**For security best practices**: Have a designated "boss" act as gatekeeper - they generate keys, manage GitHub secrets, and distribute encrypted keys to team members. This ensures private keys never touch team member machines in plain text.
+
+##### For the Boss (Key Generation and GitHub Setup)
+1. Generate keys:
+   ```
+   npx @tauri-apps/cli signer generate --password "yourpassphrase" --write-keys crypto/signing-keys/
+   ```
+2. Encrypt the private key:
+   ```
+   openssl enc -aes-256-cbc -salt -in crypto/signing-keys/privateKey.pem -out crypto/signing-keys/privateKey.enc -k "yourpassphrase"
+   rm crypto/signing-keys/privateKey.pem
+   ```
+3. Set up GitHub secrets (boss only):
+   - Go to the GitHub repository → Settings → Secrets and variables → Actions.
+   - Add `TAURI_PRIVATE_KEY`: Base64-encoded contents of `signing-keys/privateKey.enc`.
+     ```
+     base64 -i crypto/signing-keys/privateKey.enc
+     ```
+     On Windows: `certutil -encode crypto/signing-keys/privateKey.enc tmp.b64 && type tmp.b64`
+     Copy the output as the secret value.
+   - Add `TAURI_KEY_PASSWORD`: The passphrase used to encrypt the private key (e.g., "yourpassphrase").
+   
+   **Optional Code Signing Secrets:**
+   - `WINDOWS_CERTIFICATE`: Base64 encoded .pfx certificate file
+   - `WINDOWS_CERTIFICATE_PASSWORD`: Certificate password
+   - `MACOS_CERTIFICATE`: Base64 encoded .p12 certificate file  
+   - `MACOS_CERTIFICATE_PASSWORD`: Certificate password
+   - `KEYCHAIN_PASSWORD`: Random password for temporary keychain
+   - `MACOS_CERTIFICATE_NAME`: Name of certificate in keychain
+
+   **Base64 Encoding for Certificates:**
+   ```bash
+   # Windows
+   certutil -encode your-cert.pfx base64-cert.txt
+   
+   # macOS/Linux
+   base64 -i your-cert.p12 -o base64-cert.txt
+   ```
+   Then copy the contents of base64-cert.txt as the secret value.
+4. Configure the public key in `src-tauri/tauri.conf.json`:
+   - Replace `YOUR_UPDATER_PUBLIC_KEY_HERE` with the contents of `crypto/signing-keys/publicKey.pem`.
+5. Distribute:
+   - Send `crypto/signing-keys/privateKey.enc` and the passphrase to team members via secure channel (e.g., encrypted email).
+   - The public key is already configured in the project.
+
+##### For Team Members (Local Setup)
+1. Receive the encrypted private key and passphrase from the boss.
+2. Place `privateKey.enc` in `crypto/signing-keys/privateKey.enc`.
+3. The public key is already configured in the project - no additional setup needed.
+4. For local builds, set env vars:
+   ```
+   export TAURI_PRIVATE_KEY=crypto/signing-keys/privateKey.pem
+   export TAURI_KEY_PASSWORD=yourpassphrase
+   ```
+   On Windows (PowerShell):
+   ```
+   $env:TAURI_PRIVATE_KEY="crypto/signing-keys/privateKey.pem"
+   $env:TAURI_KEY_PASSWORD="yourpassphrase"
+   ```
+   (Decrypt first: `openssl enc -d -aes-256-cbc -in crypto/signing-keys/privateKey.enc -out crypto/signing-keys/privateKey.pem -k yourpassphrase`)
+
+**Important Notes:**
+- Never commit private keys or passphrases to the repo.
+- Rotate keys periodically for security.
+- For code signing certificates, follow `src-tauri/README.md` (separate from updater keys).
+- Only the boss should add/modify GitHub secrets.
+- If keys need rotation, generate new ones, update secrets, and redistribute to team members.
 
 #### B. AWS Credentials (Required, for live data)
-- **Security Role Split**: Similar to signing keys - the boss manages encrypted AWS credentials and shares decryption access with team members as needed.
-- **What you get as a team member**: Encrypted AWS credentials file + passphrase from the boss
-- **Setup for team members**:
-  ```bash
-  # When you need AWS access:
-  ./scripts/bash/decrypt-aws-creds.sh
-  source config/aws-credentials.env
-  # Run your app/tests
-  rm config/aws-credentials.env  # Clean up immediately
-  ```
-  On Windows (PowerShell):
-  ```powershell
-  .\scripts\powershell\decrypt-aws-creds.bat
-  . .\config\aws-credentials.env
-  # Run your app/tests
-  Remove-Item .\config\aws-credentials.env  # Clean up immediately
-  ```
-- **Why:** Allows testing with real AWS data instead of mock data
-- **For security best practices**: The boss should be the gatekeeper for AWS credentials, ensuring they're encrypted and only decrypted temporarily when needed.
+
+**Security Role Split**: Similar to signing keys - the boss manages encrypted AWS credentials and shares decryption access with team members as needed.
+
+**What you get as a team member**: Encrypted AWS credentials file + passphrase from the boss
+
+**Why:** Allows testing with real AWS data instead of mock data
+
+**For security best practices**: The boss should be the gatekeeper for AWS credentials, ensuring they're encrypted and only decrypted temporarily when needed.
+
+##### Setting Up Test Credentials
+
+**⚠️ SECURITY WARNING**: NEVER commit real AWS credentials to version control! Use IAM users with minimal required permissions only!
+
+###### Method 1: Direct Environment Variables (Recommended)
+
+Set these environment variables in your shell or `.env` file:
+
+```bash
+# AWS Test Credentials
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+AWS_DEFAULT_REGION=us-east-1
+```
+
+For production use, set real AWS credentials as environment variables.
+
+###### Method 2: AWS CLI Configuration
+
+If you have AWS CLI installed:
+
+```bash
+aws configure --profile pocket-architect-test
+# Enter test credentials when prompted
+
+# Then set the profile
+export AWS_PROFILE=pocket-architect-test
+```
+
+###### Method 3: Test Credentials File (For CI/CD)
+
+Create a `.env` file in your project root (add to .gitignore):
+
+```env
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+AWS_DEFAULT_REGION=us-east-1
+```
+
+##### Test IAM User Setup (AWS Console)
+
+Create an IAM user with these minimal permissions for testing:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeInstances",
+                "ec2:DescribeRegions",
+                "s3:ListAllMyBuckets",
+                "s3:GetBucketLocation",
+                "iam:ListUsers",
+                "iam:ListRoles",
+                "iam:GetUser"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+##### Running Tests with Credentials
+
+```bash
+# Load test credentials from .env file
+source .env
+
+# Run tests
+cargo test --test live_data_test
+
+# Or run with specific credentials
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE \
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
+cargo test --test live_data_test
+```
+
+##### Mock vs Live Data Detection
+
+The application automatically detects which mode to use:
+- **Mock Mode**: No credentials → Returns sample data for development
+- **Live Mode**: Credentials detected → Returns data from real AWS APIs
+
+##### Security Best Practices
+
+1. **Encrypt sensitive credentials** using the provided scripts
+2. **Never commit real credentials** to version control
+3. **Use IAM users** with minimal required permissions
+4. **Rotate credentials** regularly (every 90 days)
+5. **Use different credentials** for different environments
+6. **Monitor usage** of credentials in AWS CloudTrail
+7. **Delete decrypted files** immediately after use
+8. **Use strong passphrases** for encryption (12+ characters, mixed case, symbols)
+
+##### Test Credentials Status
+
+The application includes the following test credentials for development:
+- **Access Key**: `AKIAIOSFODNN7EXAMPLE` (AWS documentation example)
+- **Secret Key**: `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` (AWS documentation example)
+- **Region**: `us-east-2`
+
+These are safe to use in code as they are the official AWS documentation examples and do not provide access to any real AWS resources.
 
 ### Step 3: Run the Application
 
@@ -162,11 +322,8 @@ This starts the full desktop app with hot reloading.
 - `src/` - React frontend (components, pages, styles)
 - `src-tauri/` - Rust backend (AWS integration, database, Tauri config) + code signing docs
 - `scripts/` - Build and utility scripts (organized by bash/, powershell/, node/)
-- `config/` - Configuration files + AWS credentials setup
 - `crypto/` - Security and cryptographic materials
-  - `crypto/signing-keys/` - Key management + setup guide
-  - `crypto/certificates/` - Code signing certificates
-  - `crypto/keys/` - GitHub secrets templates
+  - `crypto/signing-keys/` - Key management + setup guide (includes GitHub secrets)
 - `.github/` - CI/CD workflows + pipeline documentation
 
 **Key Files to Know:**
@@ -231,8 +388,6 @@ node scripts\validate-setup.js
 ## Getting Help
 
 ### Documentation
-- `crypto/signing-keys/README.md` - Detailed key setup guide
-- `config/README.md` - AWS credential management
 - `src-tauri/README.md` - Code signing for releases
 - `.github/README.md` - CI/CD pipeline details
 
@@ -336,7 +491,6 @@ pocket-architect/
 │   ├── bash/             # Bash scripts
 │   ├── powershell/       # PowerShell/batch scripts
 │   └── node/             # Node.js scripts
-├── config/                # Configuration files + AWS setup docs
 ├── crypto/                # Security and cryptographic materials
 │   ├── signing-keys/     # Key management + setup guide
 │   ├── certificates/     # Code signing certificates

@@ -104,7 +104,10 @@ test('Tauri CLI is available', () => {
 
 console.log('\n📚 Documentation:');
 test('README exists', fileExists('README.md'));
-test('CI/CD docs exist', fileExists('docs/cicd/CI-CD.md'));
+test('Setup documentation in README', 
+  fileExists('README.md') && 
+  fs.readFileSync('README.md', 'utf8').includes('## Onboarding') &&
+  fs.readFileSync('README.md', 'utf8').includes('## Quick Start'));
 
 console.log('\n🔧 Tauri Configuration:');
 

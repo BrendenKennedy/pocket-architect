@@ -26,6 +26,24 @@ This guide explains how to set up signing keys for Pocket Architect. The "boss" 
      On Windows: `certutil -encode crypto/signing-keys/privateKey.enc tmp.b64 && type tmp.b64`
      Copy the output as the secret value.
    - Add `TAURI_KEY_PASSWORD`: The passphrase used to encrypt the private key (e.g., "yourpassphrase").
+   
+   ### Optional Code Signing Secrets
+   - `WINDOWS_CERTIFICATE`: Base64 encoded .pfx certificate file
+   - `WINDOWS_CERTIFICATE_PASSWORD`: Certificate password
+   - `MACOS_CERTIFICATE`: Base64 encoded .p12 certificate file  
+   - `MACOS_CERTIFICATE_PASSWORD`: Certificate password
+   - `KEYCHAIN_PASSWORD`: Random password for temporary keychain
+   - `MACOS_CERTIFICATE_NAME`: Name of certificate in keychain
+
+   #### Base64 Encoding for Certificates
+   ```bash
+   # Windows
+   certutil -encode your-cert.pfx base64-cert.txt
+   
+   # macOS/Linux
+   base64 -i your-cert.p12 -o base64-cert.txt
+   ```
+   Then copy the contents of base64-cert.txt as the secret value.
 4. Configure the public key in `src-tauri/tauri.conf.json`:
    - Replace `YOUR_UPDATER_PUBLIC_KEY_HERE` with the contents of `crypto/signing-keys/publicKey.pem`.
 5. Distribute:

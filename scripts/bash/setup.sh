@@ -67,8 +67,8 @@ cd ..
 
 # Setup code signing and updater
 echo -e "${BLUE}Setting up code signing and updater...${NC}"
-chmod +x scripts/setup-signing.sh
-./scripts/setup-signing.sh
+chmod +x scripts/setup-updater-keys.sh
+./scripts/setup-updater-keys.sh
 
 # Make scripts executable
 echo -e "${BLUE}Making scripts executable...${NC}"

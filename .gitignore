@@ -1,13 +1,6 @@
 # Updater private key - NEVER COMMIT
 crypto/signing-keys/privateKey.pem
 
-# AWS Credentials - NEVER COMMIT
-config/aws-credentials.env
-config/test-credentials.env
-
-# Allow encrypted credentials
-!config/aws-credentials.env.enc
-
 # Dependencies
 node_modules/
 

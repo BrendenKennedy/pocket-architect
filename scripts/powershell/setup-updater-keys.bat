@@ -1,12 +1,29 @@
 @echo off
 REM ============================================================================
-REM Code Signing & Updater Setup Script for Windows
+REM Updater Keys Setup (Windows)
 REM ============================================================================
-REM Helps set up code signing certificates and updater keys for Tauri
+REM Sets up public/private key pair for secure auto-updates
+REM This is REQUIRED for the auto-updater system to work
+REM
+REM What it does:
+REM - Generates or validates updater signing keys
+REM - Updates tauri.conf.json with public key
+REM - Prepares keys for CI/CD pipeline
+REM
+REM When to use:
+REM - Always, for secure app updates
+REM - During initial project setup
+REM - When regenerating updater keys
+REM
+REM Key locations:
+REM - Public key: crypto/signing-keys/publicKey.pem (safe to commit)
+REM - Private key: crypto/signing-keys/privateKey.enc (encrypted, for GitHub secrets)
+REM
+REM Security: Only the "boss" should generate keys and set up GitHub secrets
 REM ============================================================================
 
-echo 🔐 Pocket Architect - Code Signing & Updater Setup
-echo ===================================================
+echo 🔐 Pocket Architect - Updater Keys Setup (Windows)
+echo ====================================================
 
 REM Check if we're in the right directory
 if not exist "src-tauri\tauri.conf.json" (
@@ -76,27 +93,27 @@ if not exist scripts\setup-windows-signing.bat (
 )
 
 REM macOS certificate setup (create .bat version for Windows users who might need it)
-if not exist scripts\setup-macos-signing.bat (
-    echo @echo off > scripts\setup-macos-signing.bat
-    echo echo Setting up macOS code signing certificate... >> scripts\setup-macos-signing.bat
-    echo. >> scripts\setup-macos-signing.bat
-    echo REM Check if certificate exists >> scripts\setup-macos-signing.bat
-    echo if not exist "certificates\macos-cert.p12" ( >> scripts\setup-macos-signing.bat
-    echo     echo Error: Certificate not found at certificates\macos-cert.p12 >> scripts\setup-macos-signing.bat
-    echo     echo Please place your .p12 certificate file in the certificates directory >> scripts\setup-macos-signing.bat
-    echo     pause >> scripts\setup-macos-signing.bat
-    echo     exit /b 1 >> scripts\setup-macos-signing.bat
-    echo ) >> scripts\setup-macos-signing.bat
-    echo. >> scripts\setup-macos-signing.bat
-    echo echo Certificate found. Ready for CI/CD use. >> scripts\setup-macos-signing.bat
-    echo echo. >> scripts\setup-macos-signing.bat
-    echo echo Next steps: >> scripts\setup-macos-signing.bat
-    echo echo 1. Base64 encode your certificate: certutil -encode certificates\macos-cert.p12 certificates\macos-cert-base64.txt >> scripts\setup-macos-signing.bat
-    echo echo 2. Add the contents of macos-cert-base64.txt as MACOS_CERTIFICATE secret in GitHub >> scripts\setup-macos-signing.bat
-    echo echo 3. Add your certificate password as MACOS_CERTIFICATE_PASSWORD secret >> scripts\setup-macos-signing.bat
-    echo echo 4. Add a random password as KEYCHAIN_PASSWORD secret >> scripts\setup-macos-signing.bat
-    echo echo 5. Update tauri.conf.json with your signing identity and team ID >> scripts\setup-macos-signing.bat
-    echo pause >> scripts\setup-macos-signing.bat
+if not exist scripts\setup-macos-code-signing.bat (
+    echo @echo off > scripts\setup-macos-code-signing.bat
+    echo echo Setting up macOS code signing certificate... >> scripts\setup-macos-code-signing.bat
+    echo. >> scripts\setup-macos-code-signing.bat
+    echo REM Check if certificate exists >> scripts\setup-macos-code-signing.bat
+    echo if not exist "certificates\macos-cert.p12" ( >> scripts\setup-macos-code-signing.bat
+    echo     echo Error: Certificate not found at certificates\macos-cert.p12 >> scripts\setup-macos-code-signing.bat
+    echo     echo Please place your .p12 certificate file in the certificates directory >> scripts\setup-macos-code-signing.bat
+    echo     pause >> scripts\setup-macos-code-signing.bat
+    echo     exit /b 1 >> scripts\setup-macos-code-signing.bat
+    echo ) >> scripts\setup-macos-code-signing.bat
+    echo. >> scripts\setup-macos-code-signing.bat
+    echo echo Certificate found. Ready for CI/CD use. >> scripts\setup-macos-code-signing.bat
+    echo echo. >> scripts\setup-macos-code-signing.bat
+    echo echo Next steps: >> scripts\setup-macos-code-signing.bat
+    echo echo 1. Base64 encode your certificate: certutil -encode certificates\macos-cert.p12 certificates\macos-cert-base64.txt >> scripts\setup-macos-code-signing.bat
+    echo echo 2. Add the contents of macos-cert-base64.txt as MACOS_CERTIFICATE secret in GitHub >> scripts\setup-macos-code-signing.bat
+    echo echo 3. Add your certificate password as MACOS_CERTIFICATE_PASSWORD secret >> scripts\setup-macos-code-signing.bat
+    echo echo 4. Add a random password as KEYCHAIN_PASSWORD secret >> scripts\setup-macos-code-signing.bat
+    echo echo 5. Update tauri.conf.json with your signing identity and team ID >> scripts\setup-macos-code-signing.bat
+    echo pause >> scripts\setup-macos-code-signing.bat
 )
 
 REM Create certificates directory

@@ -1,14 +1,31 @@
 #!/bin/bash
 # ============================================================================
-# Code Signing & Updater Setup Script
+# Updater Keys Setup (macOS/Linux)
 # ============================================================================
-# Helps set up code signing certificates and updater keys for Tauri
+# Sets up public/private key pair for secure auto-updates
+# This is REQUIRED for the auto-updater system to work
+#
+# What it does:
+# - Generates or validates updater signing keys
+# - Updates tauri.conf.json with public key
+# - Prepares keys for CI/CD pipeline
+#
+# When to use:
+# - Always, for secure app updates
+# - During initial project setup
+# - When regenerating updater keys
+#
+# Key locations:
+# - Public key: keys/publicKey.pem (safe to commit)
+# - Private key: keys/privateKey.enc (encrypted, for GitHub secrets)
+#
+# Security: Only the "boss" should generate keys and set up GitHub secrets
 # ============================================================================
 
 set -e
 
-echo "🔐 Pocket Architect - Code Signing & Updater Setup"
-echo "==================================================\n"
+echo "🔐 Pocket Architect - Updater Keys Setup (macOS/Linux)"
+echo "=======================================================\n"
 
 # Colors
 RED='\033[0;31m'
