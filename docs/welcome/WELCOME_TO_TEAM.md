@@ -38,7 +38,7 @@ Welcome to the Pocket Architect team! This document will get you up and running 
 
 3. **Run the automated setup:**
    ```powershell
-   .\setup.sh
+   .\setup.bat
    ```
    Or if using WSL:
    ```bash
@@ -107,7 +107,7 @@ Welcome to the Pocket Architect team! This document will get you up and running 
   ```
   On Windows (PowerShell):
   ```powershell
-  .\scripts\decrypt-aws-creds.sh
+  .\scripts\decrypt-aws-creds.bat
   . .\config\aws-credentials.env
   # Run your app/tests
   Remove-Item .\config\aws-credentials.env  # Clean up immediately
@@ -169,6 +169,13 @@ cargo test
 
 # Full validation
 node scripts/validate-setup.js
+```
+On Windows:
+```powershell
+# Same commands work in PowerShell
+npm test
+cargo test
+node scripts\validate-setup.js
 ```
 
 **Code Quality:**
