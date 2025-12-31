@@ -22,21 +22,63 @@ Welcome to the Pocket Architect team! This document will get you up and running 
 
 ### Step 1: Environment Setup
 
-**Prerequisites:** Windows with WSL enabled, Git installed.
+**Prerequisites:** Git installed, and one of: Windows (with or without WSL), macOS, or Linux.
 
-1. **Clone the repository:**
+#### Windows
+1. **Install prerequisites:**
+   - Download and install Node.js 20+ from https://nodejs.org/
+   - Install Rust from https://rustup.rs/
+   - (Optional) Enable WSL for better development experience
+
+2. **Clone the repository:**
+   ```powershell
+   git clone https://github.com/yourusername/pocket-architect.git
+   cd pocket-architect
+   ```
+
+3. **Run the automated setup:**
+   ```powershell
+   .\setup.sh
+   ```
+   Or if using WSL:
+   ```bash
+   wsl ./setup.sh
+   ```
+
+#### macOS
+1. **Install prerequisites:**
+   - Install Homebrew: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+   - Install Node.js: `brew install node`
+   - Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+
+2. **Clone the repository:**
    ```bash
    git clone https://github.com/yourusername/pocket-architect.git
    cd pocket-architect
    ```
 
-2. **Run the automated setup:**
+3. **Run the automated setup:**
    ```bash
-   wsl ./scripts/welcome.sh
+   ./setup.sh
    ```
-   This will install Rust, Node.js 20, and all project dependencies.
 
-3. **Verify setup:**
+#### Linux
+1. **Install prerequisites:**
+   - Install Node.js 20+ (using your package manager, e.g., for Ubuntu: `curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs`)
+   - Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+
+2. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/pocket-architect.git
+   cd pocket-architect
+   ```
+
+3. **Run the automated setup:**
+   ```bash
+   ./setup.sh
+   ```
+
+4. **Verify setup:**
    The script will validate your environment and show ✅ if everything is ready.
 
 ### Step 2: Get Access Credentials
@@ -58,10 +100,17 @@ Welcome to the Pocket Architect team! This document will get you up and running 
 - **Setup:**
   ```bash
   # When you need AWS access:
-  wsl ./scripts/decrypt-aws-creds.sh
-  wsl source config/aws-credentials.env
+  ./scripts/decrypt-aws-creds.sh
+  source config/aws-credentials.env
   # Run your app/tests
-  wsl rm config/aws-credentials.env  # Clean up immediately
+  rm config/aws-credentials.env  # Clean up immediately
+  ```
+  On Windows (PowerShell):
+  ```powershell
+  .\scripts\decrypt-aws-creds.sh
+  . .\config\aws-credentials.env
+  # Run your app/tests
+  Remove-Item .\config\aws-credentials.env  # Clean up immediately
   ```
 - **Why:** Allows testing with real AWS data instead of mock data
 
@@ -69,13 +118,18 @@ Welcome to the Pocket Architect team! This document will get you up and running 
 
 **Development Mode:**
 ```bash
-wsl npm run tauri:dev
+npm run tauri:dev
 ```
+On Windows (if not using WSL):
+```powershell
+npm run tauri:dev
+```
+
 This starts the full desktop app with hot reloading.
 
 **Alternative Commands:**
-- `wsl npm run dev` - Frontend only (web browser)
-- `wsl cargo run --features aws-sdk` - Backend only
+- `npm run dev` - Frontend only (web browser)
+- `cargo run --features aws-sdk` - Backend only
 
 **First Run Experience:**
 - If no AWS credentials: Shows mock/sample data for development
@@ -87,8 +141,8 @@ This starts the full desktop app with hot reloading.
 **Daily Development:**
 1. Pull latest changes: `git pull`
 2. Make your changes in VS Code
-3. Test locally: `wsl npm run tauri:dev`
-4. Run tests: `wsl npm test`
+3. Test locally: `npm run tauri:dev`
+4. Run tests: `npm test`
 5. Commit and push
 
 **Code Structure:**
@@ -108,13 +162,13 @@ This starts the full desktop app with hot reloading.
 **Run Tests:**
 ```bash
 # Frontend tests
-wsl npm test
+npm test
 
 # Backend tests
-wsl cargo test
+cargo test
 
 # Full validation
-wsl node scripts/validate-setup.js
+node scripts/validate-setup.js
 ```
 
 **Code Quality:**
@@ -143,7 +197,7 @@ wsl node scripts/validate-setup.js
 - **Report security issues** immediately
 
 ### 📋 Development Guidelines
-- **Use WSL** for all development commands
+- **Use your OS's terminal** for all development commands (PowerShell on Windows, Terminal on macOS/Linux)
 - **Test with mock data** by default
 - **Use real AWS data** only when necessary
 - **Keep dependencies updated**

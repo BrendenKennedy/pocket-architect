@@ -23,6 +23,7 @@ This guide explains how to set up signing keys for Pocket Architect. The "boss" 
      ```
      base64 -i signing-keys/privateKey.enc
      ```
+     On Windows: `certutil -encode signing-keys/privateKey.enc tmp.b64 && type tmp.b64`
      Copy the output as the secret value.
    - Add `TAURI_KEY_PASSWORD`: The passphrase used to encrypt the private key (e.g., "yourpassphrase").
 4. Distribute:
@@ -39,6 +40,11 @@ This guide explains how to set up signing keys for Pocket Architect. The "boss" 
    ```
    export TAURI_PRIVATE_KEY=signing-keys/privateKey.pem
    export TAURI_KEY_PASSWORD=yourpassphrase
+   ```
+   On Windows (PowerShell):
+   ```
+   $env:TAURI_PRIVATE_KEY="signing-keys/privateKey.pem"
+   $env:TAURI_KEY_PASSWORD="yourpassphrase"
    ```
    (Decrypt first: `openssl enc -d -aes-256-cbc -in signing-keys/privateKey.enc -out signing-keys/privateKey.pem -k yourpassphrase`)
 
