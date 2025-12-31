@@ -101,18 +101,19 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
 **You need two types of credentials:**
 
 #### A. Signing Keys (Required for the app to run)
-- **Who provides:** The "boss" (key holder) - contact them separately
-- **What you get:** Encrypted private key file + passphrase
-- **Setup:**
-  1. Receive `signing-keys/privateKey.enc` and passphrase from boss
+- **Security Role Split**: In this open source project, the "boss" role is whoever manages the private keys for a branch (typically the branch maintainer or lead developer). Team members receive encrypted keys for local development.
+- **What you get as a team member**: Encrypted private key file + passphrase from the boss
+- **Setup for team members**:
+  1. Receive `signing-keys/privateKey.enc` and passphrase from the boss
   2. Place the file in `signing-keys/privateKey.enc`
-  3. Get the public key and add it to `src-tauri/tauri.conf.json`
+  3. The public key is already configured in `src-tauri/tauri.conf.json`
 - **Why:** Enables secure auto-updates and app integrity
+- **For security best practices**: Have a designated "boss" act as gatekeeper - they generate keys, manage GitHub secrets, and distribute encrypted keys to team members. This ensures private keys never touch team member machines in plain text.
 
 #### B. AWS Credentials (Optional, for live data)
-- **Who provides:** The boss - contact them separately
-- **What you get:** Encrypted AWS credentials file + passphrase
-- **Setup:**
+- **Security Role Split**: Similar to signing keys - the boss manages encrypted AWS credentials and shares decryption access with team members as needed.
+- **What you get as a team member**: Encrypted AWS credentials file + passphrase from the boss
+- **Setup for team members**:
   ```bash
   # When you need AWS access:
   ./scripts/decrypt-aws-creds.sh
@@ -128,6 +129,7 @@ Welcome to the Pocket Architect team! 🎉 This section will get you up and runn
   Remove-Item .\config\aws-credentials.env  # Clean up immediately
   ```
 - **Why:** Allows testing with real AWS data instead of mock data
+- **For security best practices**: The boss should be the gatekeeper for AWS credentials, ensuring they're encrypted and only decrypted temporarily when needed.
 
 ### Step 3: Run the Application
 
@@ -208,7 +210,7 @@ node scripts\validate-setup.js
 **Your Role in Deployment:**
 - Ensure your code passes CI
 - Test thoroughly before merging
-- The "boss" handles signing keys and GitHub secrets
+- The boss (key manager) handles signing keys and GitHub secrets for releases
 
 ## Security & Best Practices
 
@@ -242,7 +244,7 @@ node scripts\validate-setup.js
 
 ### Who to Contact
 - **Technical issues:** Check existing issues or create new ones
-- **Access/credentials:** Contact the "boss" (key holder)
+- **Access/credentials:** Contact the boss (key manager) for your branch
 - **Architecture questions:** Review the docs or ask in discussions
 
 ## What's Next?
