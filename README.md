@@ -15,6 +15,13 @@ Pocket Architect is a **native desktop application** that gives you complete vis
 - 🚀 **Cross-Platform**: Native apps for Windows, macOS, and Linux
 - 📊 **Unified View**: EC2, S3, Lambda, RDS, and IAM resources in one interface
 
+## Architecture & Technical Details
+
+**Frontend**: React with modern hooks and responsive design  
+**Backend**: Rust with Tauri for native desktop integration  
+**Database**: SQLite for local data persistence  
+**AWS Integration**: AWS SDK for comprehensive cloud resource management
+
 ## Who Should Use This?
 
 **👩‍💻 Individual Developers**  
@@ -143,13 +150,6 @@ echo "AWS_DEFAULT_REGION=us-east-1" >> .env
 Building releases? See [`crypto/signing-keys/README.md`](crypto/signing-keys/README.md) for signing setup.
 
 ---
-
-## Architecture & Technical Details
-
-**Frontend**: React with modern hooks and responsive design  
-**Backend**: Rust with Tauri for native desktop integration  
-**Database**: SQLite for local data persistence  
-**AWS Integration**: AWS SDK for comprehensive cloud resource management
 
 ## Contributing
 
