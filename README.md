@@ -148,15 +148,44 @@ npm run tauri build
 npm test
 ```
 
-### 🔑 Next Steps (Both Paths)
+### 🔑 Next Steps
 
-After getting Pocket Architect running, you'll need access credentials:
+**For End Users** (downloading the binary):
+- Just run the app! The binary is already signed and ready to use
+- **You'll only need AWS credentials** to connect to your AWS account and view resources
 
-**You need two types of credentials:**
+**For Developers** (setting up the development environment):
+- You'll need both signing keys (for building/signing) and AWS credentials (for testing)
+- Follow the detailed setup in [`crypto/signing-keys/README.md`](../crypto/signing-keys/README.md)
 
-#### A. Signing Keys (Required for the app to run)
+#### AWS Credentials (Required for Both)
 
-**Security Role Split**: In this open source project, the "boss" role is whoever manages the private keys for a branch (typically the branch maintainer or lead developer). Team members receive encrypted keys for local development.
+To actually use Pocket Architect with your AWS resources, you'll need AWS credentials. The app supports multiple ways to provide them:
+
+**Option 1: Environment Variables (Recommended)**
+```bash
+export AWS_ACCESS_KEY_ID=your_access_key
+export AWS_SECRET_ACCESS_KEY=your_secret_key
+export AWS_DEFAULT_REGION=us-east-1
+```
+
+**Option 2: AWS CLI Configuration**
+```bash
+aws configure --profile pocket-architect
+```
+
+**Option 3: IAM Roles** (when running on EC2)
+
+The app will automatically detect and use available credentials in this order: environment variables → AWS profile → IAM role.
+
+#### For Developers: Signing Keys Setup
+
+If you're building the app yourself, you'll also need signing keys for secure auto-updates. See the complete guide in [`crypto/signing-keys/README.md`](../crypto/signing-keys/README.md) for:
+
+- Key generation and encryption
+- GitHub secrets setup
+- CI/CD configuration
+- Team member distribution
 
 **What you get as a team member**: Encrypted private key file + passphrase from the boss
 
