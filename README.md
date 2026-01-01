@@ -6,7 +6,26 @@
 
 Pocket Architect is a **native desktop application** that gives you complete visibility and control over your AWS infrastructure. Built with Tauri and React, it provides a clean, fast, and secure interface for managing your cloud resources across multiple AWS accounts.
 
-## Key Capabilities
+## Quick Start
+
+**📥 Ready to use Pocket Architect?**  
+→ [How to download for use](#for-end-users) - No installation required!
+
+**🛠️ Want to contribute or build from source?**  
+→ See [Development Setup](#development-setup) below
+
+---
+
+## Overview
+
+### Architecture & Technical Details
+
+**Frontend**: React with modern hooks and responsive design  
+**Backend**: Rust with Tauri for native desktop integration  
+**Database**: SQLite for local data persistence  
+**AWS Integration**: AWS SDK for comprehensive cloud resource management
+
+### Key Capabilities
 
 - 🔍 **Auto-Discovery**: Automatically finds and syncs all your AWS resources
 - 💰 **Cost Tracking**: Monitor spending and identify optimization opportunities  
@@ -15,14 +34,7 @@ Pocket Architect is a **native desktop application** that gives you complete vis
 - 🚀 **Cross-Platform**: Native apps for Windows, macOS, and Linux
 - 📊 **Unified View**: EC2, S3, Lambda, RDS, and IAM resources in one interface
 
-## Architecture & Technical Details
-
-**Frontend**: React with modern hooks and responsive design  
-**Backend**: Rust with Tauri for native desktop integration  
-**Database**: SQLite for local data persistence  
-**AWS Integration**: AWS SDK for comprehensive cloud resource management
-
-## Who Should Use This?
+### Who Should Use This?
 
 **👩‍💻 Individual Developers**  
 Manage personal AWS projects without complex dashboards - perfect for learning AWS or tracking side project resources and costs.
@@ -32,14 +44,6 @@ Share visibility into team resources with consistent practices and easy onboardi
 
 **🏢 Organizations**  
 Centralized multi-account infrastructure management with governance, audit trails, and secure credential management.
-
-## Quick Start
-
-**📥 Ready to use Pocket Architect?**  
-→ [Download the latest release](https://github.com/BrendenKennedy/pocket-architect/releases) - No installation required!
-
-**🛠️ Want to contribute or build from source?**  
-→ See [Development Setup](#development-setup) below
 
 ---
 
