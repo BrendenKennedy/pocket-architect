@@ -148,24 +148,9 @@ npm run tauri build
 npm test
 ```
 
-### 🔑 Next Steps
-
-**For End Users** (downloading the binary):
-- Just run the app! The binary is already signed and ready to use
-- **You'll need AWS credentials** to connect to your AWS account and view resources (entered through the app's UI)
-
-**For Developers** (setting up the development environment):
-- You'll need signing keys (for building/signing) and AWS credentials (for testing)
-- Follow the detailed setup in [`crypto/signing-keys/README.md`](../crypto/signing-keys/README.md)
-
 #### AWS Credentials Setup
 
 To actually use Pocket Architect with your AWS resources, you'll need AWS credentials. How you provide them depends on whether you're an end user or developer:
-
-**For End Users** (using the downloaded binary):
-- Launch the app and enter your AWS credentials through the connection/settings UI
-- Credentials are stored securely for your session
-- No command-line setup required
 
 **For Developers** (testing during development):
 - Set up credentials via environment variables for automated testing
@@ -212,84 +197,9 @@ The app will automatically detect and use available credentials in this order: e
 
 #### For Developers: Signing Keys Setup
 
-If you're building the app yourself, you'll also need signing keys for secure auto-updates. See the complete guide in [`crypto/signing-keys/README.md`](../crypto/signing-keys/README.md) for:
+If you're building the app yourself, you'll need signing keys for secure auto-updates and code signing. This is a separate process with its own security considerations.
 
-- Key generation and encryption
-- GitHub secrets setup
-- CI/CD configuration
-- Team member distribution
-
-**What you get as a team member**: Encrypted private key file + passphrase from the boss
-
-**Why:** Enables secure auto-updates and app integrity
-
-**For security best practices**: Have a designated "boss" act as gatekeeper - they generate keys, manage GitHub secrets, and distribute encrypted keys to team members. This ensures private keys never touch team member machines in plain text.
-
-##### For the Boss (Key Generation and GitHub Setup)
-1. Generate keys:
-   ```
-   npx @tauri-apps/cli signer generate --password "yourpassphrase" --write-keys crypto/signing-keys/
-   ```
-2. Encrypt the private key:
-   ```
-   openssl enc -aes-256-cbc -salt -in crypto/signing-keys/privateKey.pem -out crypto/signing-keys/privateKey.enc -k "yourpassphrase"
-   rm crypto/signing-keys/privateKey.pem
-   ```
-3. Set up GitHub secrets (boss only):
-   - Go to the GitHub repository → Settings → Secrets and variables → Actions.
-   - Add `TAURI_PRIVATE_KEY`: Base64-encoded contents of `signing-keys/privateKey.enc`.
-     ```
-     base64 -i crypto/signing-keys/privateKey.enc
-     ```
-     On Windows: `certutil -encode crypto/signing-keys/privateKey.enc tmp.b64 && type tmp.b64`
-     Copy the output as the secret value.
-   - Add `TAURI_KEY_PASSWORD`: The passphrase used to encrypt the private key (e.g., "yourpassphrase").
-   
-   **Optional Code Signing Secrets:**
-   - `WINDOWS_CERTIFICATE`: Base64 encoded .pfx certificate file
-   - `WINDOWS_CERTIFICATE_PASSWORD`: Certificate password
-   - `MACOS_CERTIFICATE`: Base64 encoded .p12 certificate file  
-   - `MACOS_CERTIFICATE_PASSWORD`: Certificate password
-   - `KEYCHAIN_PASSWORD`: Random password for temporary keychain
-   - `MACOS_CERTIFICATE_NAME`: Name of certificate in keychain
-
-   **Base64 Encoding for Certificates:**
-   ```bash
-   # Windows
-   certutil -encode your-cert.pfx base64-cert.txt
-   
-   # macOS/Linux
-   base64 -i your-cert.p12 -o base64-cert.txt
-   ```
-   Then copy the contents of base64-cert.txt as the secret value.
-4. Configure the public key in `src-tauri/tauri.conf.json`:
-   - Replace `YOUR_UPDATER_PUBLIC_KEY_HERE` with the contents of `crypto/signing-keys/publicKey.pem`.
-5. Distribute:
-   - Send `crypto/signing-keys/privateKey.enc` and the passphrase to team members via secure channel (e.g., encrypted email).
-   - The public key is already configured in the project.
-
-##### For Team Members (Local Setup)
-1. Receive the encrypted private key and passphrase from the boss.
-2. Place `privateKey.enc` in `crypto/signing-keys/privateKey.enc`.
-3. The public key is already configured in the project - no additional setup needed.
-4. For local builds, set env vars:
-   ```
-   export TAURI_PRIVATE_KEY=crypto/signing-keys/privateKey.pem
-   export TAURI_KEY_PASSWORD=yourpassphrase
-   ```
-   On Windows (PowerShell):
-   ```
-   $env:TAURI_PRIVATE_KEY="crypto/signing-keys/privateKey.pem"
-   $env:TAURI_KEY_PASSWORD="yourpassphrase"
-   ```
-   (Decrypt first: `openssl enc -d -aes-256-cbc -in crypto/signing-keys/privateKey.enc -out crypto/signing-keys/privateKey.pem -k yourpassphrase`)
-
-**Important Notes:**
-- Never commit private keys or passphrases to the repo.
-- Rotate keys periodically for security.
-- For code signing certificates, follow `src-tauri/README.md` (separate from updater keys).
-- Only the boss should add/modify GitHub secrets.
-- If keys need rotation, generate new ones, update secrets, and redistribute to team members.
+**📖 Complete Setup Guide:** See [`crypto/signing-keys/README.md`](../crypto/signing-keys/README.md) for the full signing keys setup process.
 
 #### B. AWS Credentials (Required, for live data)
 
