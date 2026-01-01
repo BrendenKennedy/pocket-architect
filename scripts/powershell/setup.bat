@@ -30,6 +30,7 @@ if %errorlevel% neq 0 (
 for /f "tokens=*" %%i in ('node --version') do set NODE_VERSION=%%i
 echo   [OK] %NODE_VERSION%
 
+
 REM Check npm
 echo [PKG] npm:
 where npm >nul 2>nul
@@ -39,6 +40,16 @@ if %errorlevel% neq 0 (
 )
 for /f "tokens=*" %%i in ('npm --version') do set NPM_VERSION=%%i
 echo   [OK] v%NPM_VERSION%
+
+REM Check npx
+echo [PKG] npx:
+where npx >nul 2>nul
+if %errorlevel% neq 0 (
+    echo   [ERROR] npx not found. Please ensure you have npm 5.2+ or install npx manually.
+    exit /b 1
+)
+for /f "tokens=*" %%i in ('npx --version') do set NPX_VERSION=%%i
+echo   [OK] v%NPX_VERSION%
 
 REM Check Rust
 echo [RUST] Rust:
@@ -102,19 +113,39 @@ if %errorlevel% neq 0 (
 )
 echo [SUCCESS] Root dependencies installed
 
-REM Check Tauri CLI
-echo Checking Tauri CLI...
-npx tauri --version >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [ERROR] Tauri CLI not available. Installing...
-    npm install -g @tauri-apps/cli
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to install Tauri CLI globally
-        exit /b 1
+
+REM Check Tauri CLI (global first)
+echo Checking Tauri CLI (global)...
+tauri --version >nul 2>nul
+if %errorlevel% equ 0 (
+    for /f "tokens=*" %%i in ('tauri --version') do set TAURI_VERSION=%%i
+    echo [OK] Tauri CLI (global): %TAURI_VERSION%
+) else (
+    REM Check Tauri CLI (local via npx)
+    echo [INFO] Global Tauri CLI not found, checking local (npx)...
+    npx tauri --version >nul 2>nul
+    if %errorlevel% equ 0 (
+        for /f "tokens=*" %%i in ('npx tauri --version') do set TAURI_VERSION=%%i
+        echo [OK] Tauri CLI (npx): %TAURI_VERSION%
+    ) else (
+        echo [ERROR] Tauri CLI not available globally or locally. Attempting to install globally...
+        npm install -g @tauri-apps/cli
+        if %errorlevel% neq 0 (
+            echo [ERROR] Failed to install Tauri CLI globally. Please run 'npm install -g @tauri-apps/cli' manually as Administrator.
+            echo [HINT] You may need to add your global npm bin directory to your PATH. Run 'npm bin -g' to check.
+            exit /b 1
+        )
+        REM Try again after install
+        tauri --version >nul 2>nul
+        if %errorlevel% equ 0 (
+            for /f "tokens=*" %%i in ('tauri --version') do set TAURI_VERSION=%%i
+            echo [OK] Tauri CLI (global): %TAURI_VERSION%
+        ) else (
+            echo [ERROR] Tauri CLI still not available after install. Please check your PATH and permissions.
+            exit /b 1
+        )
     )
 )
-for /f "tokens=*" %%i in ('npx tauri --version') do set TAURI_VERSION=%%i
-echo [OK] Tauri CLI: %TAURI_VERSION%
 
 REM Install frontend dependencies
 echo Installing frontend dependencies...
