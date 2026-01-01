@@ -4,7 +4,7 @@
 
 ## What is Pocket Architect?
 
-Pocket Architect is a **native desktop application** that gives you complete visibility and control over your AWS infrastructure. Built with Tauri and React, it provides a clean, fast interface for managing your cloud resources across multiple AWS accounts.
+Pocket Architect is a **native desktop application** that gives you complete visibility and control over your AWS infrastructure. Built with Tauri and React, it provides a clean, fast, and secure interface for managing your cloud resources across multiple AWS accounts.
 
 ## Key Capabilities
 
@@ -442,3 +442,4 @@ MIT License - see LICENSE file for details.
 
 
 **Built with ❤️ using Tauri, React, and Rust - Production Ready! 🚀**
+
