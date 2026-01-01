@@ -392,7 +392,6 @@ node scripts\validate-setup.js
 
 ### Documentation
 - `src-tauri/README.md` - Code signing for releases
-- `.github/README.md` - CI/CD pipeline details
 
 ### Common Issues
 - **App won't start:** Check if signing keys are set up
@@ -514,6 +513,70 @@ cd src-tauri && cargo test
 # Frontend tests
 cd src && npm test
 ```
+
+## CI/CD Pipeline
+
+### Overview
+
+Pocket Architect uses an optimized CI/CD pipeline that leverages Tauri's built-in capabilities for efficient cross-platform builds and deployments.
+
+### Pipeline Features
+
+#### 🚀 **Fast Feedback Loop**
+- **Parallel Testing**: Frontend and backend tests run simultaneously
+- **Early Failure Detection**: Tests run before builds to catch issues quickly
+- **Cross-Platform Validation**: Tests run on Linux for speed, builds on all platforms
+
+#### 🔧 **Tauri-Optimized Builds**
+- **Native Tauri Action**: Uses `tauri-apps/tauri-action@v0` for official support
+- **Smart Caching**: Separate caches for Rust and Node.js dependencies
+- **Bundle Optimization**: Configured for all target platforms (Windows, macOS, Linux)
+- **Artifact Management**: Automatic upload of build artifacts
+
+#### 📦 **Release Automation**
+- **Semantic Versioning**: Tag-based releases (e.g., `v1.2.3`)
+- **Multi-Platform Bundles**: Creates installers for all supported platforms
+- **GitHub Releases**: Automatic release creation with assets
+- **Update Support**: Ready for Tauri's built-in updater
+
+### Workflow Structure
+
+#### CI Pipeline (`ci.yml`)
+```
+├── test-tauri (ubuntu-latest)
+│   ├── Setup dependencies
+│   ├── Run frontend tests + coverage
+│   ├── Run Rust tests + linting
+│   └── Validate formatting
+│
+├── build-tauri (ubuntu/win/mac matrix)
+│   ├── Cross-platform builds
+│   ├── Bundle creation
+│   └── Artifact upload
+│
+└── release (ubuntu-latest, on release only)
+    ├── Download all artifacts
+    ├── Create release archives
+    └── Upload to GitHub Releases
+```
+
+#### Release Pipeline (`release.yml`)
+```
+└── publish-tauri (ubuntu-latest, on tag push)
+    ├── Full test suite
+    ├── Multi-platform builds
+    ├── Code signing (if configured)
+    ├── Create GitHub release
+    └── Upload installers
+```
+
+### Required Secrets
+
+For automated releases, configure these GitHub secrets:
+- `TAURI_PRIVATE_KEY`: Base64-encoded updater private key
+- `TAURI_KEY_PASSWORD`: Password for the private key
+- `WINDOWS_CERTIFICATE`: Base64-encoded Windows code signing certificate (optional)
+- `MACOS_CERTIFICATE`: Base64-encoded macOS code signing certificate (optional)
 
 ## Building for Production
 
