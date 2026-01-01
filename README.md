@@ -152,17 +152,31 @@ npm test
 
 **For End Users** (downloading the binary):
 - Just run the app! The binary is already signed and ready to use
-- **You'll only need AWS credentials** to connect to your AWS account and view resources
+- **You'll need AWS credentials** to connect to your AWS account and view resources (entered through the app's UI)
 
 **For Developers** (setting up the development environment):
-- You'll need both signing keys (for building/signing) and AWS credentials (for testing)
+- You'll need signing keys (for building/signing) and AWS credentials (for testing)
 - Follow the detailed setup in [`crypto/signing-keys/README.md`](../crypto/signing-keys/README.md)
 
-#### AWS Credentials (Required for Both)
+#### AWS Credentials Setup
 
-To actually use Pocket Architect with your AWS resources, you'll need AWS credentials. The app supports multiple ways to provide them:
+To actually use Pocket Architect with your AWS resources, you'll need AWS credentials. How you provide them depends on whether you're an end user or developer:
 
-**Option 1: Environment Variables with .env file (Recommended for Development)**
+**For End Users** (using the downloaded binary):
+- Launch the app and enter your AWS credentials through the connection/settings UI
+- Credentials are stored securely for your session
+- No command-line setup required
+
+**For Developers** (testing during development):
+- Set up credentials via environment variables for automated testing
+- The app will use these credentials when running in development mode
+
+**Why developers need environment variables:**
+- Automated tests require credentials to be available
+- Development server needs access to AWS APIs for testing
+- Ensures consistent credential access across development tools
+
+The app supports multiple ways to provide AWS credentials for development:
 ```bash
 # Create a .env file in your project root (add to .gitignore!)
 echo "AWS_ACCESS_KEY_ID=your_access_key" > .env
