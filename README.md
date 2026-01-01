@@ -17,87 +17,108 @@ A modern desktop application for AWS resource management and infrastructure orch
 - **Database**: SQLite for local data persistence
 - **AWS Integration**: AWS SDK for comprehensive cloud resource management
 
-## Onboarding
+## About
 
-Welcome to the Pocket Architect team! 🎉 This section will get you up and running with our AWS resource management desktop application.
+**Pocket Architect** is your personal AWS infrastructure command center - a modern desktop application that brings clarity and control to your cloud resources.
 
-### What Pocket Architect Does
+### What Makes Pocket Architect Special
 
-**Core Features:**
-- **AWS Account Management**: Securely connect multiple AWS accounts
-- **Resource Discovery**: Automatically find and sync EC2 instances, S3 buckets, Lambda functions, RDS databases, and IAM resources
-- **Infrastructure Monitoring**: Real-time health checks and cost tracking
-- **Cross-Platform**: Native desktop app for Windows, macOS, and Linux
+Imagine having all your AWS infrastructure at your fingertips, beautifully organized and instantly accessible. Pocket Architect gives you:
 
-**How It Works:**
-- **Frontend**: React app with modern UI for viewing and managing resources
-- **Backend**: Rust application that securely communicates with AWS APIs
-- **Database**: Local SQLite database for caching and offline access
-- **Security**: End-to-end encryption for credentials and secure auto-updates
+- **📊 Complete Resource Visibility**: See all your EC2 instances, S3 buckets, Lambda functions, RDS databases, and IAM resources in one unified view
+- **🔍 Smart Discovery**: Automatically finds and syncs your AWS resources across multiple accounts
+- **💰 Cost Awareness**: Track spending and identify optimization opportunities
+- **🏠 Local Control**: Works offline with cached data, giving you full control even without internet
+- **🔒 Enterprise Security**: End-to-end encryption, secure auto-updates, and enterprise-grade code signing
 
-### Step 1: Environment Setup
+### Why Choose Pocket Architect?
 
-**Prerequisites:** Git installed, and one of: Windows (with or without WSL), macOS, or Linux.
+**For Individual Developers:**
+- Manage personal AWS projects without complex dashboards
+- Learn AWS resource management in a user-friendly environment
+- Keep track of costs and resources across side projects
+
+**For Small Teams:**
+- Shared visibility into team AWS resources
+- Consistent resource naming and tagging practices
+- Easy onboarding for new team members
+
+**For Organizations:**
+- Centralized view of multi-account AWS infrastructure
+- Audit trails and resource governance
+- Secure credential management and access controls
+
+### How It Works
+
+Pocket Architect bridges the gap between your local development environment and the cloud:
+
+- **Frontend**: A polished React interface that feels like a native desktop app
+- **Backend**: Rust-powered engine that securely communicates with AWS APIs
+- **Database**: Local SQLite storage for offline access and caching
+- **Security**: Military-grade encryption for your credentials and automatic updates
+
+Whether you're a solo developer managing personal projects or part of a team handling enterprise infrastructure, Pocket Architect adapts to your workflow while keeping your AWS resources secure and accessible.
+
+## Getting Started
+
+Ready to get Pocket Architect running? Here's your quick start guide:
+
+### Quick Setup (3 Steps)
+
+1. **📦 Install Dependencies** - Node.js, Rust, and Git
+2. **🔑 Get Access Credentials** - Signing keys and AWS credentials
+3. **🚀 Run the Application** - Build and launch
+
+### Prerequisites
+
+- **Git** for cloning the repository
+- **Node.js 20+** for the React frontend
+- **Rust** for the Tauri backend
+- **OpenSSL** for encryption operations
+
+### Platform-Specific Setup
+
+Choose your platform below for detailed installation instructions:
 
 #### Windows
-1. **Install prerequisites:**
-   - Download and install Node.js 20+ from https://nodejs.org/
-   - Install Rust from https://rustup.rs/
-   - Install OpenSSL: `choco install openssl` (or download from https://slproweb.com/products/Win32OpenSSL.html)
-   - (Optional) Enable WSL for better development experience
+```powershell
+# Install prerequisites
+# Download Node.js from https://nodejs.org/
+# Install Rust from https://rustup.rs/
+# Install OpenSSL via Chocolatey: choco install openssl
 
-2. **Clone the repository:**
-   ```powershell
-   git clone https://github.com/yourusername/pocket-architect.git
-   cd pocket-architect
-   ```
-
-3. **Run the automated setup:**
-   ```powershell
-   .\scripts\powershell\setup.bat
-   ```
-   Or if using WSL:
-   ```bash
-   wsl ./scripts/bash/setup.sh
-   ```
+# Clone and setup
+git clone https://github.com/BrendenKennedy/pocket-architect.git
+cd pocket-architect
+.\scripts\powershell\setup.bat
+```
 
 #### macOS
-1. **Install prerequisites:**
-   - Install Homebrew: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-   - Install Node.js: `brew install node`
-   - Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-   - Install OpenSSL: `brew install openssl` (usually pre-installed)
+```bash
+# Install prerequisites
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install node
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-2. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/pocket-architect.git
-   cd pocket-architect
-   ```
-
-3. **Run the automated setup:**
-   ```bash
-   ./scripts/bash/setup.sh
-   ```
+# Clone and setup
+git clone https://github.com/BrendenKennedy/pocket-architect.git
+cd pocket-architect
+./scripts/bash/setup.sh
+```
 
 #### Linux
-1. **Install prerequisites:**
-   - Install Node.js 20+ (using your package manager, e.g., for Ubuntu: `curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs`)
-   - Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-   - Install OpenSSL: `sudo apt install openssl` (Ubuntu/Debian) or `sudo dnf install openssl` (Fedora)
+```bash
+# Install prerequisites (Ubuntu/Debian example)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+sudo apt install openssl
 
-2. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/pocket-architect.git
-   cd pocket-architect
-   ```
-
-3. **Run the automated setup:**
-   ```bash
-   ./scripts/bash/setup.sh
-   ```
-
-4. **Verify setup:**
-   The script will validate your environment and show ✅ if everything is ready.
+# Clone and setup
+git clone https://github.com/BrendenKennedy/pocket-architect.git
+cd pocket-architect
+./scripts/bash/setup.sh
+```
 
 ### Step 2: Get Access Credentials
 
@@ -603,5 +624,3 @@ MIT License - see LICENSE file for details.
 
 
 **Built with ❤️ using Tauri, React, and Rust - Production Ready! 🚀**
-
-
