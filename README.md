@@ -1,96 +1,73 @@
 # Pocket Architect
 
-A modern desktop application for AWS resource management and infrastructure orchestration, built with Tauri and React.
+> Your personal AWS infrastructure command center - a modern desktop app that brings clarity and control to your cloud resources.
 
-## Features
+## What is Pocket Architect?
 
-- **AWS Account Management**: Securely store and manage multiple AWS accounts
-- **Resource Discovery**: Automatically sync and discover EC2 instances, S3 buckets, Lambda functions, RDS databases, and IAM resources
-- **Infrastructure Monitoring**: Real-time health checks and cost tracking
-- **Cross-Platform**: Native desktop app for Windows, macOS, and Linux
-- **Modern UI**: Clean, responsive React interface
+Pocket Architect is a **native desktop application** that gives you complete visibility and control over your AWS infrastructure. Built with Tauri and React, it provides a clean, fast interface for managing your cloud resources across multiple AWS accounts.
 
-## Architecture
+## Key Capabilities
 
-- **Frontend**: React with modern hooks and responsive design
-- **Backend**: Rust with Tauri for native desktop integration
-- **Database**: SQLite for local data persistence
-- **AWS Integration**: AWS SDK for comprehensive cloud resource management
+- 🔍 **Auto-Discovery**: Automatically finds and syncs all your AWS resources
+- 💰 **Cost Tracking**: Monitor spending and identify optimization opportunities  
+- 🏠 **Offline Access**: Local SQLite database keeps your data available without internet
+- 🔒 **Enterprise Security**: End-to-end encryption and secure auto-updates
+- 🚀 **Cross-Platform**: Native apps for Windows, macOS, and Linux
+- 📊 **Unified View**: EC2, S3, Lambda, RDS, and IAM resources in one interface
 
-## About
+## Who Should Use This?
 
-**Pocket Architect** is your personal AWS infrastructure command center - a modern desktop application that brings clarity and control to your cloud resources.
+**👩‍💻 Individual Developers**  
+Manage personal AWS projects without complex dashboards - perfect for learning AWS or tracking side project resources and costs.
 
-### What Makes Pocket Architect Special
+**👥 Small Teams**  
+Share visibility into team resources with consistent practices and easy onboarding for new members.
 
-Imagine having all your AWS infrastructure at your fingertips, beautifully organized and instantly accessible. Pocket Architect gives you:
+**🏢 Organizations**  
+Centralized multi-account infrastructure management with governance, audit trails, and secure credential management.
 
-- **📊 Complete Resource Visibility**: See all your EC2 instances, S3 buckets, Lambda functions, RDS databases, and IAM resources in one unified view
-- **🔍 Smart Discovery**: Automatically finds and syncs your AWS resources across multiple accounts
-- **💰 Cost Awareness**: Track spending and identify optimization opportunities
-- **🏠 Local Control**: Works offline with cached data, giving you full control even without internet
-- **🔒 Enterprise Security**: End-to-end encryption, secure auto-updates, and enterprise-grade code signing
+## Quick Start
 
-### Why Choose Pocket Architect?
+**📥 Ready to use Pocket Architect?**  
+→ [Download the latest release](https://github.com/BrendenKennedy/pocket-architect/releases) - No installation required!
 
-**For Individual Developers:**
-- Manage personal AWS projects without complex dashboards
-- Learn AWS resource management in a user-friendly environment
-- Keep track of costs and resources across side projects
+**🛠️ Want to contribute or build from source?**  
+→ See [Development Setup](#development-setup) below
 
-**For Small Teams:**
-- Shared visibility into team AWS resources
-- Consistent resource naming and tagging practices
-- Easy onboarding for new team members
+---
 
-**For Organizations:**
-- Centralized view of multi-account AWS infrastructure
-- Audit trails and resource governance
-- Secure credential management and access controls
+## For End Users
 
-### How It Works
+### Download & Run
 
-Pocket Architect bridges the gap between your local development environment and the cloud:
+1. **Download** the pre-built binary from [Releases](https://github.com/BrendenKennedy/pocket-architect/releases)
+2. **Verify** integrity (recommended):
+   ```bash
+   shasum -a 256 pocket-architect-v1.0.0-x86_64.AppImage
+   # Compare with published checksum
+   ```
+3. **Run** the app - works on Windows, macOS, and Linux
 
-- **Frontend**: A polished React interface that feels like a native desktop app
-- **Backend**: Rust-powered engine that securely communicates with AWS APIs
-- **Database**: Local SQLite storage for offline access and caching
-- **Security**: Enterprise-grade encryption for your credentials and automatic updates
+### Setting Up AWS Access
 
-Whether you're a solo developer managing personal projects or part of a team handling enterprise infrastructure, Pocket Architect adapts to your workflow while keeping your AWS resources secure and accessible.
+**In the app:**
+- Launch Pocket Architect
+- Go to Settings → AWS Accounts
+- Add your AWS credentials through the UI
+- Start discovering your resources!
 
-## Getting Started
+**Your data stays local** - credentials are securely stored and resources are cached for offline access.
 
-Choose your path based on what you want to do:
+---
 
-### 🚀 Just Want to Use Pocket Architect?
+## Development Setup
 
-**Download the pre-built binary** from the [Releases](https://github.com/BrendenKennedy/pocket-architect/releases) page.
+### Prerequisites & Installation
 
-#### Verify Binary Integrity (Recommended)
-```bash
-# Download the checksum file alongside the binary
-# Verify the hash matches
-shasum -a 256 pocket-architect-v1.0.0-x86_64.AppImage
-# Compare with the published checksum
-```
+**Requirements:**
+- Git, Node.js 20+, Rust, OpenSSL
 
-**Then just run it!** No installation required - works on Windows, macOS, and Linux.
-
-### 🛠️ Want to Develop or Contribute?
-
-Set up the full development environment to build, test, and modify Pocket Architect.
-
-#### Prerequisites
-
-- **Git** for cloning the repository
-- **Node.js 20+** for the React frontend
-- **Rust** for the Tauri backend
-- **OpenSSL** for encryption operations
-
-#### Quick Development Setup
-
-Choose your platform:
+**Platform Setup:**
 
 **Windows:**
 ```powershell
@@ -132,7 +109,7 @@ cd pocket-architect
 ./scripts/bash/setup.sh
 ```
 
-#### Development Workflow
+### Development Workflow
 
 ```bash
 # Install dependencies
@@ -148,221 +125,60 @@ npm run tauri build
 npm test
 ```
 
-#### AWS Credentials Setup
+### AWS Credentials for Testing
 
-To actually use Pocket Architect with your AWS resources, you'll need AWS credentials. How you provide them depends on whether you're an end user or developer:
+**For development, set up credentials via .env file:**
 
-**For Developers** (testing during development):
-- Set up credentials via environment variables for automated testing
-- The app will use these credentials when running in development mode
-
-**Why developers need environment variables:**
-- Automated tests require credentials to be available
-- Development server needs access to AWS APIs for testing
-- Ensures consistent credential access across development tools
-
-The app supports multiple ways to provide AWS credentials for development:
 ```bash
-# Create a .env file in your project root (add to .gitignore!)
+# Create .env in project root (add to .gitignore!)
 echo "AWS_ACCESS_KEY_ID=your_access_key" > .env
 echo "AWS_SECRET_ACCESS_KEY=your_secret_key" >> .env
 echo "AWS_DEFAULT_REGION=us-east-1" >> .env
-
-# Load the credentials
-source .env
 ```
 
-**Why this works well for developers:**
-- Each project can have its own credentials
-- .env file stays out of version control (.gitignore it!)
-- Easy to switch between different AWS accounts/environments
-- Works with development tools and scripts
+**Alternative options:** AWS CLI profiles, direct env vars, or IAM roles
 
-**Option 2: AWS CLI Configuration (Good for persistent setup)**
-```bash
-aws configure --profile pocket-architect
-# Enter your credentials when prompted
-```
+### Signing Keys for Building
 
-**Option 3: Direct Environment Variables (For CI/CD or one-off use)**
-```bash
-export AWS_ACCESS_KEY_ID=your_access_key
-export AWS_SECRET_ACCESS_KEY=your_secret_key
-export AWS_DEFAULT_REGION=us-east-1
-```
+If you're building releases, you'll need signing keys for secure auto-updates.
 
-**Option 4: IAM Roles** (when running on EC2 or with role-based access)
+**📖 Complete Setup Guide:** See [`crypto/signing-keys/README.md`](crypto/signing-keys/README.md)
 
-The app will automatically detect and use available credentials in this order: environment variables → AWS profile → IAM role.
+---
 
-#### For Developers: Signing Keys Setup
+## Architecture & Technical Details
 
-If you're building the app yourself, you'll need signing keys for secure auto-updates and code signing. This is a separate process with its own security considerations.
+**Frontend**: React with modern hooks and responsive design  
+**Backend**: Rust with Tauri for native desktop integration  
+**Database**: SQLite for local data persistence  
+**AWS Integration**: AWS SDK for comprehensive cloud resource management
 
-**📖 Complete Setup Guide:** See [`crypto/signing-keys/README.md`](../crypto/signing-keys/README.md) for the full signing keys setup process.
+## Contributing
 
-#### B. AWS Credentials (Required, for live data)
+We welcome contributions! Please see our [Development Setup](#development-setup) section above and:
 
-**Security Role Split**: Similar to signing keys - the boss manages encrypted AWS credentials and shares decryption access with team members as needed.
+1. Fork the repository
+2. Create a feature branch  
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-**What you get as a team member**: Encrypted AWS credentials file + passphrase from the boss
+## Security Best Practices
 
-**Why:** Allows testing with real AWS data instead of mock data
+- Never commit real AWS credentials to version control
+- Use IAM users with minimal required permissions
+- Rotate credentials regularly (every 90 days)
+- Monitor credential usage in AWS CloudTrail
 
-**For security best practices**: The boss should be the gatekeeper for AWS credentials, ensuring they're encrypted and only decrypted temporarily when needed.
+## License
 
-##### Setting Up Test Credentials
+[Add license information here]
 
-**⚠️ SECURITY WARNING**: NEVER commit real AWS credentials to version control! Use IAM users with minimal required permissions only!
+## Support
 
-###### Method 1: Direct Environment Variables (Recommended)
-
-Set these environment variables in your shell or `.env` file:
-
-```bash
-# AWS Test Credentials
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-AWS_DEFAULT_REGION=us-east-1
-```
-
-For production use, set real AWS credentials as environment variables.
-
-###### Method 2: AWS CLI Configuration
-
-If you have AWS CLI installed:
-
-```bash
-aws configure --profile pocket-architect-test
-# Enter test credentials when prompted
-
-# Then set the profile
-export AWS_PROFILE=pocket-architect-test
-```
-
-###### Method 3: Test Credentials File (For CI/CD)
-
-Create a `.env` file in your project root (add to .gitignore):
-
-```env
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-AWS_DEFAULT_REGION=us-east-1
-```
-
-##### Test IAM User Setup (AWS Console)
-
-Create an IAM user with these minimal permissions for testing:
-
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeInstances",
-                "ec2:DescribeRegions",
-                "s3:ListAllMyBuckets",
-                "s3:GetBucketLocation",
-                "iam:ListUsers",
-                "iam:ListRoles",
-                "iam:GetUser"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
-
-##### Running Tests with Credentials
-
-```bash
-# Load test credentials from .env file
-source .env
-
-# Run tests
-cargo test --test live_data_test
-
-# Or run with specific credentials
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE \
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
-cargo test --test live_data_test
-```
-
-##### Mock vs Live Data Detection
-
-The application automatically detects which mode to use:
-- **Mock Mode**: No credentials → Returns sample data for development
-- **Live Mode**: Credentials detected → Returns data from real AWS APIs
-
-##### Security Best Practices
-
-1. **Encrypt sensitive credentials** using the provided scripts
-2. **Never commit real credentials** to version control
-3. **Use IAM users** with minimal required permissions
-4. **Rotate credentials** regularly (every 90 days)
-5. **Use different credentials** for different environments
-6. **Monitor usage** of credentials in AWS CloudTrail
-7. **Delete decrypted files** immediately after use
-8. **Use strong passphrases** for encryption (12+ characters, mixed case, symbols)
-
-##### Test Credentials Status
-
-The application includes the following test credentials for development:
-- **Access Key**: `AKIAIOSFODNN7EXAMPLE` (AWS documentation example)
-- **Secret Key**: `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` (AWS documentation example)
-- **Region**: `us-east-2`
-
-These are safe to use in code as they are the official AWS documentation examples and do not provide access to any real AWS resources.
-
-### Step 3: Run the Application
-
-**Development Mode:**
-```bash/powershell
-npm run tauri:dev
-```
-
-This starts the full desktop app with hot reloading.
-
-**Alternative Commands:**
-- `npm run dev` - Frontend only (web browser)
-- `cargo run --features aws-sdk` - Backend only
-
-**First Run Experience:**
-- If no AWS credentials: Shows mock/sample data for development
-- If AWS credentials loaded: Connects to real AWS APIs
-- App automatically detects which mode to use
-
-### Step 4: Development Workflow
-
-**Daily Development:**
-1. Pull latest changes: `git pull`
-2. Make your changes in VS Code
-3. Test locally: `npm run tauri:dev`
-4. Run tests: `npm test`
-5. Commit and push
-
-**Code Structure:**
-- `src/` - React frontend (components, pages, styles)
-- `src-tauri/` - Rust backend (AWS integration, database, Tauri config) + code signing docs
-- `scripts/` - Build and utility scripts (organized by bash/, powershell/, node/)
-- `crypto/` - Security and cryptographic materials
-  - `crypto/signing-keys/` - Key management + setup guide (includes GitHub secrets)
-- `.github/` - CI/CD workflows + pipeline documentation
-
-**Key Files to Know:**
-- `src-tauri/tauri.conf.json` - App configuration
-- `src-tauri/Cargo.toml` - Rust dependencies
-- `src/package.json` - Frontend dependencies
-- `.github/workflows/ci.yml` - CI/CD pipeline
-
-### Step 5: Testing & Quality
-
-**Run Tests:**
-```bash
-# Frontend tests
-npm test
+- 📖 [Documentation](docs/)
+- 🐛 [Report Issues](https://github.com/BrendenKennedy/pocket-architect/issues)
+- 💬 [Discussions](https://github.com/BrendenKennedy/pocket-architect/discussions)
 
 # Backend tests
 cargo test
