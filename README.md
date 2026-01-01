@@ -61,26 +61,38 @@ Whether you're a solo developer managing personal projects or part of a team han
 
 ## Getting Started
 
-Ready to get Pocket Architect running? Here's your quick start guide:
+Choose your path based on what you want to do:
 
-### Quick Setup (3 Steps)
+### 🚀 Just Want to Use Pocket Architect?
 
-1. **📦 Install Dependencies** - Node.js, Rust, and Git
-2. **🔑 Get Access Credentials** - Signing keys and AWS credentials
-3. **🚀 Run the Application** - Build and launch
+**Download the pre-built binary** from the [Releases](https://github.com/BrendenKennedy/pocket-architect/releases) page.
 
-### Prerequisites
+#### Verify Binary Integrity (Recommended)
+```bash
+# Download the checksum file alongside the binary
+# Verify the hash matches
+shasum -a 256 pocket-architect-v1.0.0-x86_64.AppImage
+# Compare with the published checksum
+```
+
+**Then just run it!** No installation required - works on Windows, macOS, and Linux.
+
+### 🛠️ Want to Develop or Contribute?
+
+Set up the full development environment to build, test, and modify Pocket Architect.
+
+#### Prerequisites
 
 - **Git** for cloning the repository
 - **Node.js 20+** for the React frontend
 - **Rust** for the Tauri backend
 - **OpenSSL** for encryption operations
 
-### Platform-Specific Setup
+#### Quick Development Setup
 
-Choose your platform below for detailed installation instructions:
+Choose your platform:
 
-#### Windows
+**Windows:**
 ```powershell
 # Install prerequisites
 # Download Node.js from https://nodejs.org/
@@ -93,7 +105,7 @@ cd pocket-architect
 .\scripts\powershell\setup.bat
 ```
 
-#### macOS
+**macOS:**
 ```bash
 # Install prerequisites
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -106,7 +118,7 @@ cd pocket-architect
 ./scripts/bash/setup.sh
 ```
 
-#### Linux
+**Linux:**
 ```bash
 # Install prerequisites (Ubuntu/Debian example)
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -120,7 +132,25 @@ cd pocket-architect
 ./scripts/bash/setup.sh
 ```
 
-### Step 2: Get Access Credentials
+#### Development Workflow
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run tauri dev
+
+# Build for production
+npm run tauri build
+
+# Run tests
+npm test
+```
+
+### 🔑 Next Steps (Both Paths)
+
+After getting Pocket Architect running, you'll need access credentials:
 
 **You need two types of credentials:**
 
