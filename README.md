@@ -138,11 +138,9 @@ echo "AWS_DEFAULT_REGION=us-east-1" >> .env
 
 **Alternative options:** AWS CLI profiles, direct env vars, or IAM roles
 
-### Signing Keys for Building
+### Signing Keys (Releases Only)
 
-If you're building releases, you'll need signing keys for secure auto-updates.
-
-**📖 Complete Setup Guide:** See [`crypto/signing-keys/README.md`](crypto/signing-keys/README.md)
+Building releases? See [`crypto/signing-keys/README.md`](crypto/signing-keys/README.md) for signing setup.
 
 ---
 
