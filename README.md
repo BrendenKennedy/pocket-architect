@@ -55,7 +55,7 @@ Pocket Architect bridges the gap between your local development environment and 
 - **Frontend**: A polished React interface that feels like a native desktop app
 - **Backend**: Rust-powered engine that securely communicates with AWS APIs
 - **Database**: Local SQLite storage for offline access and caching
-- **Security**: Military-grade encryption for your credentials and automatic updates
+- **Security**: Enterprise-grade encryption for your credentials and automatic updates
 
 Whether you're a solo developer managing personal projects or part of a team handling enterprise infrastructure, Pocket Architect adapts to your workflow while keeping your AWS resources secure and accessible.
 
@@ -651,6 +651,7 @@ This creates platform-specific installers in `src-tauri/target/release/bundle/`.
 MIT License - see LICENSE file for details.
 
 ---
+
 
 
 **Built with ❤️ using Tauri, React, and Rust - Production Ready! 🚀**
