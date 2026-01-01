@@ -162,19 +162,37 @@ npm test
 
 To actually use Pocket Architect with your AWS resources, you'll need AWS credentials. The app supports multiple ways to provide them:
 
-**Option 1: Environment Variables (Recommended)**
+**Option 1: Environment Variables with .env file (Recommended for Development)**
+```bash
+# Create a .env file in your project root (add to .gitignore!)
+echo "AWS_ACCESS_KEY_ID=your_access_key" > .env
+echo "AWS_SECRET_ACCESS_KEY=your_secret_key" >> .env
+echo "AWS_DEFAULT_REGION=us-east-1" >> .env
+
+# Load the credentials
+source .env
+```
+
+**Why this works well for developers:**
+- Each project can have its own credentials
+- .env file stays out of version control (.gitignore it!)
+- Easy to switch between different AWS accounts/environments
+- Works with development tools and scripts
+
+**Option 2: AWS CLI Configuration (Good for persistent setup)**
+```bash
+aws configure --profile pocket-architect
+# Enter your credentials when prompted
+```
+
+**Option 3: Direct Environment Variables (For CI/CD or one-off use)**
 ```bash
 export AWS_ACCESS_KEY_ID=your_access_key
 export AWS_SECRET_ACCESS_KEY=your_secret_key
 export AWS_DEFAULT_REGION=us-east-1
 ```
 
-**Option 2: AWS CLI Configuration**
-```bash
-aws configure --profile pocket-architect
-```
-
-**Option 3: IAM Roles** (when running on EC2)
+**Option 4: IAM Roles** (when running on EC2 or with role-based access)
 
 The app will automatically detect and use available credentials in this order: environment variables → AWS profile → IAM role.
 
