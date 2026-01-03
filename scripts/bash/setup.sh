@@ -21,6 +21,30 @@ NC='\033[0m'
 # Check prerequisites
 echo -e "${BLUE}Checking prerequisites...${NC}"
 
+# OS detection and dependency install
+OS_TYPE="$(uname -s)"
+if [[ "$OS_TYPE" == "Linux" ]]; then
+    if command -v apt &> /dev/null; then
+        echo -e "${BLUE}Detected Linux (apt available). Installing dependencies...${NC}"
+        sudo apt update
+        sudo apt install -y build-essential openssl curl git
+    else
+        echo -e "${YELLOW}Linux detected, but apt not found. Please install dependencies manually: build-essential openssl curl git${NC}"
+    fi
+elif [[ "$OS_TYPE" == "Darwin" ]]; then
+    if command -v brew &> /dev/null; then
+        echo -e "${BLUE}Detected macOS (brew available). Installing dependencies...${NC}"
+        brew update
+        brew install openssl curl git
+    else
+        echo -e "${YELLOW}macOS detected, but Homebrew not found. Please install dependencies manually: openssl curl git${NC}"
+        echo -e "${YELLOW}Install Homebrew from https://brew.sh if needed.${NC}"
+    fi
+else
+    echo -e "${RED}Unsupported OS: $OS_TYPE. This script supports Linux and macOS only.${NC}"
+    exit 1
+fi
+
 # Check Node.js
 if ! command -v node &> /dev/null; then
     echo -e "${RED}❌ Node.js not found. Please install Node.js 20+ from https://nodejs.org/${NC}"
@@ -40,9 +64,16 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
+
 # Check Rust
 if ! command -v cargo &> /dev/null; then
     echo -e "${RED}❌ Rust not found. Please install Rust from https://rustup.rs/${NC}"
+    exit 1
+fi
+
+# Check npx
+if ! command -v npx &> /dev/null; then
+    echo -e "${RED}❌ npx not found. Please ensure you have npm 5.2+ or install npx manually.${NC}"
     exit 1
 fi
 
@@ -58,6 +89,7 @@ fi
 echo -e "${GREEN}✅ Prerequisites OK${NC}"
 echo
 
+
 # Setup directories
 echo -e "${BLUE}Setting up project structure...${NC}"
 mkdir -p crypto/signing-keys certificates
@@ -66,6 +98,33 @@ mkdir -p crypto/signing-keys certificates
 echo -e "${BLUE}Installing root dependencies...${NC}"
 npm install
 echo -e "${GREEN}✅ Root dependencies installed${NC}"
+
+# Check Tauri CLI (global first)
+echo -e "${BLUE}Checking for Tauri CLI...${NC}"
+if command -v tauri &> /dev/null; then
+    TAURI_VERSION=$(tauri --version)
+    echo -e "${GREEN}✅ Tauri CLI (global): $TAURI_VERSION${NC}"
+else
+    # Check local (npx)
+    if npx tauri --version &> /dev/null; then
+        TAURI_VERSION=$(npx tauri --version)
+        echo -e "${GREEN}✅ Tauri CLI (npx): $TAURI_VERSION${NC}"
+    else
+        echo -e "${YELLOW}Tauri CLI not found. Installing as a devDependency...${NC}"
+        npm install --save-dev @tauri-apps/cli
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}❌ Failed to install @tauri-apps/cli. Please run 'npm install --save-dev @tauri-apps/cli' manually.${NC}"
+            exit 1
+        fi
+        if npx tauri --version &> /dev/null; then
+            TAURI_VERSION=$(npx tauri --version)
+            echo -e "${GREEN}✅ Tauri CLI (npx): $TAURI_VERSION${NC}"
+        else
+            echo -e "${RED}❌ Tauri CLI still not available after install. Please check your npm setup and PATH.${NC}"
+            exit 1
+        fi
+    fi
+fi
 
 # Install frontend dependencies
 echo -e "${BLUE}Installing frontend dependencies...${NC}"
